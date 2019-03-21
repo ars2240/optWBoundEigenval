@@ -101,7 +101,7 @@ optimizer = torch.optim.Adam(model.parameters())
 # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
 opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=1e-5, mu=mu, K=K, max_iter=100,
-                       max_pow_iter=10000)
+                       max_pow_iter=100000)
 
 # Train model
 opt.train(X, y, X_valid, y_valid)
