@@ -1,4 +1,6 @@
 import numpy as np
+import os
+import sys
 import torch
 import torch.utils.data as utils_data
 
@@ -131,7 +133,7 @@ class HVPOperator(object):
 class OptWBoundEignVal(object):
     def __init__(self, model, loss, optimizer, scheduler=None, mu=0, K=0, eps=1e-3, pow_iter_eps=1e-3,
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, max_samples=512,
-                 verbose=False):
+                 ignore_bad_vals=True, verbose=False):
         self.ndim = sum(p.numel() for p in model.parameters())  # number of dimensions
         self.x = 1.0/np.sqrt(self.ndim)*np.ones(self.ndim)  # initial point
         self.f = 0  # loss function value
@@ -165,6 +167,7 @@ class OptWBoundEignVal(object):
         self.verbose = verbose  # more extensive read-out
         self.log_file = "./logs/MNIST_Adam_mu" + str(mu) + "_K" + str(K) + ".log"  # log file
         self.verbose_log_file = "./logs/MNIST_Adam_mu" + str(mu) + "_K" + str(K) + "_verbose.log"  # log file
+        self.ignore_bad_vals = ignore_bad_vals  # whether or not to ignore bad power iteration values
 
     def comp_rho(self):
         # computes rho, v
@@ -183,14 +186,15 @@ class OptWBoundEignVal(object):
 
             v = 1.0/np.linalg.norm(vnew)*vnew.double()  # update vector and normalize
 
-        if norm > self.pow_iter_eps:
-            print('Warning: power iteration has not fully converged')
-
-        vnew = self.hvp_op.Hv(v, storedGrad=True)  # compute Hv
-
         self.v = v  # update eigenvector
         self.rho = np.abs(np.dot(vnew, v))  # update eigenvalue
         self.norm = norm  # update norm
+
+        if norm > self.pow_iter_eps:
+            print('Warning: power iteration has not fully converged')
+            if self.ignore_bad_vals:
+                self.rho = -1  # if value is discarded due to poor convergence, set to -1
+                # as negative values of rho work in the other algorithms and are nonsensical
 
     def comp_gradrho(self):
         # computes grad rho
@@ -220,7 +224,11 @@ class OptWBoundEignVal(object):
             self.scheduler.step()
 
         if self.verbose:
-            log_file = open(self.verbose_log_file, "w")  # open log file
+            old_stdout = sys.stdout  # save old output
+            if self.i == 0:
+                log_file = open(self.verbose_log_file, "w")  # open log file
+            else:
+                log_file = open(self.verbose_log_file, "a")  # open log file
             sys.stdout = log_file  # write to log file
             print('batch\t rho\t norm\t gradf\t gradg')
 
@@ -264,14 +272,15 @@ class OptWBoundEignVal(object):
                 print('%d\t %f\t %f\t %f\t %f' % (j, self.rho, self.norm, np.linalg.norm(self.gradf.detach().numpy()),
                                                   np.linalg.norm(self.gradg.detach().numpy())))
 
-        if self.verbose:
-            log_file.close()  # close log file
-
         # compute overall estimates
         inputs, target = data
         self.comp_f(inputs, target)  # compute f
         self.comp_g()  # compute g
         self.h = self.f + self.mu * self.g  # compute objective function
+
+        if self.verbose:
+            log_file.close()  # close log file
+            sys.stdout = old_stdout  # reset output
 
     def train(self, inputs, target, inputs_valid=None, target_valid=None):
 
@@ -298,7 +307,7 @@ class OptWBoundEignVal(object):
         for self.i in range(0, self.max_iter):
             self.iter()  # take step
 
-            log_file = open(self.log_file, "w")  # open log file
+            log_file = open(self.log_file, "a")  # open log file
             sys.stdout = log_file  # write to log file
 
             if (inputs_valid is None) or (target_valid is None):
@@ -310,27 +319,25 @@ class OptWBoundEignVal(object):
                     torch.save(self.model.state_dict(), 'trained_model_best.pt')
                 print('%d\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm, self.val_acc))
 
-            log_file.close()  # close log file
-
             f_hist.append(self.h)
             if self.i >= (self.min_iter-1):
                 coef_var = np.std(f_hist[-10:])/np.abs(np.mean(f_hist[-10:]))
                 if coef_var <= self.eps:
                     print(coef_var)
                     break
+            if self.i < (self.max_iter - 1):
+                log_file.close()  # close log file
+                sys.stdout = old_stdout  # reset output
 
         # Save model weights
-        torch.save(model.state_dict(), 'trained_model.pt')
+        torch.save(self.model.state_dict(), 'trained_model.pt')
 
-        log_file = open(self.log_file, "w")  # open log file
-        sys.stdout = log_file  # write to log file
-
-        print('Best Validation Loss:', opt.best_val_acc)
+        print('Best Validation Loss:', self.best_val_acc)
 
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
 
-        self.test_train_set(inputs, targets)
+        self.test_train_set(inputs, target)
 
     def test_model(self, X, y):
         """
@@ -359,7 +366,7 @@ class OptWBoundEignVal(object):
 
     def test_train_set(self, X, y):
         old_stdout = sys.stdout  # save old output
-        log_file = open(self.log_file, "w")  # open log file
+        log_file = open(self.log_file, "a")  # open log file
         sys.stdout = log_file  # write to log file
 
         loss, acc = self.test_model_best(X, y)
@@ -372,7 +379,7 @@ class OptWBoundEignVal(object):
 
     def test_test_set(self, X, y):
         old_stdout = sys.stdout  # save old output
-        log_file = open(self.log_file, "w")  # open log file
+        log_file = open(self.log_file, "a")  # open log file
         sys.stdout = log_file  # write to log file
 
         loss, acc = self.test_model_best(X, y)
