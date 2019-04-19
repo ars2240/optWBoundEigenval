@@ -1,3 +1,4 @@
+import random
 import numpy as np
 import os
 import sys
@@ -17,7 +18,7 @@ class HVPOperator(object):
     max_samples: max number of examples per batch using all GPUs.
     """
 
-    def __init__(self, model, data, criterion, use_gpu=True, max_iter=100):
+    def __init__(self, model, data, criterion, use_gpu=True):
         size = int(sum(p.numel() for p in model.parameters()))
         self.grad_vec = torch.zeros(size)
         self.model = model
@@ -27,7 +28,6 @@ class HVPOperator(object):
         self.criterion = criterion
         self.use_gpu = use_gpu
         self.stored_grad = None
-        self.max_iter = max_iter
 
     def Hv(self, vec, storedGrad=False):
         """
@@ -95,9 +95,7 @@ class HVPOperator(object):
         return vec_grad_hessian_vec
 
     def zero_grad(self):
-        """
-        Zeros out the gradient info for each parameter in the model
-        """
+        # Zeros out the gradient info for each parameter in the model
         for p in self.model.parameters():
             if p.grad is not None:
                 p.grad.data.zero_()
@@ -113,27 +111,22 @@ class HVPOperator(object):
             target = target.cuda()
 
         output = self.model(inputs)
-        try:
+        if self.criterion.__class__.__name__ == 'KLDivLoss':
+            target_onehot = torch.zeros(np.shape(output))
+            target_onehot.scatter_(1, target.view(-1, 1), 1)
+            loss = self.criterion(output.float(), target_onehot.float())
+        else:
             loss = self.criterion(output, target)
-        except RuntimeError:
-            try:
-                target_onehot = torch.zeros(np.shape(output))
-                target_onehot.scatter_(1, target.view(-1, 1), 1)
-                loss = self.criterion(output.float(), target_onehot.float())
-            except RuntimeError:
-                print(np.shape(target))
-                print(target)
-                print(np.shape(target_onehot))
         grad_dict = torch.autograd.grad(loss, self.model.parameters(), create_graph=True)
         grad_vec = torch.cat(tuple([g.contiguous().view(-1) for g in grad_dict]))
-        self.grad_vec = grad_vec.double()  # convert to double if float
+        self.grad_vec = grad_vec.double()  # / len(target)  # convert to double if float
         return self.grad_vec
 
 
 class OptWBoundEignVal(object):
     def __init__(self, model, loss, optimizer, scheduler=None, mu=0, K=0, eps=1e-3, pow_iter_eps=1e-3,
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, max_samples=512,
-                 ignore_bad_vals=True, verbose=False):
+                 ignore_bad_vals=True, verbose=False, header=''):
         self.ndim = sum(p.numel() for p in model.parameters())  # number of dimensions
         self.x = 1.0/np.sqrt(self.ndim)*np.ones(self.ndim)  # initial point
         self.f = 0  # loss function value
@@ -144,7 +137,7 @@ class OptWBoundEignVal(object):
         self.g = 0  # regularizer function
         self.gradg = np.zeros(self.ndim)  # gradient of g
         self.h = 0  # objective function f+mu*g
-        self.mu = float(mu)  # coefficient in front of regularizer
+        self.mu = mu  # coefficient in front of regularizer
         self.K = float(K)  # constant, spectral radius < K
         self.batch_size = batch_size  # batch size
         self.eps = eps  # convergence
@@ -165,13 +158,25 @@ class OptWBoundEignVal(object):
         self.val_acc = 0  # validation accuracy (only used if validation set is provided)
         self.best_val_acc = 0  # best validation accuracy (only used if validation set is provided)
         self.verbose = verbose  # more extensive read-out
-        self.log_file = "./logs/MNIST_Adam_mu" + str(mu) + "_K" + str(K) + ".log"  # log file
-        self.verbose_log_file = "./logs/MNIST_Adam_mu" + str(mu) + "_K" + str(K) + "_verbose.log"  # log file
+        self.x = None  # input data
+        self.y = None  # output data
+        name = self.optimizer.__class__.__name__
+        if callable(mu):
+            mname = 'Func'
+        else:
+            mname = str(mu)
+        # log filess
+        self.log_file = "./logs/" + header + "_" + name + "_mu" + mname + "_K" + str(K) + ".log"
+        self.verbose_log_file = "./logs/" + header + "_" + name + "_mu" + mname + "_K" + str(K) + "_verbose.log"
         self.ignore_bad_vals = ignore_bad_vals  # whether or not to ignore bad power iteration values
 
     def comp_rho(self):
         # computes rho, v
         v = self.v  # initial guess for eigenvector (prior eigenvector)
+
+        # initialize lambda and the norm
+        lam = 0
+        norm = 0
 
         # power iteration
         for i in range(0, np.min([self.ndim, self.max_pow_iter])):
@@ -187,14 +192,18 @@ class OptWBoundEignVal(object):
             v = 1.0/np.linalg.norm(vnew)*vnew.double()  # update vector and normalize
 
         self.v = v  # update eigenvector
-        self.rho = np.abs(np.dot(vnew, v))  # update eigenvalue
+        self.rho = np.abs(lam)  # update spectral radius
         self.norm = norm  # update norm
 
         if norm > self.pow_iter_eps:
             print('Warning: power iteration has not fully converged')
             if self.ignore_bad_vals:
+                print('Ignoring rho.')
                 self.rho = -1  # if value is discarded due to poor convergence, set to -1
                 # as negative values of rho work in the other algorithms and are nonsensical
+
+        if lam == 0:
+            print('Warning: rho = 0')
 
     def comp_gradrho(self):
         # computes grad rho
@@ -204,12 +213,12 @@ class OptWBoundEignVal(object):
         # computes f
         output = self.model(inputs)
 
-        try:
-            self.f = self.loss(output, target).item()
-        except RuntimeError:
+        if self.loss.__class__.__name__ == 'KLDivLoss':
             target_onehot = torch.zeros(np.shape(output))
             target_onehot.scatter_(1, target.view(-1, 1), 1)
             self.f = self.loss(output.float(), target_onehot.float()).item()
+        else:
+            self.f = self.loss(output, target).item()
 
     def comp_g(self):
         # computes g
@@ -231,12 +240,27 @@ class OptWBoundEignVal(object):
                 log_file = open(self.verbose_log_file, "a")  # open log file
             sys.stdout = log_file  # write to log file
             print('batch\t rho\t norm\t gradf\t gradg')
+            log_file.close()  # close log file
+            sys.stdout = old_stdout  # reset output
+
+        # compute mu
+        if callable(self.mu):
+            mu = self.mu(self.i)
+        else:
+            mu = self.mu
+
+        rbatch = random.randint(0, len(self.dataloader)-1)
 
         for j, data in enumerate(self.dataloader):
+
+            if j == rbatch:
+                rdata = data
 
             self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
 
             self.comp_g()  # compute g
+
+            self.optimizer.zero_grad()  # zero gradient
 
             # compute grad f
             if self.hvp_op.stored_grad is not None:
@@ -251,12 +275,6 @@ class OptWBoundEignVal(object):
             else:
                 self.gradg = torch.zeros(self.ndim).double()  # set gradient to zero
 
-            # compute mu
-            if callable(self.mu):
-                mu = self.mu(self.i)
-            else:
-                mu = self.mu
-
             p = self.gradf + mu * self.gradg  # gradient step
             i = 0
             for param in self.model.parameters():
@@ -265,24 +283,35 @@ class OptWBoundEignVal(object):
                 param.grad = p[i:(i + l)].view(s).float()  # adjust gradient
                 i += l
 
+            """
+            # for testing purposes
+            inputs, target = data
+            output = self.model(inputs)
+            loss = self.loss(output, target)  # loss function
+            loss.backward()  # back prop
+            """
+
             # optimizer step
             self.optimizer.step()
 
             if self.verbose:
+                log_file = open(self.verbose_log_file, "a")  # open log file
+                sys.stdout = log_file  # write to log file
                 print('%d\t %f\t %f\t %f\t %f' % (j, self.rho, self.norm, np.linalg.norm(self.gradf.detach().numpy()),
                                                   np.linalg.norm(self.gradg.detach().numpy())))
+                log_file.close()  # close log file
+                sys.stdout = old_stdout  # reset output
 
         # compute overall estimates
-        inputs, target = data
-        self.comp_f(inputs, target)  # compute f
+        self.comp_f(self.x, self.y)  # compute f
+        self.hvp_op = HVPOperator(self.model, rdata, self.loss, use_gpu=self.use_gpu)
         self.comp_g()  # compute g
-        self.h = self.f + self.mu * self.g  # compute objective function
-
-        if self.verbose:
-            log_file.close()  # close log file
-            sys.stdout = old_stdout  # reset output
+        self.h = self.f + mu * self.g  # compute objective function
 
     def train(self, inputs, target, inputs_valid=None, target_valid=None):
+
+        self.x = inputs  # input data
+        self.y = target  # output data
 
         # make sure logs file exists
         if not os.path.exists('./logs'):
@@ -291,7 +320,7 @@ class OptWBoundEignVal(object):
         old_stdout = sys.stdout  # save old output
 
         f_hist = []
-        train_data = utils_data.TensorDataset(inputs, target)
+        train_data = utils_data.TensorDataset(self.x, self.y)
         self.dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size)
 
         log_file = open(self.log_file, "w")  # open log file
@@ -303,6 +332,7 @@ class OptWBoundEignVal(object):
             print('epoch\t f\t rho\t h\t norm\t val_acc')
 
         log_file.close()  # close log file
+        sys.stdout = old_stdout  # reset output
 
         for self.i in range(0, self.max_iter):
             self.iter()  # take step
@@ -320,11 +350,12 @@ class OptWBoundEignVal(object):
                 print('%d\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm, self.val_acc))
 
             f_hist.append(self.h)
-            if self.i >= (self.min_iter-1):
+            if self.i >= (self.min_iter - 1):
                 coef_var = np.std(f_hist[-10:])/np.abs(np.mean(f_hist[-10:]))
                 if coef_var <= self.eps:
                     print(coef_var)
                     break
+
             if self.i < (self.max_iter - 1):
                 log_file.close()  # close log file
                 sys.stdout = old_stdout  # reset output
@@ -348,12 +379,12 @@ class OptWBoundEignVal(object):
         # compute loss and accuracy
         ops = self.model(X)
         _, predicted = torch.max(ops.data, 1)
-        try:
-            test_loss = self.loss(ops, y).item()
-        except RuntimeError:
+        if self.loss.__class__.__name__ == 'KLDivLoss':
             target_onehot = torch.zeros(np.shape(ops))
             target_onehot.scatter_(1, y.view(-1, 1), 1)
             test_loss = self.loss(ops.float(), target_onehot.float()).item()
+        else:
+            test_loss = self.loss(ops, y).item()
         test_acc = torch.mean((predicted == y).float()).item() * 100
 
         return test_loss, test_acc
