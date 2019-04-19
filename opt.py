@@ -28,6 +28,7 @@ class HVPOperator(object):
         self.criterion = criterion
         self.use_gpu = use_gpu
         self.stored_grad = None
+        self.stored_grad_gpu = None
 
     def Hv(self, vec, storedGrad=False):
         """
@@ -46,10 +47,17 @@ class HVPOperator(object):
         # compute original gradient, tracking computation graph
         self.zero_grad()
         if storedGrad and (self.stored_grad is not None):
-            grad_vec = self.stored_grad
+            if self.use_gpu:
+                grad_vec = self.stored_grad_gpu
+            else:
+                grad_vec = self.stored_grad
         else:
             grad_vec = self.prepare_grad().double()
-            self.stored_grad = grad_vec
+            if self.use_gpu:
+                self.stored_grad = grad_vec.cpu()
+                self.stored_grad_gpu = grad_vec
+            else:
+                self.stored_grad = grad_vec
         # compute the product
         grad_product = torch.sum(grad_vec * vec)
         self.zero_grad()
@@ -57,6 +65,8 @@ class HVPOperator(object):
         grad_grad = torch.autograd.grad(grad_product, self.model.parameters(), retain_graph=True)
         # concatenate the results over the different components of the network
         hessian_vec_prod = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad])).double()
+        if self.use_gpu:
+            hessian_vec_prod = hessian_vec_prod.cpu()
         return hessian_vec_prod
 
     def vGHv(self, vec, storedGrad=False):
@@ -94,6 +104,8 @@ class HVPOperator(object):
                                         allow_unused=True)
         # concatenate the results over the different components of the network
         vec_grad_hessian_vec = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad])).double()
+        if self.use_gpu:
+            vec_grad_hessian_vec = vec_grad_hessian_vec.cpu()
         return vec_grad_hessian_vec
 
     def zero_grad(self):
