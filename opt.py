@@ -38,7 +38,7 @@ class HVPOperator(object):
         # convert numpy array to torch tensor
         if type(vec) is np.ndarray:
             vec = torch.from_numpy(vec)
-        if use_gpu:
+        if self.use_gpu:
             vec = vec.cuda()
 
         vec = vec.double()  # convert to double if float
