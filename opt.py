@@ -78,16 +78,25 @@ class HVPOperator(object):
         # convert numpy array to torch tensor
         if type(vec) is np.ndarray:
             vec = torch.from_numpy(vec)
+        if self.use_gpu:
+            vec = vec.cuda()
 
         vec = vec.double()  # convert to double if float
 
         # compute original gradient, tracking computation graph
         self.zero_grad()
         if storedGrad and (self.stored_grad is not None):
-            grad_vec = self.stored_grad
+            if self.use_gpu:
+                grad_vec = self.stored_grad_gpu
+            else:
+                grad_vec = self.stored_grad
         else:
-            grad_vec = self.prepare_grad()
-            self.stored_grad = grad_vec
+            grad_vec = self.prepare_grad().double()
+            if self.use_gpu:
+                self.stored_grad = grad_vec.cpu()
+                self.stored_grad_gpu = grad_vec
+            else:
+                self.stored_grad = grad_vec
         # compute the product
         grad_product = torch.sum(grad_vec * vec)
         self.zero_grad()
@@ -294,7 +303,12 @@ class OptWBoundEignVal(object):
             for param in self.model.parameters():
                 s = param.data.size()
                 l = np.product(s)
-                param.grad = p[i:(i + l)].view(s).float()  # adjust gradient
+                try:
+                    param.grad = p[i:(i + l)].view(s).float()  # adjust gradient
+                except RuntimeError:
+                    print(type(param.grad))
+                    print(type(p[i:(i + l)].view(s).float()))
+                    pass
                 i += l
 
             """
