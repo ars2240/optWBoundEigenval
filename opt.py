@@ -166,6 +166,8 @@ class OptWBoundEignVal(object):
         self.eps = eps  # convergence
         self.pow_iter_eps = pow_iter_eps  # convergence
         self.model = model  # model (from torch)
+        if use_gpu:
+            self.model = self.model.cuda()
         self.dataloader = None  # dataloader for training set (from torch)
         self.loss = loss  # loss function (from torch)
         self.optimizer = optimizer  # optimizer function, optional (from torch)
@@ -235,6 +237,8 @@ class OptWBoundEignVal(object):
     def comp_f(self, inputs, target):
         # computes f
         output = self.model(inputs)
+        if self.use_gpu:
+            output = output.cpu()
 
         if self.loss.__class__.__name__ == 'KLDivLoss':
             target_onehot = torch.zeros(np.shape(output))
@@ -299,13 +303,18 @@ class OptWBoundEignVal(object):
                 self.gradg = torch.zeros(self.ndim).double()  # set gradient to zero
 
             p = self.gradf + mu * self.gradg  # gradient step
+            if self.use_gpu:
+                p = p.cuda()
             i = 0
             for param in self.model.parameters():
                 s = param.data.size()
                 l = np.product(s)
                 try:
                     param.grad = p[i:(i + l)].view(s).float()  # adjust gradient
+                    print('success')
                 except RuntimeError:
+                    print(s)
+                    print(l)
                     print(type(param.grad))
                     print(type(p[i:(i + l)].view(s).float()))
                     pass
