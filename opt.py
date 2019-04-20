@@ -311,7 +311,6 @@ class OptWBoundEignVal(object):
                 l = np.product(s)
                 try:
                     param.grad = p[i:(i + l)].view(s).float()  # adjust gradient
-                    print('success')
                 except RuntimeError:
                     print(s)
                     print(l)
@@ -338,6 +337,9 @@ class OptWBoundEignVal(object):
                                                   np.linalg.norm(self.gradg.detach().numpy())))
                 log_file.close()  # close log file
                 sys.stdout = old_stdout  # reset output
+
+            if self.use_gpu:
+                torch.cuda.empty_cache()
 
         # compute overall estimates
         self.comp_f(self.x, self.y)  # compute f
