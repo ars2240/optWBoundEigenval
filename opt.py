@@ -289,7 +289,7 @@ class OptWBoundEignVal(object):
 
             # compute grad f
             if self.hvp_op.stored_grad is not None:
-                self.gradf = self.hvp_op.stored_grad.detatch()
+                self.gradf = self.hvp_op.stored_grad
             else:
                 self.gradf = torch.zeros(self.ndim).double()  # set gradient to zero
 
