@@ -234,16 +234,22 @@ class OptWBoundEignVal(object):
 
     def comp_f(self, inputs, target):
         # computes f
-        output = self.model(inputs)
         if self.use_gpu:
-            output = output.cpu()
+            inputs = inputs.cuda()
+            target = target.cuda()
+        output = self.model(inputs)
 
         if self.loss.__class__.__name__ == 'KLDivLoss':
             target_onehot = torch.zeros(np.shape(output))
             target_onehot.scatter_(1, target.view(-1, 1), 1)
-            self.f = self.loss(output.float(), target_onehot.float()).item()
+            f = self.loss(output.float(), target_onehot.float()).item()
         else:
-            self.f = self.loss(output, target).item()
+            f = self.loss(output, target).item()
+
+        if self.use_gpu:
+            self.f = f.cpu()
+        else:
+            self.f = f
 
     def comp_g(self):
         # computes g
