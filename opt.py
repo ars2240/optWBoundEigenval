@@ -62,7 +62,7 @@ class HVPOperator(object):
         grad_product = torch.sum(grad_vec * vec)
         self.zero_grad()
         # take the second gradient
-        grad_grad = torch.autograd.grad(grad_product, self.model.parameters(), retain_graph=True)
+        grad_grad = torch.autograd.grad(grad_product, self.model.parameters(), retain_graph=False)
         # concatenate the results over the different components of the network
         hessian_vec_prod = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad])).double()
         if self.use_gpu:
@@ -108,7 +108,7 @@ class HVPOperator(object):
         grad_product = torch.sum(hessian_vec_prod * vec)
         self.zero_grad()
         # take the second gradient
-        grad_grad = torch.autograd.grad(grad_product, self.model.parameters(), retain_graph=True)
+        grad_grad = torch.autograd.grad(grad_product, self.model.parameters(), retain_graph=False)
         # concatenate the results over the different components of the network
         vec_grad_hessian_vec = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad])).double()
         if self.use_gpu:
@@ -295,7 +295,7 @@ class OptWBoundEignVal(object):
 
             # compute grad f
             if self.hvp_op.stored_grad is not None:
-                self.gradf = self.hvp_op.stored_grad
+                self.gradf = self.hvp_op.stored_grad.detatch()
             else:
                 self.gradf = torch.zeros(self.ndim).double()  # set gradient to zero
 
