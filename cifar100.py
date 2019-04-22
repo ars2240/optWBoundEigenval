@@ -22,14 +22,12 @@ torch.manual_seed(1226)
 
 # Parameters
 tol = 0.001
-batch_size = 128
+batch_size = 16
 mu = 0
 K = 0
 
-
 #def mu(i):
 #    return np.max([0.0, (i-50)/1000])
-
 
 # Load Data
 root = './data'
