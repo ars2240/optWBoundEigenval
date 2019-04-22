@@ -26,7 +26,7 @@ mu = 0
 K = 0
 
 
-#def mu(i):
+# def mu(i):
 #    return np.max([0.0, (i-50)/1000])
 
 
@@ -69,14 +69,8 @@ X_test = torch.from_numpy(X_test)
 y_test = torch.from_numpy(y_test).long()
 """""
 
-# train_data = utils_data.TensorDataset(X, y)
 
 #   Define Neural Network Architecture
-#
-#   Modify your neural network here!
-
-
-# original NN
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()

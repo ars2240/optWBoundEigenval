@@ -26,7 +26,7 @@ batch_size = 16
 mu = 0
 K = 0
 
-#def mu(i):
+# def mu(i):
 #    return np.max([0.0, (i-50)/1000])
 
 # Load Data
@@ -36,7 +36,7 @@ if not os.path.exists(root):
 
 # Load the dataset
 trans = transforms.Compose([transforms.ToTensor()])
-# if not exist, download mnist dataset
+# if not exist, download cifar100 dataset
 train_set = utils_data.DataLoader(dset.CIFAR100(root=root, train=True, transform=trans, download=True), batch_size=50000)
 test_set = utils_data.DataLoader(dset.CIFAR100(root=root, train=False, transform=trans, download=True), batch_size=10000)
 
