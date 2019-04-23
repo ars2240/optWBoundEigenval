@@ -35,33 +35,28 @@ root = './data'
 if not os.path.exists(root):
     os.mkdir(root)
 
+
 # Download and parse the dataset
-url = 'http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz'
-filename = root + '/' + url.split("/")[-1]
-exists = os.path.isfile(filename)
-if not exists:
-    with open(filename, "wb") as f:
-        r = requests.get(url)
-        f.write(r.content)
-filename2 = filename[:-3] + '.csv'
-exists = os.path.isfile(filename2)
-if not exists:
-    with gzip.open(filename, 'rb') as f_in:
-        with open(filename2, 'wb') as f_out:
-            shutil.copyfileobj(f_in, f_out)
-url = 'http://kdd.ics.uci.edu/databases/kddcup99/corrected.gz'
-filename = root + '/' + url.split("/")[-1]
-exists = os.path.isfile(filename)
-if not exists:
-    with open(filename, "wb") as f:
-        r = requests.get(url)
-        f.write(r.content)
-filename3 = filename[:-3] + '.csv'
-exists = os.path.isfile(filename3)
-if not exists:
-    with gzip.open(filename, 'rb') as f_in:
-        with open(filename3, 'wb') as f_out:
-            shutil.copyfileobj(f_in, f_out)
+def download(url):
+    filename = root + '/' + url.split("/")[-1]
+    exists = os.path.isfile(filename)
+    if not exists:
+        with open(filename, "wb") as f:
+            r = requests.get(url)
+            f.write(r.content)
+    fname = filename[:-3] + '.csv'
+    exists = os.path.isfile(fname)
+    if not exists:
+        with gzip.open(filename, 'rb') as f_in:
+            with open(fname, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
+    return fname
+
+
+u = 'http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz'
+filename2 = download(u)
+u = 'http://kdd.ics.uci.edu/databases/kddcup99/corrected.gz'
+filename3 = download(u)
 
 # import dataset
 train = pd.read_csv(filename2, header=None)
@@ -71,6 +66,7 @@ for i in range(0, train.shape[1]):
         s = list(set(train.values[:, i]))
         dic = {s[i]: i for i in range(0, len(s))}
         train.replace({i: dic}, inplace=True)
+        test = test.loc[test[i].isin(dic.keys())]
         test.replace({i: dic}, inplace=True)
 
 X = train.values[:, :-1]
@@ -79,13 +75,16 @@ y = train.values[:, -1]
 X_test = test.values[:, :-1]
 y_test = test.values[:, -1]
 
-X = X.reshape((494021, 41))
-X_test = X_test.reshape((311029, 41))
+X = X.reshape((train.shape[0], 41))
+X_test = X_test.reshape((test.shape[0], 41))
 
 X, X_valid, y, y_valid = train_test_split(np.array(X), np.array(y), test_size=1/5, random_state=1226)
 
+# convert data-types
 X = torch.from_numpy(X).float()
 y = torch.from_numpy(y).long()
+X_test = torch.from_numpy(X_test).float()
+y_test = torch.from_numpy(y_test).long()
 X_valid = torch.from_numpy(X_valid).float()
 y_valid = torch.from_numpy(y_valid).long()
 
