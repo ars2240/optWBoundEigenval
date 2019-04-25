@@ -122,7 +122,7 @@ class Net(nn.Module):
         return x
 
 
-alpha = lambda k: 1/(1+np.sqrt(k))
+alpha = lambda k: 1/(k)
 
 # Train Neural Network
 
