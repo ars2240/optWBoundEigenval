@@ -67,7 +67,7 @@ class HVPOperator(object):
         hessian_vec_prod = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad])).double()
         if self.use_gpu:
             hessian_vec_prod = hessian_vec_prod.cpu()
-        return hessian_vec_prod
+        return float(hessian_vec_prod)
 
     def vGHv(self, vec, storedGrad=False):
         """
@@ -113,7 +113,7 @@ class HVPOperator(object):
         vec_grad_hessian_vec = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad])).double()
         if self.use_gpu:
             vec_grad_hessian_vec = vec_grad_hessian_vec.cpu()
-        return vec_grad_hessian_vec
+        return float(vec_grad_hessian_vec)
 
     def zero_grad(self):
         # Zeros out the gradient info for each parameter in the model
@@ -295,7 +295,7 @@ class OptWBoundEignVal(object):
 
             # compute grad f
             if self.hvp_op.stored_grad is not None:
-                self.gradf = self.hvp_op.stored_grad
+                self.gradf = float(self.hvp_op.stored_grad)
             else:
                 self.gradf = torch.zeros(self.ndim).double()  # set gradient to zero
 
