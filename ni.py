@@ -122,18 +122,18 @@ class Net(nn.Module):
         return x
 
 
-alpha = lambda k: 1/(k)
+alpha = lambda k: 1/(1+np.sqrt(k))
 
 # Train Neural Network
 
 # Create neural network
 model = Net()
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=1)
+optimizer = torch.optim.SGD(model.parameters(), lr=.1)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
 opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
-                       max_pow_iter=10000, verbose=False, header='NI', use_gpu=True)
+                       max_pow_iter=10000, verbose=False, header='NI', use_gpu=False)
 
 # Train model
 opt.train(X, y, X_valid, y_valid)
