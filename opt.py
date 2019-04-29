@@ -344,6 +344,7 @@ class OptWBoundEignVal(object):
 
             if self.use_gpu:
                 torch.cuda.empty_cache()
+                print(torch.cuda.memory_allocated())
 
         # compute overall estimates
         self.comp_f(self.x, self.y)  # compute f
