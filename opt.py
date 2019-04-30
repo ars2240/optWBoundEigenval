@@ -18,7 +18,7 @@ class HVPOperator(object):
     max_samples: max number of examples per batch using all GPUs.
     """
 
-    def __init__(self, model, data, criterion, use_gpu=True):
+    def __init__(self, model, data, criterion, use_gpu=True, mem_track=False):
         size = int(sum(p.numel() for p in model.parameters()))
         self.grad_vec = torch.zeros(size)
         self.model = model
@@ -29,6 +29,8 @@ class HVPOperator(object):
         self.use_gpu = use_gpu
         self.stored_grad = None
         self.stored_grad_gpu = None
+        self.mem_track = mem_track
+        self.mem_max = 0
 
     def Hv(self, vec, storedGrad=False):
         """
@@ -58,15 +60,27 @@ class HVPOperator(object):
                 self.stored_grad_gpu = grad_vec
             else:
                 self.stored_grad = grad_vec
+
         # compute the product
         grad_product = torch.sum(grad_vec * vec)
+
+        # check memory usage
+        if self.mem_track and self.use_gpu:
+            self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
+
         self.zero_grad()
         # take the second gradient
         grad_grad = torch.autograd.grad(grad_product, self.model.parameters(), retain_graph=True)
         # concatenate the results over the different components of the network
         hessian_vec_prod = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad])).double()
+
+        # check memory usage
+        if self.mem_track and self.use_gpu:
+            self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
+
         if self.use_gpu:
             hessian_vec_prod = hessian_vec_prod.cpu()
+
         return hessian_vec_prod.data
 
     def vGHv(self, vec, storedGrad=False):
@@ -97,8 +111,14 @@ class HVPOperator(object):
                 self.stored_grad_gpu = grad_vec
             else:
                 self.stored_grad = grad_vec
+
         # compute the product
         grad_product = torch.sum(grad_vec * vec)
+
+        # check memory usage
+        if self.mem_track and self.use_gpu:
+            self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
+
         self.zero_grad()
         # take the second gradient
         grad_grad = torch.autograd.grad(grad_product, self.model.parameters(), retain_graph=True, create_graph=True)
@@ -106,11 +126,21 @@ class HVPOperator(object):
         hessian_vec_prod = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad])).double()
         # compute the product
         grad_product = torch.sum(hessian_vec_prod * vec)
+
+        # check memory usage
+        if self.mem_track and self.use_gpu:
+            self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
+
         self.zero_grad()
         # take the second gradient
         grad_grad = torch.autograd.grad(grad_product, self.model.parameters(), retain_graph=True)
         # concatenate the results over the different components of the network
         vec_grad_hessian_vec = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad])).double()
+
+        # check memory usage
+        if self.mem_track and self.use_gpu:
+            self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
+
         if self.use_gpu:
             vec_grad_hessian_vec = vec_grad_hessian_vec.cpu()
         return vec_grad_hessian_vec.data
@@ -147,7 +177,7 @@ class HVPOperator(object):
 class OptWBoundEignVal(object):
     def __init__(self, model, loss, optimizer, scheduler=None, mu=0, K=0, eps=1e-3, pow_iter_eps=1e-3,
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, max_samples=512,
-                 ignore_bad_vals=True, verbose=False, header=''):
+                 ignore_bad_vals=True, verbose=False, mem_track=False, header=''):
         self.ndim = sum(p.numel() for p in model.parameters())  # number of dimensions
         self.x = 1.0/np.sqrt(self.ndim)*np.ones(self.ndim)  # initial point
         self.f = 0  # loss function value
@@ -192,6 +222,8 @@ class OptWBoundEignVal(object):
         self.log_file = "./logs/" + header + "_" + name + "_mu" + mname + "_K" + str(K) + ".log"
         self.verbose_log_file = "./logs/" + header + "_" + name + "_mu" + mname + "_K" + str(K) + "_verbose.log"
         self.ignore_bad_vals = ignore_bad_vals  # whether or not to ignore bad power iteration values
+        self.mem_track = mem_track
+        self.mem_max = 0
 
     def comp_rho(self):
         # computes rho, v
@@ -344,7 +376,10 @@ class OptWBoundEignVal(object):
 
             if self.use_gpu:
                 torch.cuda.empty_cache()
-                print(torch.cuda.memory_allocated())
+                # check memory usage
+                if self.mem_track:
+                    self.mem_max = np.max([self.mem_max, self.hvp_op.mem_max, torch.cuda.memory_allocated()])
+                    print('Running Max GPU Memory used (in bytes): %d' % self.mem_max)
 
         # compute overall estimates
         self.comp_f(self.x, self.y)  # compute f
