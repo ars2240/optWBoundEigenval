@@ -1,6 +1,6 @@
 """
-Classifies network intrusion from the KDD Cup 99 dataset
-http://kdd.ics.uci.edu/databases/kddcup99/kddcup99.html
+Classifies forest cover type from UCI data
+https://archive.ics.uci.edu/ml/datasets/covertype
 """
 
 import sys
@@ -54,52 +54,27 @@ def download(url):
     return fname
 
 
-u = 'http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz'
+u = 'https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz'
 filename2 = download(u)
-u = 'http://kdd.ics.uci.edu/databases/kddcup99/corrected.gz'
-filename3 = download(u)
 
 # import dataset
-train = pd.read_csv(filename2, header=None)
-test = pd.read_csv(filename3, header=None)
+data = pd.read_csv(filename2, header=None)
 
-# transform to supercategories
-dic = {'normal.': 'normal',  'nmap.': 'probing', 'portsweep.': 'probing', 'ipsweep.': 'probing', 'satan.': 'probing',
-       'land.': 'dos', 'pod.': 'dos', 'teardrop.': 'dos', 'back.': 'dos', 'neptune.': 'dos', 'smurf.': 'dos',
-       'spy.': 'r2l', 'phf.': 'r2l', 'multihop.': 'r2l', 'ftp_write.': 'r2l', 'imap.': 'r2l', 'warezmaster.': 'r2l',
-       'guess_passwd.': 'r2l', 'buffer_overflow.': 'u2r', 'rootkit.': 'u2r', 'loadmodule.': 'u2r', 'perl.': 'u2r'}
-i = train.shape[1] - 1
-train = train.loc[train[i].isin(dic.keys())]
-train.replace({i: dic}, inplace=True)
-test = test.loc[test[i].isin(dic.keys())]
-test.replace({i: dic}, inplace=True)
+print(set(data.values[:, -1]))
 
-# print(set(train.values[:, -1]))
+X = data.values[:, :-1]
+y = data.values[:, -1]
 
-for i in range(0, train.shape[1]):
-    if train.dtypes[i] == 'object':
-        s = list(set(train.values[:, i]))
-        dic = {s[i]: i for i in range(0, len(s))}
-        train.replace({i: dic}, inplace=True)
-        test = test.loc[test[i].isin(dic.keys())]
-        test.replace({i: dic}, inplace=True)
-
-X = train.values[:, :-1]
-y = train.values[:, -1]
-
-""""
 # class balance
 cts = []
 for i in set(y):
     cts.append(list(y).count(i))
 print(cts)
-"""
 
-X_test = test.values[:, :-1]
-y_test = test.values[:, -1]
+X, X_test, y, y_test = train_test_split(np.array(X), np.array(y), test_size=1/5, random_state=1226)
 
-X = X.reshape((train.shape[0], 41))
-X_test = X_test.reshape((test.shape[0], 41))
+X = X.reshape((X.shape[0], 54))
+X_test = X_test.reshape((X_test.shape[0], 54))
 
 X, X_valid, y, y_valid = train_test_split(np.array(X), np.array(y), test_size=1/5, random_state=1226)
 
@@ -131,16 +106,15 @@ y_test = torch.from_numpy(y_test).long()
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(41, 13)
-        self.fc2 = nn.Linear(13, 15)
-        self.fc3 = nn.Linear(15, 20)
-        self.fc4 = nn.Linear(20, 5)
+        self.fc1 = nn.Linear(54, 20)
+        self.fc2 = nn.Linear(20, 20)
+        self.fc3 = nn.Linear(20, 7)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
-        x = F.relu(self.fc3(x))
-        x = self.fc4(x)
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
         x = F.softmax(x, dim=0)
         return x
 
@@ -156,7 +130,7 @@ optimizer = torch.optim.Adam(model.parameters())
 #scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
 opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
-                       max_pow_iter=10000, verbose=False, header='NI', use_gpu=False)
+                       max_pow_iter=10000, verbose=False, header='Cov', use_gpu=False)
 
 # Train model
 opt.train(X, y, X_valid, y_valid)
