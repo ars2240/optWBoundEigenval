@@ -1,7 +1,15 @@
-"""
-Classifies forest cover type from UCI data
-https://archive.ics.uci.edu/ml/datasets/covertype
-"""
+# cov.py
+#
+# Author: Adam Sandler
+# Date: 5/7/19
+#
+# Classifies forest cover type from UCI data
+# https://archive.ics.uci.edu/ml/datasets/covertype
+#
+#
+# Dependencies:
+#   Packages: random, numpy, torch, torchvision, gzip, shutil, pandas
+#   Files: opt
 
 import sys
 import os
@@ -63,7 +71,7 @@ data = pd.read_csv(filename2, header=None)
 print(set(data.values[:, -1]))
 
 X = data.values[:, :-1]
-y = data.values[:, -1]
+y = data.values[:, -1] - 1
 
 # class balance
 cts = []
@@ -119,17 +127,17 @@ class Net(nn.Module):
         return x
 
 
-# alpha = lambda k: 1/(1+k)
+alpha = lambda k: 1/(1+np.sqrt(k))
 
 # Train Neural Network
 
 # Create neural network
 model = Net()
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters())
-#scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
+optimizer = torch.optim.SGD(model.parameters(), lr=.01)
+scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
-opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
+opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
                        max_pow_iter=10000, verbose=False, header='Cov', use_gpu=False)
 
 # Train model

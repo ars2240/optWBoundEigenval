@@ -1,7 +1,15 @@
-"""
-Classifies network intrusion from the KDD Cup 99 dataset
-http://kdd.ics.uci.edu/databases/kddcup99/kddcup99.html
-"""
+# ni.py
+#
+# Author: Adam Sandler
+# Date: 5/7/19
+#
+# Classifies network intrusion from the KDD Cup 99 dataset
+# http://kdd.ics.uci.edu/databases/kddcup99/kddcup99.html
+#
+#
+# Dependencies:
+#   Packages: random, numpy, torch, torchvision, gzip, shutil, pandas
+#   Files: opt
 
 import sys
 import os

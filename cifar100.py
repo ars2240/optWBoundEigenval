@@ -1,6 +1,14 @@
-"""
-Classifies images from the CIFAR100 dataset
-"""
+# cifar100.py
+#
+# Author: Adam Sandler
+# Date: 5/7/19
+#
+# Classifies images from the CIFAR100 dataset
+#
+#
+# Dependencies:
+#   Packages: random, numpy, torch, torchvision, scikit-learn
+#   Files: opt
 
 import sys
 import os
@@ -22,7 +30,7 @@ torch.manual_seed(1226)
 
 # Parameters
 tol = 0.001
-batch_size = 8
+batch_size = 16
 mu = 0
 K = 0
 

@@ -1,6 +1,14 @@
-"""
-Classifies digits from the MNIST dataset
-"""
+# digits.py
+#
+# Author: Adam Sandler
+# Date: 5/7/19
+#
+# Classifies digits from the MNIST dataset
+#
+#
+# Dependencies:
+#   Packages: random, numpy, torch, torchvision, scikit-learn
+#   Files: opt
 
 import sys
 import os

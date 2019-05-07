@@ -1,3 +1,15 @@
+# opt.py
+#
+# Author: Adam Sandler
+# Date: 5/7/19
+#
+# Contains methods & classes for optimizing NNs with spectral radius regulation
+#
+#
+# Dependencies:
+#   Packages: random, numpy, torch
+
+
 import random
 import numpy as np
 import os
@@ -11,32 +23,22 @@ class HVPOperator(object):
     Modified from: https://github.com/noahgolmant/pytorch-hessian-eigenthings
 
     Use PyTorch autograd for Hessian Vec product calculation
-    model:  PyTorch network to compute hessian for
-    dataloader: pytorch dataloader that we get examples from to compute grads
-    loss:   Loss function to descend (e.g. F.cross_entropy)
-    use_gpu: use cuda or not
-    max_samples: max number of examples per batch using all GPUs.
     """
 
     def __init__(self, model, data, criterion, use_gpu=True, mem_track=False):
-        size = int(sum(p.numel() for p in model.parameters()))
-        self.grad_vec = torch.zeros(size)
-        self.model = model
+        self.model = model  # NN model
         if use_gpu:
             self.model = self.model.cuda()
-        self.data = data
-        self.criterion = criterion
-        self.use_gpu = use_gpu
-        self.stored_grad = None
-        self.stored_grad_gpu = None
-        self.mem_track = mem_track
-        self.mem_max = 0
+        self.data = data  # data (inputs, target)
+        self.criterion = criterion  # loss function
+        self.use_gpu = use_gpu  # whether or not GPUs are used
+        self.stored_grad = None  # stored gradient (on CPU)
+        self.stored_grad_gpu = None  # stored gradient (on GPU)
+        self.mem_track = mem_track  # whether or not maximum memory usage is tracked
+        self.mem_max = 0  # running maximum memory usage
 
     def Hv(self, vec, storedGrad=False):
-        """
-        Returns H*vec where H is the hessian of the loss w.r.t.
-        the vectorized model parameters
-        """
+        # Returns H*vec where H is the hessian of the loss w.r.t. the vectorized model parameters
 
         # convert numpy array to torch tensor
         if type(vec) is np.ndarray:
@@ -84,10 +86,7 @@ class HVPOperator(object):
         return hessian_vec_prod.data
 
     def vGHv(self, vec, storedGrad=False):
-        """
-        Returns vec*grad H*vec where H is the hessian of the loss w.r.t.
-        the vectorized model parameters
-        """
+        # Returns vec*grad H*vec where H is the hessian of the loss w.r.t. the vectorized model parameters
 
         # convert numpy array to torch tensor
         if type(vec) is np.ndarray:
@@ -152,9 +151,7 @@ class HVPOperator(object):
                 p.grad.data.zero_()
 
     def prepare_grad(self):
-        """
-        Compute gradient w.r.t loss over all parameters and vectorize
-        """
+        # Compute gradient w.r.t loss over all parameters and vectorize
         inputs, target = self.data
 
         if self.use_gpu:
@@ -170,8 +167,8 @@ class HVPOperator(object):
             loss = self.criterion(output, target)
         grad_dict = torch.autograd.grad(loss, self.model.parameters(), create_graph=True)
         grad_vec = torch.cat(tuple([g.contiguous().view(-1) for g in grad_dict]))
-        self.grad_vec = grad_vec.double()  # / len(target)  # convert to double if float
-        return self.grad_vec
+        grad_vec = grad_vec.double()  # / len(target)  # convert to double if float
+        return grad_vec
 
 
 class OptWBoundEignVal(object):
@@ -218,15 +215,16 @@ class OptWBoundEignVal(object):
             mname = 'Func'
         else:
             mname = str(mu)
-        # log filess
+        # log files
         self.log_file = "./logs/" + header + "_" + name + "_mu" + mname + "_K" + str(K) + ".log"
         self.verbose_log_file = "./logs/" + header + "_" + name + "_mu" + mname + "_K" + str(K) + "_verbose.log"
         self.ignore_bad_vals = ignore_bad_vals  # whether or not to ignore bad power iteration values
-        self.mem_track = mem_track
-        self.mem_max = 0
+        self.mem_track = mem_track  # whether or not maximum memory usage is tracked
+        self.mem_max = 0  # running maximum memory usage
 
     def comp_rho(self):
         # computes rho, v
+
         v = self.v  # initial guess for eigenvector (prior eigenvector)
 
         # initialize lambda and the norm
@@ -262,15 +260,19 @@ class OptWBoundEignVal(object):
 
     def comp_gradrho(self):
         # computes grad rho
+
         self.gradrho = self.hvp_op.vGHv(self.v, storedGrad=True)  # compute v*gradH*v
 
     def comp_f(self, inputs, target):
         # computes f
+
+        # if using gpu, move data to it
         if self.use_gpu:
             inputs = inputs.cuda()
             target = target.cuda()
-        output = self.model(inputs)
+        output = self.model(inputs)  # compute prediction
 
+        # compute loss
         if self.loss.__class__.__name__ == 'KLDivLoss':
             target_onehot = torch.zeros(np.shape(output))
             target_onehot.scatter_(1, target.view(-1, 1), 1)
@@ -278,6 +280,7 @@ class OptWBoundEignVal(object):
         else:
             f = self.loss(output, target).item()
 
+        # if using gpu, move function value back to CPU
         if self.use_gpu:
             self.f = f.cpu()
         else:
@@ -285,6 +288,7 @@ class OptWBoundEignVal(object):
 
     def comp_g(self):
         # computes g
+
         self.comp_rho()
         self.g = np.max([0.0, self.rho - self.K])
 
@@ -295,6 +299,7 @@ class OptWBoundEignVal(object):
         if self.scheduler is not None:
             self.scheduler.step()
 
+        # if verbose, make header for file
         if self.verbose:
             old_stdout = sys.stdout  # save old output
             if self.i == 0:
@@ -312,13 +317,16 @@ class OptWBoundEignVal(object):
         else:
             mu = self.mu
 
+        # pick random batch for estimation of spectral radius at end of epoch
         rbatch = random.randint(0, len(self.dataloader)-1)
 
         for j, data in enumerate(self.dataloader):
 
+            # store random batch
             if j == rbatch:
                 rdata = data
 
+            # initialize hessian vector operation class
             self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
 
             self.comp_g()  # compute g
@@ -340,20 +348,14 @@ class OptWBoundEignVal(object):
 
             p = self.gradf + mu * self.gradg  # gradient step
             if self.use_gpu:
-                p = p.cuda()
+                p = p.cuda()  # move to GPU
+
             i = 0
             for param in self.model.parameters():
-                s = param.data.size()
-                l = np.product(s)
-                try:
-                    param.grad = p[i:(i + l)].view(s).float()  # adjust gradient
-                except RuntimeError:
-                    print(s)
-                    print(l)
-                    print(type(param.grad))
-                    print(type(p[i:(i + l)].view(s).float()))
-                    pass
-                i += l
+                s = param.data.size()  # number of input & output nodes
+                l = np.product(s)  # total number of parameters
+                param.grad = p[i:(i + l)].view(s).float()  # adjust gradient
+                i += l  # increment
 
             """
             # for testing purposes
@@ -366,6 +368,7 @@ class OptWBoundEignVal(object):
             # optimizer step
             self.optimizer.step()
 
+            # if verbose, add values to file
             if self.verbose:
                 log_file = open(self.verbose_log_file, "a")  # open log file
                 sys.stdout = log_file  # write to log file
@@ -374,15 +377,17 @@ class OptWBoundEignVal(object):
                 log_file.close()  # close log file
                 sys.stdout = old_stdout  # reset output
 
+            # if using GPU, memory cleanup & tracking
             if self.use_gpu:
                 torch.cuda.empty_cache()
-                # check memory usage
+                # check max memory usage
                 if self.mem_track:
                     self.mem_max = np.max([self.mem_max, self.hvp_op.mem_max, torch.cuda.memory_allocated()])
                     print('Running Max GPU Memory used (in bytes): %d' % self.mem_max)
 
         # compute overall estimates
         self.comp_f(self.x, self.y)  # compute f
+        # initialize hessian vector operation class for random batch
         self.hvp_op = HVPOperator(self.model, rdata, self.loss, use_gpu=self.use_gpu)
         self.comp_g()  # compute g
         self.h = self.f + mu * self.g  # compute objective function
@@ -398,13 +403,16 @@ class OptWBoundEignVal(object):
 
         old_stdout = sys.stdout  # save old output
 
-        f_hist = []
+        f_hist = []  # tracks function value after each epoch
+
+        # create dataloader
         train_data = utils_data.TensorDataset(self.x, self.y)
         self.dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size)
 
         log_file = open(self.log_file, "w")  # open log file
         sys.stdout = log_file  # write to log file
 
+        # header of log file
         if (inputs_valid is None) or (target_valid is None):
             print('epoch\t f\t rho\t h\t norm')
         else:
@@ -419,6 +427,7 @@ class OptWBoundEignVal(object):
             log_file = open(self.log_file, "a")  # open log file
             sys.stdout = log_file  # write to log file
 
+            # add values to log file
             if (inputs_valid is None) or (target_valid is None):
                 print('%d\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm))
             else:
@@ -428,7 +437,10 @@ class OptWBoundEignVal(object):
                     torch.save(self.model.state_dict(), 'trained_model_best.pt')
                 print('%d\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm, self.val_acc))
 
+            # add function value to history log
             f_hist.append(self.h)
+
+            # check if convergence criteria met
             if self.i >= (self.min_iter - 1):
                 coef_var = np.std(f_hist[-10:])/np.abs(np.mean(f_hist[-10:]))
                 if coef_var <= self.eps:
@@ -442,18 +454,17 @@ class OptWBoundEignVal(object):
         # Save model weights
         torch.save(self.model.state_dict(), 'trained_model.pt')
 
+        # best validation accuracy
         print('Best Validation Accuracy:', self.best_val_acc)
 
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
 
+        # compute loss & accuracy on training set
         self.test_train_set(inputs, target)
 
     def test_model(self, X, y):
-        """
-        Tests the model using stored network weights.
-        Please ensure that this code will allow me to test your model on testing data.
-        """
+        # Computes the loss and accuracy of model on given dataset
 
         # compute loss and accuracy
         ops = self.model(X)
@@ -469,6 +480,7 @@ class OptWBoundEignVal(object):
         return test_loss, test_acc
 
     def test_model_best(self, X, y):
+        # tests best model, loaded from file
 
         self.model.load_state_dict(torch.load('trained_model_best.pt'))
 
@@ -479,7 +491,7 @@ class OptWBoundEignVal(object):
         log_file = open(self.log_file, "a")  # open log file
         sys.stdout = log_file  # write to log file
 
-        loss, acc = self.test_model_best(X, y)
+        loss, acc = self.test_model_best(X, y)  # test best model
 
         print('Train Loss:', loss)
         print('Train Accuracy:', acc)
@@ -492,7 +504,7 @@ class OptWBoundEignVal(object):
         log_file = open(self.log_file, "a")  # open log file
         sys.stdout = log_file  # write to log file
 
-        loss, acc = self.test_model_best(X, y)
+        loss, acc = self.test_model_best(X, y)  # test best model
 
         print('Test Loss:', loss)
         print('Test Accuracy:', acc)
