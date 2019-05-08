@@ -103,11 +103,11 @@ alpha = lambda k: 1/(1+np.sqrt(k))
 # Create neural network
 model = Net()
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=1)
+optimizer = torch.optim.SGD(model.parameters(), lr=.01)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
 opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
-                       max_pow_iter=10000, verbose=False, header='MNIST')
+                       max_pow_iter=10000, verbose=False, header='MNIST', use_gpu=True, mem_track=True)
 
 # Train model
 opt.train(X, y, X_valid, y_valid)
