@@ -279,12 +279,7 @@ class OptWBoundEignVal(object):
             f = self.loss(output.float(), target_onehot.float()).item()
         else:
             f = self.loss(output, target).item()
-
-        # if using gpu, move function value back to CPU
-        if self.use_gpu:
-            self.f = f.cpu()
-        else:
-            self.f = f
+        self.f = f
 
     def comp_g(self):
         # computes g
