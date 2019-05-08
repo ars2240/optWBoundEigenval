@@ -8,7 +8,7 @@
 #
 #
 # Dependencies:
-#   Packages: random, numpy, torch, torchvision, gzip, shutil, pandas
+#   Packages: random, numpy, torch, torchvision, requests, gzip, shutil, pandas
 #   Files: opt
 
 import sys
@@ -153,7 +153,7 @@ class Net(nn.Module):
         return x
 
 
-# alpha = lambda k: 1/(1+k)
+alpha = lambda k: 1/(1+k)
 
 # Train Neural Network
 
