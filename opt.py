@@ -461,6 +461,10 @@ class OptWBoundEignVal(object):
     def test_model(self, X, y):
         # Computes the loss and accuracy of model on given dataset
 
+        if self.use_gpu:
+            X = X.cuda()
+            y = y.cuda()
+
         # compute loss and accuracy
         ops = self.model(X)
         _, predicted = torch.max(ops.data, 1)
