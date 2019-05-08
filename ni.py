@@ -85,7 +85,7 @@ test.replace({i: dic}, inplace=True)
 # print(set(train.values[:, -1]))
 
 for i in range(0, train.shape[1]):
-    if train.dtypes[i] == 'object':
+    if train.dtypes[i] == 'object' or test.dtypes[i] == 'object':
         s = list(set(train.values[:, i]))
         dic = {s[i]: i for i in range(0, len(s))}
         train.replace({i: dic}, inplace=True)
