@@ -114,9 +114,10 @@ y_test = torch.from_numpy(y_test).long()
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(54, 20)
-        self.fc2 = nn.Linear(20, 20)
-        self.fc3 = nn.Linear(20, 7)
+        n = 100
+        self.fc1 = nn.Linear(54, n)
+        self.fc2 = nn.Linear(n, n)
+        self.fc3 = nn.Linear(n, 7)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
