@@ -356,9 +356,13 @@ class OptWBoundEignVal(object):
             """
             # for testing purposes
             inputs, target = data
+            if self.use_gpu:
+                inputs = inputs.cuda()
+                target = target.cuda()
             output = self.model(inputs)
             loss = self.loss(output, target)  # loss function
             loss.backward()  # back prop
+
 
             # optimizer step
             self.optimizer.step()
