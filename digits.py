@@ -44,7 +44,7 @@ if not os.path.exists(root):
     os.mkdir(root)
 
 # Load the dataset
-trans = transforms.Compose([transforms.ToTensor()])
+trans = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
 # if not exist, download mnist dataset
 train_set = utils_data.DataLoader(dset.MNIST(root=root, train=True, transform=trans, download=True), batch_size=60000)
 test_set = utils_data.DataLoader(dset.MNIST(root=root, train=False, transform=trans, download=True), batch_size=10000)
@@ -86,11 +86,12 @@ class Net(nn.Module):
         self.fc1 = nn.Linear(784, n)
         self.fc2 = nn.Linear(n, n)
         self.fc3 = nn.Linear(n, 10)
+        self.bn1 = nn.BatchNorm1d(n)
 
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc2(x))
+        x = self.bn1(F.relu(self.fc1(x)))
+        x = self.bn1(F.relu(self.fc2(x)))
+        x = self.bn1(F.relu(self.fc2(x)))
         x = self.fc3(x)
         x = F.softmax(x, dim=0)
         return x

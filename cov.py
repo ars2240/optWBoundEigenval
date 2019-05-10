@@ -21,6 +21,7 @@ import torch.utils.data as utils_data
 # import scipy.io as sio
 from opt import OptWBoundEignVal
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
 import requests
 import gzip
 import shutil
@@ -84,6 +85,12 @@ X, X_test, y, y_test = train_test_split(np.array(X), np.array(y), test_size=1/5,
 X = X.reshape((X.shape[0], 54))
 X_test = X_test.reshape((X_test.shape[0], 54))
 
+# normalize data
+scaler = StandardScaler()
+scaler.fit(X)
+X = scaler.transform(X)
+X_test = scaler.transform(X_test)
+
 X, X_valid, y, y_valid = train_test_split(np.array(X), np.array(y), test_size=1/5, random_state=1226)
 
 # convert data-types
@@ -114,15 +121,16 @@ y_test = torch.from_numpy(y_test).long()
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        n = 100
+        n = 20
         self.fc1 = nn.Linear(54, n)
         self.fc2 = nn.Linear(n, n)
         self.fc3 = nn.Linear(n, 7)
+        self.bn1 = nn.BatchNorm1d(n)
 
     def forward(self, x):
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
-        x = F.relu(self.fc2(x))
+        x = self.bn1(F.relu(self.fc1(x)))
+        x = self.bn1(F.relu(self.fc2(x)))
+        x = self.bn1(F.relu(self.fc2(x)))
         x = self.fc3(x)
         x = F.softmax(x, dim=0)
         return x

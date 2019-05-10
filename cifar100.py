@@ -43,7 +43,7 @@ if not os.path.exists(root):
     os.mkdir(root)
 
 # Load the dataset
-trans = transforms.Compose([transforms.ToTensor()])
+trans = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
 # if not exist, download cifar100 dataset
 train_set = utils_data.DataLoader(dset.CIFAR100(root=root, train=True, transform=trans, download=True), batch_size=50000)
 test_set = utils_data.DataLoader(dset.CIFAR100(root=root, train=False, transform=trans, download=True), batch_size=10000)
