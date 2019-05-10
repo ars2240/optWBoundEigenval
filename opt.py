@@ -317,6 +317,7 @@ class OptWBoundEignVal(object):
 
         for j, data in enumerate(self.dataloader):
 
+            """
             # store random batch
             if j == rbatch:
                 rdata = data
@@ -358,7 +359,6 @@ class OptWBoundEignVal(object):
             output = self.model(inputs)
             loss = self.loss(output, target)  # loss function
             loss.backward()  # back prop
-            """
 
             # optimizer step
             self.optimizer.step()
