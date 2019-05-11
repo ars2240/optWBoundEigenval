@@ -381,7 +381,7 @@ class OptWBoundEignVal(object):
                 torch.cuda.empty_cache()
                 # check max memory usage
                 if self.mem_track:
-                    self.mem_max = np.max([self.mem_max, self.hvp_op.mem_max, torch.cuda.memory_allocated()])
+                    self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
                     print('Running Max GPU Memory used (in bytes): %d' % self.mem_max)
 
         # compute overall estimates
