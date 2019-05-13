@@ -279,7 +279,7 @@ class OptWBoundEignVal(object):
             f = self.loss(output.float(), target_onehot.float()).item()
         else:
             f = self.loss(output, target).item()
-        self.f = f
+        return f
 
     def comp_g(self):
         # computes g
@@ -363,7 +363,6 @@ class OptWBoundEignVal(object):
             loss = self.loss(output, target)  # loss function
             loss.backward()  # back prop
 
-
             # optimizer step
             self.optimizer.step()
 
@@ -385,7 +384,18 @@ class OptWBoundEignVal(object):
                     print('Running Max GPU Memory used (in bytes): %d' % self.mem_max)
 
         # compute overall estimates
-        self.comp_f(self.x, self.y)  # compute f
+        f_list = []
+        size = []
+        # compute f on each batch (to avoid memory issues)
+        for data in enumerate(self.dataloader):
+            inputs, target = data
+            if self.use_gpu:
+                inputs = inputs.cuda()
+                target = target.cuda()
+
+            f_list.append(self.comp_f(inputs, target))  # compute f on each batch
+            size.append(len(target))
+        self.f = np.average(f_list, weights=size)  # weighted mean of f values
         # initialize hessian vector operation class for random batch
         self.hvp_op = HVPOperator(self.model, rdata, self.loss, use_gpu=self.use_gpu)
         self.comp_g()  # compute g
