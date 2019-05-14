@@ -488,6 +488,8 @@ class OptWBoundEignVal(object):
 
             # compute accuracy
             _, predicted = torch.max(ops.data, 1)
+            if self.use_gpu:
+                target = target.cuda()
             acc = torch.mean((predicted == target).float()).item() * 100
             acc_list.append(acc)
 
