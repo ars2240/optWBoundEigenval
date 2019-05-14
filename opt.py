@@ -279,7 +279,7 @@ class OptWBoundEignVal(object):
             f = self.loss(output.float(), target_onehot.float()).item()
         else:
             f = self.loss(output, target).item()
-        return f
+        return f, output
 
     def comp_g(self):
         # computes g
@@ -362,6 +362,7 @@ class OptWBoundEignVal(object):
             loss = self.loss(output, target)  # loss function
             loss.backward()  # back prop
 
+
             # optimizer step
             self.optimizer.step()
 
@@ -388,7 +389,8 @@ class OptWBoundEignVal(object):
         # compute f on each batch (to avoid memory issues)
         for _, data in enumerate(self.dataloader):
             inputs, target = data
-            f_list.append(self.comp_f(inputs, target))  # compute f on each batch
+            f, _ = self.comp_f(inputs, target)
+            f_list.append(f)  # compute f on each batch
             size.append(len(target))
         self.f = np.average(f_list, weights=size)  # weighted mean of f values
         # initialize hessian vector operation class for random batch
@@ -470,20 +472,30 @@ class OptWBoundEignVal(object):
     def test_model(self, X, y):
         # Computes the loss and accuracy of model on given dataset
 
-        if self.use_gpu:
-            X = X.cuda()
-            y = y.cuda()
+        test_data = utils_data.TensorDataset(X, y)
+        dataloader = utils_data.DataLoader(test_data, batch_size=self.batch_size)
 
-        # compute loss and accuracy
-        ops = self.model(X)
-        _, predicted = torch.max(ops.data, 1)
-        if self.loss.__class__.__name__ == 'KLDivLoss':
-            target_onehot = torch.zeros(np.shape(ops))
-            target_onehot.scatter_(1, y.view(-1, 1), 1)
-            test_loss = self.loss(ops.float(), target_onehot.float()).item()
-        else:
-            test_loss = self.loss(ops, y).item()
-        test_acc = torch.mean((predicted == y).float()).item() * 100
+        f_list = []
+        acc_list = []
+        size = []
+        for _, data in enumerate(dataloader):
+
+            inputs, target = data
+
+            # compute loss
+            f, ops = self.comp_f(inputs, target)
+            f_list.append(f)
+
+            # compute accuracy
+            _, predicted = torch.max(ops.data, 1)
+            acc = torch.mean((predicted == target).float()).item() * 100
+            acc_list.append(acc)
+
+            # size of dataset
+            size.append(len(target))
+
+        test_loss = np.average(f_list, weights=size)  # weighted mean of f values
+        test_acc = np.average(acc_list, weights=size)  # weighted mean of f values
 
         return test_loss, test_acc
 
