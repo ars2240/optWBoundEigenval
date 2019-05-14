@@ -387,12 +387,8 @@ class OptWBoundEignVal(object):
         f_list = []
         size = []
         # compute f on each batch (to avoid memory issues)
-        for data in enumerate(self.dataloader):
+        for _, data in enumerate(self.dataloader):
             inputs, target = data
-            if self.use_gpu:
-                inputs = inputs.cuda()
-                target = target.cuda()
-
             f_list.append(self.comp_f(inputs, target))  # compute f on each batch
             size.append(len(target))
         self.f = np.average(f_list, weights=size)  # weighted mean of f values
