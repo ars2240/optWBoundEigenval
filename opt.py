@@ -317,11 +317,10 @@ class OptWBoundEignVal(object):
 
         for j, data in enumerate(self.dataloader):
 
-            """
             # store random batch
             if j == rbatch:
                 rdata = data
-
+            """
             # initialize hessian vector operation class
             self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
 
