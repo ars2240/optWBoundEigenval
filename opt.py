@@ -207,6 +207,7 @@ class OptWBoundEignVal(object):
         self.norm = 0  # norm of H*v-lambda*v
         self.val_acc = 0  # validation accuracy (only used if validation set is provided)
         self.best_val_acc = 0  # best validation accuracy (only used if validation set is provided)
+        self.best_rho = 0  # spectral radius at best validation accuracy
         self.verbose = verbose  # more extensive read-out
         self.x = None  # input data
         self.y = None  # output data
@@ -320,7 +321,7 @@ class OptWBoundEignVal(object):
             # store random batch
             if j == rbatch:
                 rdata = data
-            """
+
             # initialize hessian vector operation class
             self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
 
@@ -361,7 +362,7 @@ class OptWBoundEignVal(object):
             output = self.model(inputs)
             loss = self.loss(output, target)  # loss function
             loss.backward()  # back prop
-
+            """
 
             # optimizer step
             self.optimizer.step()
@@ -389,9 +390,9 @@ class OptWBoundEignVal(object):
         # compute f on each batch (to avoid memory issues)
         for _, data in enumerate(self.dataloader):
             inputs, target = data
+            size.append(len(target))
             f, _ = self.comp_f(inputs, target)
             f_list.append(f)  # compute f on each batch
-            size.append(len(target))
         self.f = np.average(f_list, weights=size)  # weighted mean of f values
         # initialize hessian vector operation class for random batch
         self.hvp_op = HVPOperator(self.model, rdata, self.loss, use_gpu=self.use_gpu)
@@ -440,6 +441,7 @@ class OptWBoundEignVal(object):
                 _, self.val_acc = self.test_model(inputs_valid, target_valid)
                 if self.val_acc > self.best_val_acc:
                     self.best_val_acc = self.val_acc
+                    self.best_rho = self.rho
                     torch.save(self.model.state_dict(), 'trained_model_best.pt')
                 print('%d\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm, self.val_acc))
 
@@ -462,6 +464,7 @@ class OptWBoundEignVal(object):
 
         # best validation accuracy
         print('Best Validation Accuracy:', self.best_val_acc)
+        print('Rho:', self.best_rho)
 
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
@@ -486,15 +489,15 @@ class OptWBoundEignVal(object):
             f, ops = self.comp_f(inputs, target)
             f_list.append(f)
 
+            # size of dataset
+            size.append(len(target))
+
             # compute accuracy
             _, predicted = torch.max(ops.data, 1)
             if self.use_gpu:
                 target = target.cuda()
             acc = torch.mean((predicted == target).float()).item() * 100
             acc_list.append(acc)
-
-            # size of dataset
-            size.append(len(target))
 
         test_loss = np.average(f_list, weights=size)  # weighted mean of f values
         test_acc = np.average(acc_list, weights=size)  # weighted mean of f values
