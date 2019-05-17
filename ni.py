@@ -19,7 +19,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data as utils_data
 # import scipy.io as sio
-from opt import OptWBoundEignVal
+from opt import OptWBoundEignVal, download
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import requests
@@ -41,29 +41,8 @@ K = 0
 #    return np.max([0.0, (i-50)/1000])
 
 # Load Data
-root = './data'
-if not os.path.exists(root):
-    os.mkdir(root)
-
-
-# Download and parse the dataset
-def download(url):
-    filename = root + '/' + url.split("/")[-1]
-    exists = os.path.isfile(filename)
-    if not exists:
-        with open(filename, "wb") as f:
-            r = requests.get(url)
-            f.write(r.content)
-    fname = filename[:-3] + '.csv'
-    exists = os.path.isfile(fname)
-    if not exists:
-        with gzip.open(filename, 'rb') as f_in:
-            with open(fname, 'wb') as f_out:
-                shutil.copyfileobj(f_in, f_out)
-    return fname
-
-
-u = 'http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz'
+# u = 'http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz'
+u = 'http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data.gz'
 filename2 = download(u)
 u = 'http://kdd.ics.uci.edu/databases/kddcup99/corrected.gz'
 filename3 = download(u)
@@ -83,32 +62,32 @@ train.replace({i: dic}, inplace=True)
 test = test.loc[test[i].isin(dic.keys())]
 test.replace({i: dic}, inplace=True)
 
-# print(set(train.values[:, -1]))
+train_len = train.shape[0]  # save length of training set
+train = train.append(test, ignore_index=True)
+inputs = pd.get_dummies(train)  # convert objects to one-hot encoding
 
-for i in range(0, train.shape[1]):
-    if train.dtypes[i] == 'object' or test.dtypes[i] == 'object':
-        s = list(set(train.values[:, i]))
-        dic = {s[i]: i for i in range(0, len(s))}
-        train.replace({i: dic}, inplace=True)
-        test = test.loc[test[i].isin(dic.keys())]
-        test.replace({i: dic}, inplace=True)
+X = inputs.values[:train_len, :-5]
+y_onehot = inputs.values[:train_len, -5:]
+y = np.asarray([np.where(r == 1)[0][0] for r in y_onehot])  # convert from one-hot to integer encoding
 
-X = train.values[:, :-1]
-y = train.values[:, -1]
-
-""""
 # class balance
 cts = []
 for i in set(y):
     cts.append(list(y).count(i))
-print(cts)
-"""
+print(cts/np.sum(cts))
 
-X_test = test.values[:, :-1]
-y_test = test.values[:, -1]
+X_test = inputs.values[train_len:, :-5]
+y_test_onehot = inputs.values[train_len:, -5:]
+y_test = np.asarray([np.where(r == 1)[0][0] for r in y_test_onehot])  # convert from one-hot to integer encoding
 
-X = X.reshape((train.shape[0], 41))
-X_test = X_test.reshape((test.shape[0], 41))
+# class balance
+cts = []
+for i in set(y_test):
+    cts.append(list(y_test).count(i))
+print(cts/np.sum(cts))
+
+X = X.reshape((train_len, 123))
+X_test = X_test.reshape((test.shape[0], 123))
 
 # normalize data
 scaler = StandardScaler()
@@ -146,18 +125,15 @@ y_test = torch.from_numpy(y_test).long()
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(41, 13)
+        self.fc1 = nn.Linear(123, 13)
         self.fc2 = nn.Linear(13, 15)
         self.fc3 = nn.Linear(15, 20)
         self.fc4 = nn.Linear(20, 5)
-        self.bn1 = nn.BatchNorm1d(13)
-        self.bn2 = nn.BatchNorm1d(15)
-        self.bn3 = nn.BatchNorm1d(20)
 
     def forward(self, x):
-        x = self.bn1(F.relu(self.fc1(x)))
-        x = self.bn2(F.relu(self.fc2(x)))
-        x = self.bn3(F.relu(self.fc3(x)))
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc3(x))
         x = self.fc4(x)
         x = F.softmax(x, dim=0)
         return x
@@ -170,11 +146,11 @@ alpha = lambda k: 1/(1+k)
 # Create neural network
 model = Net()
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=.1)
+optimizer = torch.optim.SGD(model.parameters(), lr=.5)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
 opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
-                       max_pow_iter=10000, verbose=False, header='NI', use_gpu=True, mem_track=True)
+                       max_pow_iter=10000, verbose=False, header='NI')
 
 # Train model
 opt.train(X, y, X_valid, y_valid)

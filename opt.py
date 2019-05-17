@@ -171,6 +171,26 @@ class HVPOperator(object):
         return grad_vec
 
 
+# Download and parse the dataset
+def download(url):
+    root = './data'
+    if not os.path.exists(root):
+        os.mkdir(root)
+    filename = root + '/' + url.split("/")[-1]
+    exists = os.path.isfile(filename)
+    if not exists:
+        with open(filename, "wb") as f:
+            r = requests.get(url)
+            f.write(r.content)
+    fname = filename[:-3] + '.csv'
+    exists = os.path.isfile(fname)
+    if not exists:
+        with gzip.open(filename, 'rb') as f_in:
+            with open(fname, 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
+    return fname
+
+
 class OptWBoundEignVal(object):
     def __init__(self, model, loss, optimizer, scheduler=None, mu=0, K=0, eps=1e-3, pow_iter_eps=1e-3,
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, max_samples=512,

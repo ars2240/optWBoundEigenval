@@ -19,7 +19,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data as utils_data
 # import scipy.io as sio
-from opt import OptWBoundEignVal
+from opt import OptWBoundEignVal, download
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 import requests
@@ -41,28 +41,6 @@ K = 0
 #    return np.max([0.0, (i-50)/1000])
 
 # Load Data
-root = './data'
-if not os.path.exists(root):
-    os.mkdir(root)
-
-
-# Download and parse the dataset
-def download(url):
-    filename = root + '/' + url.split("/")[-1]
-    exists = os.path.isfile(filename)
-    if not exists:
-        with open(filename, "wb") as f:
-            r = requests.get(url)
-            f.write(r.content)
-    fname = filename[:-3] + '.csv'
-    exists = os.path.isfile(fname)
-    if not exists:
-        with gzip.open(filename, 'rb') as f_in:
-            with open(fname, 'wb') as f_out:
-                shutil.copyfileobj(f_in, f_out)
-    return fname
-
-
 u = 'https://archive.ics.uci.edu/ml/machine-learning-databases/covtype/covtype.data.gz'
 filename2 = download(u)
 
@@ -136,17 +114,17 @@ class Net(nn.Module):
         return x
 
 
-alpha = lambda k: 1/(1+np.sqrt(k))
+alpha = lambda k: 1/(1+k)
 
 # Train Neural Network
 
 # Create neural network
 model = Net()
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters())
+optimizer = torch.optim.SGD(model.parameters(), lr=.5)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
-opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
+opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
                        max_pow_iter=10000, verbose=False, header='Cov', use_gpu=False)
 
 # Train model
