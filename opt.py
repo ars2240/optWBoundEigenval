@@ -322,6 +322,7 @@ class OptWBoundEignVal(object):
             if j == rbatch:
                 rdata = data
 
+            """
             # initialize hessian vector operation class
             self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
 
@@ -354,6 +355,7 @@ class OptWBoundEignVal(object):
                 i += l  # increment
 
             """
+
             # for testing purposes
             inputs, target = data
             if self.use_gpu:
@@ -362,7 +364,6 @@ class OptWBoundEignVal(object):
             output = self.model(inputs)
             loss = self.loss(output, target)  # loss function
             loss.backward()  # back prop
-            """
 
             # optimizer step
             self.optimizer.step()
