@@ -1,18 +1,21 @@
 # opt.py
 #
 # Author: Adam Sandler
-# Date: 5/7/19
+# Date: 5/17/19
 #
 # Contains methods & classes for optimizing NNs with spectral radius regulation
 #
 #
 # Dependencies:
-#   Packages: random, numpy, torch
+#   Packages: requests, numpy, torch
 
 
+import gzip
 import random
+import requests
 import numpy as np
 import os
+import shutil
 import sys
 import torch
 import torch.utils.data as utils_data

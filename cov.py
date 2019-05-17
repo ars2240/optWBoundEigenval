@@ -22,9 +22,6 @@ import torch.utils.data as utils_data
 from opt import OptWBoundEignVal, download
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
-import requests
-import gzip
-import shutil
 import pandas as pd
 
 # set seed
