@@ -150,7 +150,7 @@ optimizer = torch.optim.SGD(model.parameters(), lr=.5)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
 opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
-                       max_pow_iter=10000, verbose=False, header='NI')
+                       max_pow_iter=10000, verbose=False, header='NI', use_gpu=True)
 
 # Train model
 opt.train(X, y, X_valid, y_valid)
