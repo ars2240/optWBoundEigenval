@@ -132,7 +132,7 @@ class Net(nn.Module):
         x = F.relu(self.fc2(x))
         x = F.relu(self.fc3(x))
         x = self.fc4(x)
-        x = F.softmax(x, dim=0)
+        x = F.softmax(x, dim=1)
         return x
 
 
@@ -143,11 +143,11 @@ alpha = lambda k: 1/(1+k)
 # Create neural network
 model = Net()
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=.5)
+optimizer = torch.optim.Adam(model.parameters())
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
-opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
-                       max_pow_iter=10000, verbose=False, header='NI', use_gpu=True)
+opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
+                       max_pow_iter=10000, verbose=False, header='NI')
 
 # Train model
 opt.train(X, y, X_valid, y_valid)

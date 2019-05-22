@@ -93,7 +93,7 @@ class Net(nn.Module):
         x = self.bn1(F.relu(self.fc2(x)))
         x = self.bn1(F.relu(self.fc2(x)))
         x = self.fc3(x)
-        x = F.softmax(x, dim=0)
+        x = F.softmax(x, dim=1)
         return x
 
 
@@ -108,7 +108,7 @@ optimizer = torch.optim.SGD(model.parameters(), lr=1)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
 opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
-                       max_pow_iter=10000, verbose=False, header='MNIST', use_gpu=True, mem_track=True)
+                       max_pow_iter=10000, verbose=False, header='MNIST', use_gpu=True)
 
 # Train model
 opt.train(X, y, X_valid, y_valid)

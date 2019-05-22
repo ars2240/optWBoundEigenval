@@ -240,6 +240,7 @@ class OptWBoundEignVal(object):
         else:
             mname = str(mu)
         # log files
+        self.header = header  # header to files
         self.log_file = "./logs/" + header + "_" + name + "_mu" + mname + "_K" + str(K) + ".log"
         self.verbose_log_file = "./logs/" + header + "_" + name + "_mu" + mname + "_K" + str(K) + "_verbose.log"
         self.ignore_bad_vals = ignore_bad_vals  # whether or not to ignore bad power iteration values
@@ -314,10 +315,6 @@ class OptWBoundEignVal(object):
     def iter(self):
         # performs one gradient descent iteration
 
-        # adjust learning rate
-        if self.scheduler is not None:
-            self.scheduler.step()
-
         # if verbose, make header for file
         if self.verbose:
             old_stdout = sys.stdout  # save old output
@@ -345,7 +342,6 @@ class OptWBoundEignVal(object):
             if j == rbatch:
                 rdata = data
 
-            """
             # initialize hessian vector operation class
             self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
 
@@ -378,7 +374,6 @@ class OptWBoundEignVal(object):
                 i += l  # increment
 
             """
-
             # for testing purposes
             inputs, target = data
             if self.use_gpu:
@@ -387,6 +382,7 @@ class OptWBoundEignVal(object):
             output = self.model(inputs)
             loss = self.loss(output, target)  # loss function
             loss.backward()  # back prop
+            """
 
             # optimizer step
             self.optimizer.step()
@@ -422,6 +418,10 @@ class OptWBoundEignVal(object):
         self.hvp_op = HVPOperator(self.model, rdata, self.loss, use_gpu=self.use_gpu)
         self.comp_g()  # compute g
         self.h = self.f + mu * self.g  # compute objective function
+
+        # adjust learning rate
+        if self.scheduler is not None:
+            self.scheduler.step()
 
     def train(self, inputs, target, inputs_valid=None, target_valid=None):
 
@@ -466,7 +466,7 @@ class OptWBoundEignVal(object):
                 if self.val_acc > self.best_val_acc:
                     self.best_val_acc = self.val_acc
                     self.best_rho = self.rho
-                    torch.save(self.model.state_dict(), 'trained_model_best.pt')
+                    torch.save(self.model.state_dict(), self.header + 'trained_model_best.pt')
                 print('%d\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm, self.val_acc))
 
             # add function value to history log
@@ -484,7 +484,7 @@ class OptWBoundEignVal(object):
                 sys.stdout = old_stdout  # reset output
 
         # Save model weights
-        torch.save(self.model.state_dict(), 'trained_model.pt')
+        torch.save(self.model.state_dict(), self.header + 'trained_model.pt')
 
         # best validation accuracy
         print('Best Validation Accuracy:', self.best_val_acc)
@@ -531,7 +531,7 @@ class OptWBoundEignVal(object):
     def test_model_best(self, X, y):
         # tests best model, loaded from file
 
-        self.model.load_state_dict(torch.load('trained_model_best.pt'))
+        self.model.load_state_dict(torch.load(self.header + 'trained_model_best.pt'))
 
         return self.test_model(X, y)
 
