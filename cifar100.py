@@ -88,7 +88,7 @@ alpha = lambda k: 1/(1+np.sqrt(k))
 # Train Neural Network
 
 # Create neural network
-model = tvm.resnet50()
+model = tvm.resnet50(num_classes=100)
 loss = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=1)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)

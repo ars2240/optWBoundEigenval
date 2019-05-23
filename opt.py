@@ -341,7 +341,7 @@ class OptWBoundEignVal(object):
             # store random batch
             if j == rbatch:
                 rdata = data
-
+            """
             # initialize hessian vector operation class
             self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
 
@@ -382,7 +382,6 @@ class OptWBoundEignVal(object):
             output = self.model(inputs)
             loss = self.loss(output, target)  # loss function
             loss.backward()  # back prop
-            """
 
             # optimizer step
             self.optimizer.step()
@@ -517,6 +516,7 @@ class OptWBoundEignVal(object):
             size.append(len(target))
 
             # compute accuracy
+            print(ops.data)
             _, predicted = torch.max(ops.data, 1)
             if self.use_gpu:
                 target = target.cuda()
