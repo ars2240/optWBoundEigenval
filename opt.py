@@ -516,7 +516,6 @@ class OptWBoundEignVal(object):
             size.append(len(target))
 
             # compute accuracy
-            print(ops.data)
             _, predicted = torch.max(ops.data, 1)
             if self.use_gpu:
                 target = target.cuda()
