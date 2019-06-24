@@ -96,16 +96,15 @@ y_test = torch.from_numpy(y_test).long()
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        n = 20
+        n = 50
         self.fc1 = nn.Linear(54, n)
         self.fc2 = nn.Linear(n, n)
         self.fc3 = nn.Linear(n, 7)
-        self.bn1 = nn.BatchNorm1d(n)
 
     def forward(self, x):
-        x = self.bn1(F.relu(self.fc1(x)))
-        x = self.bn1(F.relu(self.fc2(x)))
-        x = self.bn1(F.relu(self.fc2(x)))
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = F.relu(self.fc2(x))
         x = self.fc3(x)
         x = F.softmax(x, dim=1)
         return x
@@ -118,11 +117,11 @@ alpha = lambda k: 1/(1+k)
 # Create neural network
 model = Net()
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=.5)
+optimizer = torch.optim.Adam(model.parameters())
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
-opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
-                       max_pow_iter=10000, verbose=False, header='Cov', use_gpu=True)
+opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
+                       max_pow_iter=10000, verbose=False, header='Cov')
 
 # Train model
 opt.train(X, y, X_valid, y_valid)

@@ -38,8 +38,8 @@ K = 0
 #    return np.max([0.0, (i-50)/1000])
 
 # Load Data
-# u = 'http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz'
-u = 'http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data.gz'
+u = 'http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz'
+# u = 'http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data.gz'
 filename2 = download(u)
 u = 'http://kdd.ics.uci.edu/databases/kddcup99/corrected.gz'
 filename3 = download(u)
@@ -62,6 +62,8 @@ test.replace({i: dic}, inplace=True)
 train_len = train.shape[0]  # save length of training set
 train = train.append(test, ignore_index=True)
 inputs = pd.get_dummies(train)  # convert objects to one-hot encoding
+train_feat = inputs.shape[1] - 5  # number of features
+print(train_feat)
 
 X = inputs.values[:train_len, :-5]
 y_onehot = inputs.values[:train_len, -5:]
@@ -83,8 +85,8 @@ for i in set(y_test):
     cts.append(list(y_test).count(i))
 print(cts/np.sum(cts))
 
-X = X.reshape((train_len, 123))
-X_test = X_test.reshape((test.shape[0], 123))
+X = X.reshape((train_len, train_feat))
+X_test = X_test.reshape((test.shape[0], train_feat))
 
 # normalize data
 scaler = StandardScaler()
@@ -122,7 +124,7 @@ y_test = torch.from_numpy(y_test).long()
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        self.fc1 = nn.Linear(123, 13)
+        self.fc1 = nn.Linear(train_feat, 13)
         self.fc2 = nn.Linear(13, 15)
         self.fc3 = nn.Linear(15, 20)
         self.fc4 = nn.Linear(20, 5)
@@ -143,13 +145,15 @@ alpha = lambda k: 1/(1+k)
 # Create neural network
 model = Net()
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters())
+optimizer = torch.optim.SGD(model.parameters(), lr=.5)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
-opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
+opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
                        max_pow_iter=10000, verbose=False, header='NI')
 
 # Train model
-opt.train(X, y, X_valid, y_valid)
+#opt.train(X, y, X_valid, y_valid)
 
-opt.test_test_set(X_test, y_test)  # test model on test set
+test_mean = [0.0] * train_feat
+test_mean[0] = 0.1
+opt.test_cov_shift(X_test, y_test, test_mean=test_mean)  # test model on test set

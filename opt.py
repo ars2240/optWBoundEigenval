@@ -7,7 +7,7 @@
 #
 #
 # Dependencies:
-#   Packages: requests, numpy, torch
+#   Packages: requests, numpy, scipy, torch
 
 
 import gzip
@@ -17,6 +17,7 @@ import numpy as np
 import os
 import shutil
 import sys
+from scipy.stats import norm
 import torch
 import torch.utils.data as utils_data
 
@@ -341,6 +342,7 @@ class OptWBoundEignVal(object):
             # store random batch
             if j == rbatch:
                 rdata = data
+
             """
             # initialize hessian vector operation class
             self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
@@ -382,6 +384,7 @@ class OptWBoundEignVal(object):
             output = self.model(inputs)
             loss = self.loss(output, target)  # loss function
             loss.backward()  # back prop
+
 
             # optimizer step
             self.optimizer.step()
@@ -465,7 +468,7 @@ class OptWBoundEignVal(object):
                 if self.val_acc > self.best_val_acc:
                     self.best_val_acc = self.val_acc
                     self.best_rho = self.rho
-                    torch.save(self.model.state_dict(), self.header + 'trained_model_best.pt')
+                    torch.save(self.model.state_dict(), self.header + '_trained_model_best.pt')
                 print('%d\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm, self.val_acc))
 
             # add function value to history log
@@ -483,7 +486,7 @@ class OptWBoundEignVal(object):
                 sys.stdout = old_stdout  # reset output
 
         # Save model weights
-        torch.save(self.model.state_dict(), self.header + 'trained_model.pt')
+        torch.save(self.model.state_dict(), self.header + '_trained_model.pt')
 
         # best validation accuracy
         print('Best Validation Accuracy:', self.best_val_acc)
@@ -530,7 +533,7 @@ class OptWBoundEignVal(object):
     def test_model_best(self, X, y):
         # tests best model, loaded from file
 
-        self.model.load_state_dict(torch.load(self.header + 'trained_model_best.pt'))
+        self.model.load_state_dict(torch.load(self.header + '_trained_model_best.pt'))
 
         return self.test_model(X, y)
 
@@ -560,5 +563,76 @@ class OptWBoundEignVal(object):
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
 
+    def get_prob(self, inputs, m=[0], sd=[1]):
+        # computes log pdf of inputs given mean (m) & standard deviation (sd)
+        if len(m) == 1 and len(sd) == 1:
+            w = norm.logpdf(inputs, m, sd)
+            w = np.sum(w, axis=1)
+        else:
+            if len(m) == 1:
+                m = np.ones(len(sd))
+            if len(sd) == 1:
+                sd = np.ones(len(m))
+
+            w = np.zeros(inputs.size()[0])
+            for i in range(0, len(m)):
+                w += norm.logpdf(inputs[:, i], m[i], sd[i])
+
+        return w
+
+    def test_model_cov(self, X, y, test_mean=[0], test_sd=[1], train_mean=[0], train_sd=[1]):
+        # Computes the loss and accuracy of model on given dataset
+
+        test_data = utils_data.TensorDataset(X, y)
+        dataloader = utils_data.DataLoader(test_data, batch_size=self.batch_size)
+
+        f_list = []
+        acc_list = []
+        size = []
+        wm_list = []
+        for _, data in enumerate(dataloader):
+
+            inputs, target = data
+
+            # compute loss
+            f, ops = self.comp_f(inputs, target)
+            f_list.append(f)
+
+            # size of dataset
+            size.append(len(target))
+
+            # compute accuracy
+            _, predicted = torch.max(ops.data, 1)
+
+            w = np.exp(self.get_prob(inputs, test_mean, test_sd) - self.get_prob(inputs, train_mean, train_sd))
+            weights = torch.from_numpy(w)
+            wm = torch.mean(weights).item()
+            wm_list.append(wm)
+            weights /= wm * len(target)
+            if self.use_gpu:
+                target = target.cuda()
+                weights = weights.cuda()
+            acc = torch.sum(weights.float() * (predicted == target).float()).item() * 100
+            acc_list.append(acc)
+
+        test_loss = np.average(f_list, weights=size)  # weighted mean of f values
+        acc_w = np.array(size) * np.array(wm_list)
+        acc_w = acc_w/np.sum(acc_w)
+        test_acc = np.average(acc_list, weights=acc_w)  # weighted mean of f values
+
+        return test_loss, test_acc
+
+    def test_model_best_cov(self, X, y, test_mean=[0], test_sd=[1], train_mean=[0], train_sd=[1]):
+        # tests best model, loaded from file
+
+        self.model.load_state_dict(torch.load(self.header + '_trained_model_best.pt'))
+
+        return self.test_model_cov(X, y, test_mean, test_sd, train_mean, train_sd)
+
+    def test_cov_shift(self, X, y, test_mean=[0], test_sd=[1], train_mean=[0], train_sd=[1]):
+
+        loss, acc = self.test_model_best_cov(X, y, test_mean, test_sd, train_mean, train_sd)  # test best model
+
+        print('Test Accuracy:', acc)
 
 
