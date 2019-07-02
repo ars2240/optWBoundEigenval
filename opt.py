@@ -398,8 +398,9 @@ class OptWBoundEignVal(object):
                                                     np.linalg.norm(self.gradf.detach().numpy()),
                                                     np.linalg.norm(self.gradg.detach().numpy())))
                 else:
-                    print('%d\t %f\t %f\t %f\t %f' % (j, self.rho, self.norm, np.linalg.norm(self.gradf.numpy()),
-                                                    np.linalg.norm(self.gradg.numpy())))
+                    print('%d\t %f\t %f\t %f\t %f' % (j, self.rho, self.norm,
+                                                      np.linalg.norm(self.gradf),
+                                                      np.linalg.norm(self.gradg)))
                 log_file.close()  # close log file
                 sys.stdout = old_stdout  # reset output
 
