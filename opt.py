@@ -17,6 +17,7 @@ import numpy as np
 import os
 import shutil
 import sys
+from scipy.stats import skewnorm
 from scipy.stats import norm
 import torch
 import torch.utils.data as utils_data
@@ -563,24 +564,29 @@ class OptWBoundEignVal(object):
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
 
-    def get_prob(self, inputs, m=[0], sd=[1]):
-        # computes log pdf of inputs given mean (m) & standard deviation (sd)
-        if len(m) == 1 and len(sd) == 1:
-            w = norm.logpdf(inputs, m, sd)
-            w = np.sum(w, axis=1)
-        else:
+    def get_prob(self, inputs,  m=[0], sd=[1], skew=[0]):
+        # computes log pdf of inputs given mean (m), standard deviation (sd), and skewness (skew)
+        if len(m) != 1 or len(sd) != 1 or len(skew) != 1:
             if len(m) == 1:
-                m = np.ones(len(sd))
+                if len(sd) > 1:
+                    m = np.ones(len(sd))
+                else:
+                    m = np.ones(len(skew))
             if len(sd) == 1:
                 sd = np.ones(len(m))
+            if len(skew) == 1:
+                skew = np.ones(len(m))
 
-            w = np.zeros(inputs.size()[0])
-            for i in range(0, len(m)):
-                w += norm.logpdf(inputs[:, i], m[i], sd[i])
+        w = skewnorm.logpdf(inputs, skew, m, sd)
+        bad = np.where(np.isinf(w))[0]
+        if len(bad) > 0:
+            w[bad] = norm.logpdf(inputs[bad, :], m, sd)
+        w = np.sum(w, axis=1)
 
         return w
 
-    def test_model_cov(self, X, y, test_mean=[0], test_sd=[1], train_mean=[0], train_sd=[1]):
+    def test_model_cov(self, X, y, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
+                       train_skew=[0]):
         # Computes the loss and accuracy of model on given dataset
 
         test_data = utils_data.TensorDataset(X, y)
@@ -590,9 +596,28 @@ class OptWBoundEignVal(object):
         acc_list = []
         size = []
         wm_list = []
+
+        modes = np.logical_or(np.subtract(test_mean, train_mean) != 0, np.subtract(test_sd, train_sd) != 0)
+        modes = np.logical_or(modes, np.subtract(test_skew, train_skew) != 0)
+        modes = np.where(modes)[0]
+
         for _, data in enumerate(dataloader):
 
             inputs, target = data
+
+            feats = inputs.shape[1]
+            if len(test_mean) == 1:
+                test_mean = test_mean * feats
+            if len(test_sd) == 1:
+                test_sd = test_sd * feats
+            if len(test_skew) == 1:
+                test_skew = test_skew * feats
+            if len(train_mean) == 1:
+                train_mean = train_mean * feats
+            if len(train_sd) == 1:
+                train_sd = train_sd * feats
+            if len(train_skew) == 1:
+                train_skew = train_skew * feats
 
             # compute loss
             f, ops = self.comp_f(inputs, target)
@@ -604,7 +629,10 @@ class OptWBoundEignVal(object):
             # compute accuracy
             _, predicted = torch.max(ops.data, 1)
 
-            w = np.exp(self.get_prob(inputs, test_mean, test_sd) - self.get_prob(inputs, train_mean, train_sd))
+            w = np.exp(self.get_prob(inputs[:, modes], [test_mean[i] for i in modes], [test_sd[i] for i in modes],
+                                     [test_skew[i] for i in modes]) -
+                       self.get_prob(inputs[:, modes], [train_mean[i] for i in modes], [train_sd[i] for i in modes],
+                                     [train_skew[i] for i in modes]))
             weights = torch.from_numpy(w)
             wm = torch.mean(weights).item()
             wm_list.append(wm)
@@ -622,16 +650,19 @@ class OptWBoundEignVal(object):
 
         return test_loss, test_acc
 
-    def test_model_best_cov(self, X, y, test_mean=[0], test_sd=[1], train_mean=[0], train_sd=[1]):
+    def test_model_best_cov(self, X, y, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
+                       train_skew=[0]):
         # tests best model, loaded from file
 
         self.model.load_state_dict(torch.load(self.header + '_trained_model_best.pt'))
 
-        return self.test_model_cov(X, y, test_mean, test_sd, train_mean, train_sd)
+        return self.test_model_cov(X, y, test_mean, test_sd, test_skew, train_mean, train_sd, train_skew)
 
-    def test_cov_shift(self, X, y, test_mean=[0], test_sd=[1], train_mean=[0], train_sd=[1]):
+    def test_cov_shift(self, X, y, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
+                       train_skew=[0]):
 
-        loss, acc = self.test_model_best_cov(X, y, test_mean, test_sd, train_mean, train_sd)  # test best model
+        # test best model
+        loss, acc = self.test_model_best_cov(X, y, test_mean, test_sd, test_skew, train_mean, train_sd, train_skew)
 
         print('Test Accuracy:', acc)
 
