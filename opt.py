@@ -198,8 +198,8 @@ def download(url):
 
 class OptWBoundEignVal(object):
     def __init__(self, model, loss, optimizer, scheduler=None, mu=0, K=0, eps=1e-3, pow_iter_eps=1e-3,
-                 use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, max_samples=512,
-                 ignore_bad_vals=True, verbose=False, mem_track=False, header=''):
+                 use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, pow_iter=True,
+                 max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header=''):
         self.ndim = sum(p.numel() for p in model.parameters())  # number of dimensions
         self.x = 1.0/np.sqrt(self.ndim)*np.ones(self.ndim)  # initial point
         self.f = 0  # loss function value
@@ -227,6 +227,7 @@ class OptWBoundEignVal(object):
         self.max_iter = max_iter  # maximum number of iterations
         self.max_pow_iter = max_pow_iter  # maximum number of power iterations
         self.max_samples = max_samples  # maximum batch size
+        self.pow_iter = pow_iter  # whether or not it performs power iteration
         self.hvp_op = None  # Hessian-vector operation object
         self.i = 0  # iteration count
         self.norm = 0  # norm of H*v-lambda*v
@@ -344,48 +345,46 @@ class OptWBoundEignVal(object):
             if j == rbatch:
                 rdata = data
 
-            """
-            # initialize hessian vector operation class
-            self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
+            if self.pow_iter:
+                # initialize hessian vector operation class
+                self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
 
-            self.comp_g()  # compute g
+                self.comp_g()  # compute g
 
-            self.optimizer.zero_grad()  # zero gradient
+                self.optimizer.zero_grad()  # zero gradient
 
-            # compute grad f
-            if self.hvp_op.stored_grad is not None:
-                self.gradf = self.hvp_op.stored_grad.data
+                # compute grad f
+                if self.hvp_op.stored_grad is not None:
+                    self.gradf = self.hvp_op.stored_grad.data
+                else:
+                    self.gradf = torch.zeros(self.ndim).double()  # set gradient to zero
+
+                # compute grad g
+                if self.g > 0:
+                    self.comp_gradrho()  # compute gradient of rho
+                    self.gradg = self.gradrho  # compute g
+                else:
+                    self.gradg = torch.zeros(self.ndim).double()  # set gradient to zero
+
+                p = self.gradf + mu * self.gradg  # gradient step
+                if self.use_gpu:
+                    p = p.cuda()  # move to GPU
+
+                i = 0
+                for param in self.model.parameters():
+                    s = param.data.size()  # number of input & output nodes
+                    l = np.product(s)  # total number of parameters
+                    param.grad = p[i:(i + l)].view(s).float()  # adjust gradient
+                    i += l  # increment
             else:
-                self.gradf = torch.zeros(self.ndim).double()  # set gradient to zero
-
-            # compute grad g
-            if self.g > 0:
-                self.comp_gradrho()  # compute gradient of rho
-                self.gradg = self.gradrho  # compute g
-            else:
-                self.gradg = torch.zeros(self.ndim).double()  # set gradient to zero
-
-            p = self.gradf + mu * self.gradg  # gradient step
-            if self.use_gpu:
-                p = p.cuda()  # move to GPU
-
-            i = 0
-            for param in self.model.parameters():
-                s = param.data.size()  # number of input & output nodes
-                l = np.product(s)  # total number of parameters
-                param.grad = p[i:(i + l)].view(s).float()  # adjust gradient
-                i += l  # increment
-
-            """
-            # for testing purposes
-            inputs, target = data
-            if self.use_gpu:
-                inputs = inputs.cuda()
-                target = target.cuda()
-            output = self.model(inputs)
-            loss = self.loss(output, target)  # loss function
-            loss.backward()  # back prop
-
+                # for testing purposes
+                inputs, target = data
+                if self.use_gpu:
+                    inputs = inputs.cuda()
+                    target = target.cuda()
+                output = self.model(inputs)
+                loss = self.loss(output, target)  # loss function
+                loss.backward()  # back prop
 
             # optimizer step
             self.optimizer.step()
@@ -394,8 +393,13 @@ class OptWBoundEignVal(object):
             if self.verbose:
                 log_file = open(self.verbose_log_file, "a")  # open log file
                 sys.stdout = log_file  # write to log file
-                print('%d\t %f\t %f\t %f\t %f' % (j, self.rho, self.norm, np.linalg.norm(self.gradf.detach().numpy()),
-                                                  np.linalg.norm(self.gradg.detach().numpy())))
+                if self.pow_iter:
+                    print('%d\t %f\t %f\t %f\t %f' % (j, self.rho, self.norm,
+                                                    np.linalg.norm(self.gradf.detach().numpy()),
+                                                    np.linalg.norm(self.gradg.detach().numpy())))
+                else:
+                    print('%d\t %f\t %f\t %f\t %f' % (j, self.rho, self.norm, np.linalg.norm(self.gradf.numpy()),
+                                                    np.linalg.norm(self.gradg.numpy())))
                 log_file.close()  # close log file
                 sys.stdout = old_stdout  # reset output
 
