@@ -43,7 +43,8 @@ if not os.path.exists(root):
     os.mkdir(root)
 
 # Load the dataset
-trans = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+trans = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=[0.507, 0.487, 0.441],
+                                                                        std=[0.267, 0.256, 0.276])])
 # if not exist, download cifar100 dataset
 train_set = utils_data.DataLoader(dset.CIFAR100(root=root, train=True, transform=trans, download=True), batch_size=50000)
 test_set = utils_data.DataLoader(dset.CIFAR100(root=root, train=False, transform=trans, download=True), batch_size=10000)
@@ -88,7 +89,7 @@ alpha = lambda k: 1/(1+k)
 # Train Neural Network
 
 # Create neural network
-model = tvm.resnet18(num_classes=100)
+model = tvm.resnet50(num_classes=100)
 loss = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=1)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
