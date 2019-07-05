@@ -378,6 +378,7 @@ class OptWBoundEignVal(object):
                     i += l  # increment
             else:
                 # for testing purposes
+                self.optimizer.zero_grad()  # zero gradient
                 inputs, target = data
                 if self.use_gpu:
                     inputs = inputs.cuda()

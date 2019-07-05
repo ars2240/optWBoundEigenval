@@ -83,7 +83,7 @@ y_test = torch.from_numpy(y_test).long()
 #   Modify your neural network here!
 
 
-alpha = lambda k: 1/(1+np.sqrt(k))
+alpha = lambda k: 1/(1+k)
 
 # Train Neural Network
 
@@ -94,7 +94,7 @@ optimizer = torch.optim.SGD(model.parameters(), lr=1)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
 opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
-                       max_pow_iter=10000, verbose=True, header='CIFAR100', use_gpu=True)
+                       max_pow_iter=10000, verbose=True, header='CIFAR100', use_gpu=True, pow_iter=False)
 
 # Train model
 opt.train(X, y, X_valid, y_valid)
