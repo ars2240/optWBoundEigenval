@@ -13,12 +13,14 @@
 import gzip
 import random
 import requests
+import math
 import numpy as np
 import os
 import shutil
 import sys
 from scipy.stats import skewnorm
 from scipy.stats import norm
+import time
 import torch
 import torch.utils.data as utils_data
 
@@ -244,8 +246,9 @@ class OptWBoundEignVal(object):
             mname = str(mu)
         # log files
         self.header = header  # header to files
-        self.log_file = "./logs/" + header + "_" + name + "_mu" + mname + "_K" + str(K) + ".log"
-        self.verbose_log_file = "./logs/" + header + "_" + name + "_mu" + mname + "_K" + str(K) + "_verbose.log"
+        self.header2 = header + "_" + name + "_mu" + mname + "_K" + str(K)
+        self.log_file = "./logs/" + self.header2 + ".log"
+        self.verbose_log_file = "./logs/" + self.header2 + "_verbose.log"
         self.ignore_bad_vals = ignore_bad_vals  # whether or not to ignore bad power iteration values
         self.mem_track = mem_track  # whether or not maximum memory usage is tracked
         self.mem_max = 0  # running maximum memory usage
@@ -434,6 +437,8 @@ class OptWBoundEignVal(object):
 
     def train(self, inputs, target, inputs_valid=None, target_valid=None):
 
+        start = time.time()  # start timer
+
         self.x = inputs  # input data
         self.y = target  # output data
 
@@ -475,11 +480,14 @@ class OptWBoundEignVal(object):
                 if self.val_acc > self.best_val_acc:
                     self.best_val_acc = self.val_acc
                     self.best_rho = self.rho
-                    torch.save(self.model.state_dict(), self.header + '_trained_model_best.pt')
+                    torch.save(self.model.state_dict(), self.header2 + '_trained_model_best.pt')
                 print('%d\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm, self.val_acc))
 
             # add function value to history log
             f_hist.append(self.h)
+
+            # Save model weights
+            torch.save(self.model.state_dict(), self.header2 + '_trained_model.pt')
 
             # check if convergence criteria met
             if self.i >= (self.min_iter - 1):
@@ -492,8 +500,14 @@ class OptWBoundEignVal(object):
                 log_file.close()  # close log file
                 sys.stdout = old_stdout  # reset output
 
-        # Save model weights
-        torch.save(self.model.state_dict(), self.header + '_trained_model.pt')
+        # compute time elapsed
+        end = time.time()
+        tTime = end - start
+        hrs = math.floor(tTime / 3600)
+        tTime = tTime - hrs * 3600
+        mins = math.floor(tTime / 60)
+        secs = tTime - mins * 60
+        print('Time elapsed: %2i hrs, %2i min, %4.2f sec ' % (hrs, mins, secs))
 
         # best validation accuracy
         print('Best Validation Accuracy:', self.best_val_acc)
@@ -540,7 +554,7 @@ class OptWBoundEignVal(object):
     def test_model_best(self, X, y):
         # tests best model, loaded from file
 
-        self.model.load_state_dict(torch.load(self.header + '_trained_model_best.pt'))
+        self.model.load_state_dict(torch.load(self.header2 + '_trained_model_best.pt'))
 
         return self.test_model(X, y)
 
@@ -660,7 +674,7 @@ class OptWBoundEignVal(object):
                        train_skew=[0]):
         # tests best model, loaded from file
 
-        self.model.load_state_dict(torch.load(self.header + '_trained_model_best.pt'))
+        self.model.load_state_dict(torch.load(self.header2 + '_trained_model_best.pt'))
 
         return self.test_model_cov(X, y, test_mean, test_sd, test_skew, train_mean, train_sd, train_skew)
 
