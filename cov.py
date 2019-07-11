@@ -31,7 +31,7 @@ torch.manual_seed(1226)
 # Parameters
 tol = 0.001
 batch_size = 128
-mu = 0
+mu = 0.01
 K = 0
 
 # def mu(i):
@@ -127,3 +127,7 @@ opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu
 opt.train(X, y, X_valid, y_valid)
 
 opt.test_test_set(X_test, y_test)  # test model on test set
+
+test_mean = [0.0] * train_feat
+test_mean[0] = 0.1
+opt.test_cov_shift(X_test, y_test, test_mean=test_mean)  # test model on test set

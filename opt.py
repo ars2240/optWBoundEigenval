@@ -442,9 +442,13 @@ class OptWBoundEignVal(object):
         self.x = inputs  # input data
         self.y = target  # output data
 
-        # make sure logs file exists
+        # make sure logs folder exists
         if not os.path.exists('./logs'):
             os.mkdir('./logs')
+
+        # make sure models folder exists
+        if not os.path.exists('./models'):
+            os.mkdir('./models')
 
         old_stdout = sys.stdout  # save old output
 
@@ -480,14 +484,14 @@ class OptWBoundEignVal(object):
                 if self.val_acc > self.best_val_acc:
                     self.best_val_acc = self.val_acc
                     self.best_rho = self.rho
-                    torch.save(self.model.state_dict(), self.header2 + '_trained_model_best.pt')
+                    torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model_best.pt')
                 print('%d\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm, self.val_acc))
 
             # add function value to history log
             f_hist.append(self.h)
 
             # Save model weights
-            torch.save(self.model.state_dict(), self.header2 + '_trained_model.pt')
+            torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model.pt')
 
             # check if convergence criteria met
             if self.i >= (self.min_iter - 1):
@@ -554,7 +558,7 @@ class OptWBoundEignVal(object):
     def test_model_best(self, X, y):
         # tests best model, loaded from file
 
-        self.model.load_state_dict(torch.load(self.header2 + '_trained_model_best.pt'))
+        self.model.load_state_dict(torch.load('./models/' + self.header2 + '_trained_model_best.pt'))
 
         return self.test_model(X, y)
 
@@ -674,7 +678,7 @@ class OptWBoundEignVal(object):
                        train_skew=[0]):
         # tests best model, loaded from file
 
-        self.model.load_state_dict(torch.load(self.header2 + '_trained_model_best.pt'))
+        self.model.load_state_dict(torch.load('./models/' + self.header2 + '_trained_model_best.pt'))
 
         return self.test_model_cov(X, y, test_mean, test_sd, test_skew, train_mean, train_sd, train_skew)
 

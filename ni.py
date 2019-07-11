@@ -31,15 +31,15 @@ torch.manual_seed(1226)
 # Parameters
 tol = 0.001
 batch_size = 128
-mu = 0
+mu = .001
 K = 0
 
 # def mu(i):
 #    return np.max([0.0, (i-50)/1000])
 
 # Load Data
-u = 'http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz'
-# u = 'http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data.gz'
+# u = 'http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data_10_percent.gz'
+u = 'http://kdd.ics.uci.edu/databases/kddcup99/kddcup.data.gz'
 filename2 = download(u)
 u = 'http://kdd.ics.uci.edu/databases/kddcup99/corrected.gz'
 filename3 = download(u)
@@ -152,7 +152,9 @@ opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size,
                        max_pow_iter=10000, verbose=False, header='NI')
 
 # Train model
-#opt.train(X, y, X_valid, y_valid)
+opt.train(X, y, X_valid, y_valid)
+
+opt.test_test_set(X_test, y_test)  # test model on test set
 
 test_mean = [0.0] * train_feat
 test_mean[0] = 0.1
