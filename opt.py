@@ -588,6 +588,7 @@ class OptWBoundEignVal(object):
 
         print('Train Loss:', loss)
         print('Train Accuracy:', acc)
+        print('Train F1:', f1)
 
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
@@ -601,6 +602,7 @@ class OptWBoundEignVal(object):
 
         print('Test Loss:', loss)
         print('Test Accuracy:', acc)
+        print('Test F1:', f1)
 
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
@@ -714,5 +716,6 @@ class OptWBoundEignVal(object):
         loss, acc, f1 = self.test_model_best_cov(X, y, test_mean, test_sd, test_skew, train_mean, train_sd, train_skew)
 
         print('Test Accuracy:', acc)
+        print('Test F1:', f1)
 
 
