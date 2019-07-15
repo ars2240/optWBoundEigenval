@@ -7,7 +7,7 @@
 #
 #
 # Dependencies:
-#   Packages: requests, numpy, scipy, torch
+#   Packages: requests, numpy, scipy, sklearn, torch
 
 
 import gzip
@@ -20,6 +20,7 @@ import shutil
 import sys
 from scipy.stats import skewnorm
 from scipy.stats import norm
+from sklearn.metrics import f1_score
 import time
 import torch
 import torch.utils.data as utils_data
@@ -484,14 +485,22 @@ class OptWBoundEignVal(object):
                 if self.val_acc > self.best_val_acc:
                     self.best_val_acc = self.val_acc
                     self.best_rho = self.rho
-                    torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model_best.pt')
+                    if self.use_gpu:
+                        model = self.model.cpu()
+                        torch.save(model.state_dict(), './models/' + self.header2 + '_trained_model_best.pt')
+                    else:
+                        torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model_best.pt')
                 print('%d\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm, self.val_acc))
 
             # add function value to history log
             f_hist.append(self.h)
 
             # Save model weights
-            torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model.pt')
+            if self.use_gpu:
+                model = self.model.cpu()
+                torch.save(model.state_dict(), './models/' + self.header2 + '_trained_model.pt')
+            else:
+                torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model.pt')
 
             # check if convergence criteria met
             if self.i >= (self.min_iter - 1):
@@ -531,6 +540,7 @@ class OptWBoundEignVal(object):
 
         f_list = []
         acc_list = []
+        f1_list = []
         size = []
         for _, data in enumerate(dataloader):
 
@@ -550,15 +560,22 @@ class OptWBoundEignVal(object):
             acc = torch.mean((predicted == target).float()).item() * 100
             acc_list.append(acc)
 
-        test_loss = np.average(f_list, weights=size)  # weighted mean of f values
-        test_acc = np.average(acc_list, weights=size)  # weighted mean of f values
+            f1 = f1_score(target, ops)
+            f1_list.append(f1)
 
-        return test_loss, test_acc
+        test_loss = np.average(f_list, weights=size)  # weighted mean of f values
+        test_acc = np.average(acc_list, weights=size)  # weighted mean of accuracy
+        test_f1 = np.average(f1_list, weights=size)  # weighted mean of f1 scores
+
+        return test_loss, test_acc, test_f1
 
     def test_model_best(self, X, y):
         # tests best model, loaded from file
 
         self.model.load_state_dict(torch.load('./models/' + self.header2 + '_trained_model_best.pt'))
+
+        if self.use_gpu:
+            self.model = self.model.cuda()
 
         return self.test_model(X, y)
 
@@ -567,7 +584,7 @@ class OptWBoundEignVal(object):
         log_file = open(self.log_file, "a")  # open log file
         sys.stdout = log_file  # write to log file
 
-        loss, acc = self.test_model_best(X, y)  # test best model
+        loss, acc, f1 = self.test_model_best(X, y)  # test best model
 
         print('Train Loss:', loss)
         print('Train Accuracy:', acc)
@@ -580,7 +597,7 @@ class OptWBoundEignVal(object):
         log_file = open(self.log_file, "a")  # open log file
         sys.stdout = log_file  # write to log file
 
-        loss, acc = self.test_model_best(X, y)  # test best model
+        loss, acc, f1 = self.test_model_best(X, y)  # test best model
 
         print('Test Loss:', loss)
         print('Test Accuracy:', acc)
@@ -618,6 +635,7 @@ class OptWBoundEignVal(object):
 
         f_list = []
         acc_list = []
+        f1_list = []
         size = []
         wm_list = []
 
@@ -667,12 +685,16 @@ class OptWBoundEignVal(object):
             acc = torch.sum(weights.float() * (predicted == target).float()).item() * 100
             acc_list.append(acc)
 
+            f1 = f1_score(target, ops)
+            f1_list.append(f1)
+
         test_loss = np.average(f_list, weights=size)  # weighted mean of f values
         acc_w = np.array(size) * np.array(wm_list)
         acc_w = acc_w/np.sum(acc_w)
-        test_acc = np.average(acc_list, weights=acc_w)  # weighted mean of f values
+        test_acc = np.average(acc_list, weights=acc_w)  # weighted mean of accuracy
+        test_f1 = np.average(f1_list, weights=size)  # weighted mean of f1 scores
 
-        return test_loss, test_acc
+        return test_loss, test_acc, test_f1
 
     def test_model_best_cov(self, X, y, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
                        train_skew=[0]):
@@ -680,13 +702,16 @@ class OptWBoundEignVal(object):
 
         self.model.load_state_dict(torch.load('./models/' + self.header2 + '_trained_model_best.pt'))
 
+        if self.use_gpu:
+            self.model = self.model.cuda()
+
         return self.test_model_cov(X, y, test_mean, test_sd, test_skew, train_mean, train_sd, train_skew)
 
     def test_cov_shift(self, X, y, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
                        train_skew=[0]):
 
         # test best model
-        loss, acc = self.test_model_best_cov(X, y, test_mean, test_sd, test_skew, train_mean, train_sd, train_skew)
+        loss, acc, f1 = self.test_model_best_cov(X, y, test_mean, test_sd, test_skew, train_mean, train_sd, train_skew)
 
         print('Test Accuracy:', acc)
 
