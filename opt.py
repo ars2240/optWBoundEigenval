@@ -486,8 +486,9 @@ class OptWBoundEignVal(object):
                     self.best_val_acc = self.val_acc
                     self.best_rho = self.rho
                     if self.use_gpu:
-                        model = self.model.cpu()
-                        torch.save(model.state_dict(), './models/' + self.header2 + '_trained_model_best.pt')
+                        self.model.cpu()
+                        torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model_best.pt')
+                        self.model.cuda()
                     else:
                         torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model_best.pt')
                 print('%d\t %f\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm, self.val_acc,
@@ -498,8 +499,9 @@ class OptWBoundEignVal(object):
 
             # Save model weights
             if self.use_gpu:
-                model = self.model.cpu()
+                self.model.cpu()
                 torch.save(model.state_dict(), './models/' + self.header2 + '_trained_model.pt')
+                self.model.cuda()
             else:
                 torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model.pt')
 
