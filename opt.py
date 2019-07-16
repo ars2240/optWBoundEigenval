@@ -466,7 +466,7 @@ class OptWBoundEignVal(object):
         if (inputs_valid is None) or (target_valid is None):
             print('epoch\t f\t rho\t h\t norm')
         else:
-            print('epoch\t f\t rho\t h\t norm\t val_acc')
+            print('epoch\t f\t rho\t h\t norm\t val_acc\t val_f1')
 
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
@@ -481,7 +481,7 @@ class OptWBoundEignVal(object):
             if (inputs_valid is None) or (target_valid is None):
                 print('%d\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm))
             else:
-                _, self.val_acc = self.test_model(inputs_valid, target_valid)
+                _, self.val_acc, val_f1 = self.test_model(inputs_valid, target_valid)
                 if self.val_acc > self.best_val_acc:
                     self.best_val_acc = self.val_acc
                     self.best_rho = self.rho
@@ -490,7 +490,8 @@ class OptWBoundEignVal(object):
                         torch.save(model.state_dict(), './models/' + self.header2 + '_trained_model_best.pt')
                     else:
                         torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model_best.pt')
-                print('%d\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm, self.val_acc))
+                print('%d\t %f\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm, self.val_acc,
+                                                            val_f1))
 
             # add function value to history log
             f_hist.append(self.h)
@@ -560,7 +561,7 @@ class OptWBoundEignVal(object):
             acc = torch.mean((predicted == target).float()).item() * 100
             acc_list.append(acc)
 
-            f1 = f1_score(target, ops)
+            f1 = f1_score(target, predicted, average='micro')
             f1_list.append(f1)
 
         test_loss = np.average(f_list, weights=size)  # weighted mean of f values
@@ -687,7 +688,7 @@ class OptWBoundEignVal(object):
             acc = torch.sum(weights.float() * (predicted == target).float()).item() * 100
             acc_list.append(acc)
 
-            f1 = f1_score(target, ops)
+            f1 = f1_score(target, predicted, average='micro')
             f1_list.append(f1)
 
         test_loss = np.average(f_list, weights=size)  # weighted mean of f values
