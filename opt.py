@@ -220,7 +220,7 @@ class OptWBoundEignVal(object):
         self.pow_iter_eps = pow_iter_eps  # convergence
         self.model = model  # model (from torch)
         if use_gpu:
-            self.model = self.model.cuda()
+            self.model.cuda()
         self.dataloader = None  # dataloader for training set (from torch)
         self.loss = loss  # loss function (from torch)
         self.optimizer = optimizer  # optimizer function, optional (from torch)
@@ -500,7 +500,7 @@ class OptWBoundEignVal(object):
             # Save model weights
             if self.use_gpu:
                 self.model.cpu()
-                torch.save(model.state_dict(), './models/' + self.header2 + '_trained_model.pt')
+                torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model.pt')
                 self.model.cuda()
             else:
                 torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model.pt')
@@ -581,7 +581,7 @@ class OptWBoundEignVal(object):
         self.model.load_state_dict(torch.load('./models/' + self.header2 + '_trained_model_best.pt'))
 
         if self.use_gpu:
-            self.model = self.model.cuda()
+            self.model.cuda()
 
         return self.test_model(X, y)
 
@@ -714,7 +714,7 @@ class OptWBoundEignVal(object):
         self.model.load_state_dict(torch.load('./models/' + self.header2 + '_trained_model_best.pt'))
 
         if self.use_gpu:
-            self.model = self.model.cuda()
+            self.model.cuda()
 
         return self.test_model_cov(X, y, test_mean, test_sd, test_skew, train_mean, train_sd, train_skew)
 
