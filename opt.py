@@ -561,6 +561,9 @@ class OptWBoundEignVal(object):
             acc = torch.mean((predicted == target).float()).item() * 100
             acc_list.append(acc)
 
+            if self.use_gpu:
+                target = target.cpu()
+                predicted = predicted.cpu()
             f1 = f1_score(target, predicted, average='micro')
             f1_list.append(f1)
 
@@ -688,6 +691,9 @@ class OptWBoundEignVal(object):
             acc = torch.sum(weights.float() * (predicted == target).float()).item() * 100
             acc_list.append(acc)
 
+            if self.use_gpu:
+                target = target.cpu()
+                predicted = predicted.cpu()
             f1 = f1_score(target, predicted, average='micro')
             f1_list.append(f1)
 
