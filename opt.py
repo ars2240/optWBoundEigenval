@@ -696,14 +696,14 @@ class OptWBoundEignVal(object):
             if self.use_gpu:
                 target = target.cpu()
                 predicted = predicted.cpu()
-            f1 = f1_score(target, predicted, average='micro')
+            f1 = f1_score(target, predicted, average='micro', sample_weight=weights)
             f1_list.append(f1)
 
         test_loss = np.average(f_list, weights=size)  # weighted mean of f values
         acc_w = np.array(size) * np.array(wm_list)
         acc_w = acc_w/np.sum(acc_w)
         test_acc = np.average(acc_list, weights=acc_w)  # weighted mean of accuracy
-        test_f1 = np.average(f1_list, weights=size)  # weighted mean of f1 scores
+        test_f1 = np.average(f1_list, weights=acc_w)  # weighted mean of f1 scores
 
         return test_loss, test_acc, test_f1
 
