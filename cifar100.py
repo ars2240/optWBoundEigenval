@@ -55,8 +55,8 @@ test_set = utils_data.DataLoader(dset.CIFAR100(root=root, train=False, transform
 _, (X, y) = next(enumerate(train_set))
 _, (X_test, y_test) = next(enumerate(test_set))
 
-X = X.reshape((50000, 3, 32, 32))
-X_test = X_test.reshape((10000, 3, 32, 32))
+X = X.reshape((50000, 3*32*32))
+X_test = X_test.reshape((10000, 3*32*32))
 
 X, X_valid, y, y_valid = train_test_split(np.array(X), np.array(y), test_size=1/5, random_state=1226)
 
@@ -66,6 +66,10 @@ scaler.fit(X)
 X = scaler.transform(X)
 X_valid = scaler.transform(X_valid)
 X_test = scaler.transform(X_test)
+
+X = X.reshape((40000, 3, 32, 32))
+X_test = X_valid.reshape((10000, 3, 32, 32))
+X_test = X_test.reshape((10000, 3, 32, 32))
 
 # convert data-types
 X = torch.from_numpy(X)
