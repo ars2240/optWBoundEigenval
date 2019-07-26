@@ -88,17 +88,28 @@ y_test = torch.from_numpy(y_test).long()
 #   Modify your neural network here!
 
 
-alpha = lambda k: 1/(1+k)
+# learning rate
+# https://arxiv.org/pdf/1605.07146v4.pdf
+def alpha(i):
+    if i < 60:
+        return 0.1
+    elif i < 120:
+        return 0.02
+    elif i < 160:
+        return 0.004
+    else:
+        return 0.0008
+
 
 # Train Neural Network
 
 # Create neural network
 model = tvm.resnet50(num_classes=100)
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), weight_decay=0.005)
+optimizer = torch.optim.SGD(model.parameters(), lr=1, weight_decay=0.0005, momentum=0.9)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
-opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
+opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,
                        max_pow_iter=10000, verbose=True, header='CIFAR100', use_gpu=True, pow_iter=False)
 
 # Train model
