@@ -31,7 +31,7 @@ torch.manual_seed(1226)
 
 # Parameters
 tol = 0.001
-batch_size = 16
+batch_size = 128
 mu = 0
 K = 0
 
@@ -91,14 +91,7 @@ y_test = torch.from_numpy(y_test).long()
 # learning rate
 # https://arxiv.org/pdf/1605.07146v4.pdf
 def alpha(i):
-    if i < 60:
-        return 0.1
-    elif i < 120:
-        return 0.02
-    elif i < 160:
-        return 0.004
-    else:
-        return 0.0008
+    return 0.1*0.2**np.floor(i/60)
 
 
 # Train Neural Network

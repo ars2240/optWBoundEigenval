@@ -31,8 +31,8 @@ torch.manual_seed(1226)
 # Parameters
 tol = 0.001
 batch_size = 128
-mu = 0.001
-K = 5
+mu = 0
+K = 0
 
 """
 def mu(ep):

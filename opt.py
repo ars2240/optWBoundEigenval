@@ -236,6 +236,7 @@ class OptWBoundEignVal(object):
         self.norm = 0  # norm of H*v-lambda*v
         self.val_acc = 0  # validation accuracy (only used if validation set is provided)
         self.best_val_acc = 0  # best validation accuracy (only used if validation set is provided)
+        self.best_val_iter = 0  # best validation iterate
         self.best_rho = 0  # spectral radius at best validation accuracy
         self.verbose = verbose  # more extensive read-out
         self.x = None  # input data
@@ -485,6 +486,7 @@ class OptWBoundEignVal(object):
                 if self.val_acc > self.best_val_acc:
                     self.best_val_acc = self.val_acc
                     self.best_rho = self.rho
+                    self.best_val_iter = self.i
                     if self.use_gpu:
                         self.model.cpu()
                         torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model_best.pt')
@@ -526,6 +528,7 @@ class OptWBoundEignVal(object):
         print('Time elapsed: %2i hrs, %2i min, %4.2f sec ' % (hrs, mins, secs))
 
         # best validation accuracy
+        print('Best Validation Iterate:', self.best_val_iter)
         print('Best Validation Accuracy:', self.best_val_acc)
         print('Rho:', self.best_rho)
 
@@ -618,15 +621,18 @@ class OptWBoundEignVal(object):
         if len(m) != 1 or len(sd) != 1 or len(skew) != 1:
             if len(m) == 1:
                 if len(sd) > 1:
-                    m = np.ones(len(sd))
+                    m = m*np.ones(len(sd))
                 else:
-                    m = np.ones(len(skew))
+                    m = m*np.ones(len(skew))
             if len(sd) == 1:
-                sd = np.ones(len(m))
+                sd = sd*np.ones(len(m))
             if len(skew) == 1:
-                skew = np.ones(len(m))
+                skew = skew*np.ones(len(m))
 
-        w = skewnorm.logpdf(inputs, skew, m, sd)
+        if not np.any(skew):
+            w = norm.logpdf(inputs, m, sd)
+        else:
+            w = skewnorm.logpdf(inputs, skew, m, sd)
         bad = np.where(np.isinf(w))[0]
         if len(bad) > 0:
             w[bad] = norm.logpdf(inputs[bad, :], m, sd)
@@ -646,6 +652,8 @@ class OptWBoundEignVal(object):
         f1_list = []
         size = []
         wm_list = []
+        min_weight = 1
+        max_weight = 1
 
         modes = np.logical_or(np.subtract(test_mean, train_mean) != 0, np.subtract(test_sd, train_sd) != 0)
         modes = np.logical_or(modes, np.subtract(test_skew, train_skew) != 0)
@@ -686,6 +694,8 @@ class OptWBoundEignVal(object):
             weights = torch.from_numpy(w)
             wm = torch.mean(weights).item()
             wm_list.append(wm)
+            min_weight = np.min([min_weight, np.min(wm)])
+            max_weight = np.max([max_weight, np.max(wm)])
             weights /= wm * len(target)
             if self.use_gpu:
                 target = target.cuda()
@@ -704,6 +714,8 @@ class OptWBoundEignVal(object):
         acc_w = acc_w/np.sum(acc_w)
         test_acc = np.average(acc_list, weights=acc_w)  # weighted mean of accuracy
         test_f1 = np.average(f1_list, weights=acc_w)  # weighted mean of f1 scores
+        print('Min-weight:', min_weight)
+        print('Max-weight:', max_weight)
 
         return test_loss, test_acc, test_f1
 
