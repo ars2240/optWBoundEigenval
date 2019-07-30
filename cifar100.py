@@ -91,7 +91,14 @@ y_test = torch.from_numpy(y_test).long()
 # learning rate
 # https://arxiv.org/pdf/1605.07146v4.pdf
 def alpha(i):
-    return 0.1*0.2**np.floor(i/60)
+    if i < 60:
+        return 0.1
+    elif i < 120:
+        return 0.1*0.2
+    elif i < 160:
+        return 0.1*(0.2**2)
+    else:
+        return 0.1*(0.2**3)
 
 
 # Train Neural Network
