@@ -61,6 +61,7 @@ X, X_test, y, y_test = train_test_split(np.array(X), np.array(y), test_size=1/5,
 
 X = X.reshape((X.shape[0], 54))
 X_test = X_test.reshape((X_test.shape[0], 54))
+print(np.sum(X[:, 29])/X.shape[0])
 
 X, X_valid, y, y_valid = train_test_split(np.array(X), np.array(y), test_size=1/5, random_state=1226)
 
@@ -127,23 +128,7 @@ opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size,
                        max_pow_iter=10000, verbose=False, header='Cov')
 
 # Train model
-#opt.train(X, y, X_valid, y_valid)
+opt.train(X, y, X_valid, y_valid)
 
-#opt.test_test_set(X_test, y_test)  # test model on test set
+opt.test_test_set(X_test, y_test)  # test model on test set
 
-
-if not os.path.exists('./logs'):
-    os.mkdir('./logs')
-
-feat = 54
-old_stdout = sys.stdout  # save old output
-log_file = open("./logs/" + opt.header2 + "_cov_shift.log", "w")  # open log file
-sys.stdout = log_file  # write to log file
-for i in range(0, feat):
-    test_mean = [0.0] * feat
-    test_mean[i] = 0.1
-    print('Feature %d' % (i+1))
-    opt.test_cov_shift(X_test, y_test, test_mean=test_mean)  # test model on test set
-
-log_file.close()  # close log file
-sys.stdout = old_stdout  # reset output

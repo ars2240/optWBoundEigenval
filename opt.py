@@ -711,13 +711,14 @@ class OptWBoundEignVal(object):
 
         test_loss = np.average(f_list, weights=size)  # weighted mean of f values
         acc_w = np.array(size) * np.array(wm_list)
+        if np.sum(acc_w) == 0 or np.isinf(np.sum(acc_w)):
+            print(acc_w)
+            print(wm_list)
         acc_w = acc_w/np.sum(acc_w)
         test_acc = np.average(acc_list, weights=acc_w)  # weighted mean of accuracy
         test_f1 = np.average(f1_list, weights=acc_w)  # weighted mean of f1 scores
-        print('Min-weight:', min_weight)
-        print('Max-weight:', max_weight)
 
-        return test_loss, test_acc, test_f1
+        return test_loss, test_acc, test_f1, min_weight, max_weight
 
     def test_model_best_cov(self, X, y, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
                        train_skew=[0]):
@@ -734,9 +735,58 @@ class OptWBoundEignVal(object):
                        train_skew=[0]):
 
         # test best model
-        loss, acc, f1 = self.test_model_best_cov(X, y, test_mean, test_sd, test_skew, train_mean, train_sd, train_skew)
+        loss, acc, f1, min_weight, max_weight = self.test_model_best_cov(X, y, test_mean, test_sd, test_skew,
+                                                                         train_mean, train_sd, train_skew)
 
         print('Test Accuracy:', acc)
         print('Test F1:', f1)
+        print('Min-weight:', min_weight)
+        print('Max-weight:', max_weight)
+
+
+def cov_shift_tester(models, X, y, iters=1000, bad_modes=[], header='', prob=0.5, mean_diff=0, sd_diff=0, skew_diff=0,
+                     test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1], train_skew=[0]):
+    # make sure logs folder exists
+    if not os.path.exists('./logs'):
+        os.mkdir('./logs')
+
+    feats = X.shape[1]
+    modes = range(0, feats)
+    good_modes = np.setdiff1d(modes, bad_modes)
+    good_feats = len(good_modes)
+
+    if len(test_mean) == 1:
+        test_mean = test_mean * feats
+    if len(test_sd) == 1:
+        test_sd = test_sd * feats
+    if len(test_skew) == 1:
+        test_skew = test_skew * feats
+
+    acc = np.zeros((len(models), iters))
+    f1 = np.zeros((len(models), iters))
+    indices = np.zeros((feats, iters))
+    indices[good_modes, :] = np.random.binomial(1, prob, (good_feats, iters))
+
+    for i in range(0, iters):
+
+        mean = test_mean
+        sd = test_sd
+        skew = test_skew
+        sample = indices[:, i]
+        index = np.where(sample > 0)[0]
+        for k in index:
+            mean[k] += mean_diff
+            sd[k] += sd_diff
+            skew[k] += skew_diff
+
+        for j in range(0, len(models)):
+            model = models[j]
+            _, acc[j, i], f1[j, i], _, _ = model.test_model_best_cov(X, y, test_mean=mean, test_sd=sd, test_skew=skew,
+                                                                     train_mean=train_mean, train_sd=train_sd,
+                                                                     train_skew=train_skew)
+
+    np.savetxt("./logs/" + header + "_cov_shift_acc.csv", acc, delimiter=",")
+    np.savetxt("./logs/" + header + "_cov_shift_f1.csv", f1, delimiter=",")
+    np.savetxt("./logs/" + header + "_cov_shift_indices.csv", indices, delimiter=",")
 
 
