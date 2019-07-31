@@ -89,16 +89,13 @@ y_test = torch.from_numpy(y_test).long()
 
 
 # learning rate
-# https://arxiv.org/pdf/1605.07146v4.pdf
 def alpha(i):
-    if i < 60:
+    if i < 81:
         return 0.1
-    elif i < 120:
-        return 0.1*0.2
-    elif i < 160:
-        return 0.1*(0.2**2)
+    elif i < 122:
+        return 0.1*0.1
     else:
-        return 0.1*(0.2**3)
+        return 0.1*(0.1**2)
 
 
 # Train Neural Network
@@ -106,7 +103,7 @@ def alpha(i):
 # Create neural network
 model = tvm.resnet50(num_classes=100)
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=1, weight_decay=0.002, momentum=0.9)
+optimizer = torch.optim.SGD(model.parameters(), lr=1, weight_decay=0.0001, momentum=0.9)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
 opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,

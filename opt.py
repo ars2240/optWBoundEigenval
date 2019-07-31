@@ -772,16 +772,9 @@ def cov_shift_tester(models, X, y, iters=1000, bad_modes=[], header='', prob=0.5
 
     for i in range(0, iters):
 
-        mean = test_mean[:]
-        sd = test_sd[:]
-        skew = test_skew[:]
-
-        sample = indices[:, i]
-        index = np.where(sample > 0)[0]
-        for k in index:
-            mean[k] += mean_diff
-            sd[k] += sd_diff
-            skew[k] += skew_diff
+        mean = test_mean + indices[:, i] * mean_diff
+        sd = test_sd + indices[:, i] * sd_diff
+        skew = test_skew + indices[:, i] * skew_diff
 
         for j in range(0, nmod):
             model = models[j]
