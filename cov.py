@@ -61,7 +61,6 @@ X, X_test, y, y_test = train_test_split(np.array(X), np.array(y), test_size=1/5,
 
 X = X.reshape((X.shape[0], 54))
 X_test = X_test.reshape((X_test.shape[0], 54))
-print(np.sum(X[:, 29])/X.shape[0])
 
 X, X_valid, y, y_valid = train_test_split(np.array(X), np.array(y), test_size=1/5, random_state=1226)
 

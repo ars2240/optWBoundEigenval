@@ -693,6 +693,8 @@ class OptWBoundEignVal(object):
                                      [train_skew[i] for i in modes]))
             weights = torch.from_numpy(w)
             wm = torch.mean(weights).item()
+            if wm == 0:
+                print(weights)
             wm_list.append(wm)
             min_weight = np.min([min_weight, np.min(wm)])
             max_weight = np.max([max_weight, np.max(wm)])
@@ -754,6 +756,7 @@ def cov_shift_tester(models, X, y, iters=1000, bad_modes=[], header='', prob=0.5
     modes = range(0, feats)
     good_modes = np.setdiff1d(modes, bad_modes)
     good_feats = len(good_modes)
+    nmod = len(models)
 
     if len(test_mean) == 1:
         test_mean = test_mean * feats
@@ -762,16 +765,17 @@ def cov_shift_tester(models, X, y, iters=1000, bad_modes=[], header='', prob=0.5
     if len(test_skew) == 1:
         test_skew = test_skew * feats
 
-    acc = np.zeros((len(models), iters))
-    f1 = np.zeros((len(models), iters))
+    acc = np.zeros((nmod, iters))
+    f1 = np.zeros((nmod, iters))
     indices = np.zeros((feats, iters))
     indices[good_modes, :] = np.random.binomial(1, prob, (good_feats, iters))
 
     for i in range(0, iters):
 
-        mean = test_mean
-        sd = test_sd
-        skew = test_skew
+        mean = test_mean[:]
+        sd = test_sd[:]
+        skew = test_skew[:]
+
         sample = indices[:, i]
         index = np.where(sample > 0)[0]
         for k in index:
@@ -779,7 +783,7 @@ def cov_shift_tester(models, X, y, iters=1000, bad_modes=[], header='', prob=0.5
             sd[k] += sd_diff
             skew[k] += skew_diff
 
-        for j in range(0, len(models)):
+        for j in range(0, nmod):
             model = models[j]
             _, acc[j, i], f1[j, i], _, _ = model.test_model_best_cov(X, y, test_mean=mean, test_sd=sd, test_skew=skew,
                                                                      train_mean=train_mean, train_sd=train_sd,
