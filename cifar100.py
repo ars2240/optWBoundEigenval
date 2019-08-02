@@ -90,12 +90,10 @@ y_test = torch.from_numpy(y_test).long()
 
 # learning rate
 def alpha(i):
-    if i < 81:
-        return 0.1
-    elif i < 122:
-        return 0.1*0.1
+    if i < 10:
+        return (i+1)*0.2*batch_size/256
     else:
-        return 0.1*(0.1**2)
+        return 0.2*batch_size/256*np.cos((i-10)/(190*np.pi))
 
 
 # Train Neural Network
