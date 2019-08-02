@@ -93,7 +93,7 @@ def alpha(i):
     if i < 10:
         return (i+1)*0.2*batch_size/256
     else:
-        return 0.2*batch_size/256*np.cos((i-10)/(190*np.pi))
+        return 0.1*batch_size/256*(1+np.cos((i-10)/(190*np.pi)))
 
 
 # Train Neural Network
