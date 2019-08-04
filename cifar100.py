@@ -101,10 +101,10 @@ def alpha(i):
 # Create neural network
 model = tvm.resnet50(num_classes=100)
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=1, weight_decay=2e-4)
+optimizer = torch.optim.Adam(model.parameters())
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
-opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,
+opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,
                        max_pow_iter=10000, verbose=True, header='CIFAR100', use_gpu=True, pow_iter=False)
 
 # Train model
