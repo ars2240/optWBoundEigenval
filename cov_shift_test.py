@@ -149,4 +149,4 @@ opt6 = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size
 
 models = [opt1, opt2, opt3, opt4, opt5, opt6]
 
-cov_shift_tester(models, X_test, y_test, iters=1000, bad_modes=[28], header='Cov', mean_diff=0.1)
+cov_shift_tester(models, X_test, y_test, iters=1000, bad_modes=[28], header='Cov_norm_5', mult=.05, mean_diff=1)

@@ -262,7 +262,7 @@ class OptWBoundEignVal(object):
 
         # initialize lambda and the norm
         lam = 0
-        norm = 0
+        n = 0
 
         # power iteration
         for i in range(0, np.min([self.ndim, self.max_pow_iter])):
@@ -270,18 +270,19 @@ class OptWBoundEignVal(object):
 
             # if converged, break
             lam = np.dot(vnew, v)  # update eigenvalue
-            norm = np.linalg.norm(vnew-lam*v)  # norm of H*v-lambda*v
+            n = np.linalg.norm(vnew-lam*v)  # norm of H*v-lambda*v
 
-            if norm < self.pow_iter_eps:
+            if n < self.pow_iter_eps:
                 break
 
             v = 1.0/np.linalg.norm(vnew)*vnew.double()  # update vector and normalize
+            print(n)
 
         self.v = v  # update eigenvector
         self.rho = np.abs(lam)  # update spectral radius
-        self.norm = norm  # update norm
+        self.norm = n  # update norm
 
-        if norm > self.pow_iter_eps:
+        if n > self.pow_iter_eps:
             print('Warning: power iteration has not fully converged')
             if self.ignore_bad_vals:
                 print('Ignoring rho.')
@@ -746,8 +747,9 @@ class OptWBoundEignVal(object):
         print('Max-weight:', max_weight)
 
 
-def cov_shift_tester(models, X, y, iters=1000, bad_modes=[], header='', prob=0.5, mean_diff=0, sd_diff=0, skew_diff=0,
-                     test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1], train_skew=[0]):
+def cov_shift_tester(models, X, y, iters=1000, bad_modes=[], header='', mult=.1, prob=0.5, mean_diff=0, sd_diff=0,
+                     skew_diff=0, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
+                     train_skew=[0]):
     # make sure logs folder exists
     if not os.path.exists('./logs'):
         os.mkdir('./logs')
@@ -768,7 +770,7 @@ def cov_shift_tester(models, X, y, iters=1000, bad_modes=[], header='', prob=0.5
     acc = np.zeros((nmod, iters))
     f1 = np.zeros((nmod, iters))
     indices = np.zeros((feats, iters))
-    indices[good_modes, :] = np.random.binomial(1, prob, (good_feats, iters))
+    indices[good_modes, :] = mult*np.random.normal(size=(good_feats, iters))
 
     for i in range(0, iters):
 
