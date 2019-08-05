@@ -29,7 +29,7 @@ torch.manual_seed(1226)
 # Parameters
 tol = 0.001
 batch_size = 128
-mu = 0
+mu = 0.005
 K = 0
 
 
@@ -49,19 +49,25 @@ u = 'https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.test.gz'
 filename3 = download(u)
 
 # import dataset
-train = pd.read_csv(filename2, header=None)
-test = pd.read_csv(filename3, header=None)
+train = pd.read_csv(filename2, header=None, sep=' ')
+test = pd.read_csv(filename3, header=None, sep=' ')
 
-# normalize data
-scaler = StandardScaler()
-scaler.fit(X)
-X = scaler.transform(X)
-X_test = scaler.transform(X_test)
+X = np.asarray(-train.loc[:, 1:256])
+y = np.asarray(train.loc[:, 0])
+X_test = np.asarray(-test.loc[:, 1:256])
+y_test = np.asarray(test.loc[:, 0])
 
 X = X.reshape((7291, 256))
 X_test = X_test.reshape((2007, 256))
 
 X, X_valid, y, y_valid = train_test_split(np.array(X), np.array(y), test_size=1/7, random_state=1226)
+
+# normalization
+X_m = X.mean()
+X_sd = X.std()
+X = (X-X_m)/X_sd
+X_valid = (X_valid-X_m)/X_sd
+X_test = (X_test-X_m)/X_sd
 
 # convert data-types
 X = torch.from_numpy(X).float()
@@ -76,7 +82,7 @@ y_valid = torch.from_numpy(y_valid).long()
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        n = 400
+        n = 100
         self.fc1 = nn.Linear(256, n)
         self.fc2 = nn.Linear(n, n)
         self.fc3 = nn.Linear(n, 10)
@@ -98,10 +104,10 @@ alpha = lambda k: 1/(1+k)
 # Create neural network
 model = Net()
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters())
+optimizer = torch.optim.SGD(model.parameters(), lr=0.5)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
-opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
+opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
                        max_pow_iter=10000, verbose=False, header='USPS')
 
 # Train model

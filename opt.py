@@ -9,8 +9,6 @@
 # Dependencies:
 #   Packages: requests, numpy, scipy, sklearn, torch
 
-
-import gzip
 import random
 import requests
 import math
@@ -190,12 +188,20 @@ def download(url):
         with open(filename, "wb") as f:
             r = requests.get(url)
             f.write(r.content)
-    fname = filename[:-3] + '.csv'
+    ftype = os.path.splitext(filename)[1]
+    fname = filename[:-len(ftype)] + '.csv'
     exists = os.path.isfile(fname)
     if not exists:
-        with gzip.open(filename, 'rb') as f_in:
-            with open(fname, 'wb') as f_out:
-                shutil.copyfileobj(f_in, f_out)
+        if ftype == '.gz':
+            import gzip
+            with gzip.open(filename, 'rb') as f_in:
+                with open(fname, 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
+        elif ftype == '.bz2':
+            import bz2
+            with bz2.open(filename, 'rb') as f_in:
+                with open(fname, 'wb') as f_out:
+                    shutil.copyfileobj(f_in, f_out)
     return fname
 
 
@@ -276,7 +282,6 @@ class OptWBoundEignVal(object):
                 break
 
             v = 1.0/np.linalg.norm(vnew)*vnew.double()  # update vector and normalize
-            print(n)
 
         self.v = v  # update eigenvector
         self.rho = np.abs(lam)  # update spectral radius

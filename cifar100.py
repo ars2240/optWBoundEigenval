@@ -90,10 +90,7 @@ y_test = torch.from_numpy(y_test).long()
 
 # learning rate
 def alpha(i):
-    if i < 10:
-        return (i+1)*0.2*batch_size/256
-    else:
-        return 0.1*batch_size/256*(1+np.cos((i-10)/(190*np.pi)))
+    return 1/(i+1)
 
 
 # Train Neural Network
@@ -101,10 +98,10 @@ def alpha(i):
 # Create neural network
 model = tvm.resnet50(num_classes=100)
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters())
+optimizer = torch.optim.SGD(model.parameters(), lr=0.5)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
-opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,
+opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,
                        max_pow_iter=10000, verbose=True, header='CIFAR100', use_gpu=True, pow_iter=False)
 
 # Train model
