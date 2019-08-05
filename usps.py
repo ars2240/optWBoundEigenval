@@ -1,9 +1,9 @@
-# digits.py
+# usps.py
 #
 # Author: Adam Sandler
-# Date: 5/7/19
+# Date: 8/5/19
 #
-# Classifies digits from the MNIST dataset
+# Classifies digits from the USPS dataset
 #
 #
 # Dependencies:
@@ -18,9 +18,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data as utils_data
 # import scipy.io as sio
-import torchvision.datasets as dset
-import torchvision.transforms as transforms
-from opt import OptWBoundEignVal
+from opt import OptWBoundEignVal, download
 from sklearn.model_selection import train_test_split
 
 # set seed
@@ -43,39 +41,31 @@ root = './data'
 if not os.path.exists(root):
     os.mkdir(root)
 
-# Load the dataset
-trans = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.5,), (0.5,))])
-# if not exist, download mnist dataset
-train_set = utils_data.DataLoader(dset.MNIST(root=root, train=True, transform=trans, download=True), batch_size=60000)
-test_set = utils_data.DataLoader(dset.MNIST(root=root, train=False, transform=trans, download=True), batch_size=10000)
+# Load Data
+u = 'https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.train.gz'
+filename2 = download(u)
+u = 'https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.test.gz'
+filename3 = download(u)
 
-_, (X, y) = next(enumerate(train_set))
-_, (X_test, y_test) = next(enumerate(test_set))
+# import dataset
+train = pd.read_csv(filename2, header=None)
+test = pd.read_csv(filename3, header=None)
 
-X = X.reshape((60000, 784))
-X_test = X_test.reshape((10000, 784))
+# normalize data
+scaler = StandardScaler()
+scaler.fit(X)
+X = scaler.transform(X)
+X_test = scaler.transform(X_test)
 
-X, X_valid, y, y_valid = train_test_split(np.array(X), np.array(y), test_size=1/6, random_state=1226)
+X, X_valid, y, y_valid = train_test_split(np.array(X), np.array(y), test_size=1/7, random_state=1226)
 
-X = torch.from_numpy(X)
+# convert data-types
+X = torch.from_numpy(X).float()
 y = torch.from_numpy(y).long()
-X_valid = torch.from_numpy(X_valid)
-y_valid = torch.from_numpy(y_valid).long()
-
-"""
-mdict = sio.loadmat('data')
-X = mdict['X'].astype('float32').reshape((60000, 784))/255
-y = mdict['y'].squeeze()
-
-# split data set into 70% train, 30% test
-X, X_test, y, y_test = train_test_split(X, y, test_size=0.3, random_state=1226)
-
-# re-format data
-X = torch.from_numpy(X)
-y = torch.from_numpy(y).long()
-X_test = torch.from_numpy(X_test)
+X_test = torch.from_numpy(X_test).float()
 y_test = torch.from_numpy(y_test).long()
-"""""
+X_valid = torch.from_numpy(X_valid).float()
+y_valid = torch.from_numpy(y_valid).long()
 
 
 #   Define Neural Network Architecture

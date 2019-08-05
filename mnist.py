@@ -1,4 +1,4 @@
-# digits.py
+# mnist.py
 #
 # Author: Adam Sandler
 # Date: 5/7/19

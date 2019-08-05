@@ -104,21 +104,6 @@ y_test = torch.from_numpy(y_test).long()
 X_valid = torch.from_numpy(X_valid).float()
 y_valid = torch.from_numpy(y_valid).long()
 
-"""
-mdict = sio.loadmat('data')
-X = mdict['X'].astype('float32').reshape((60000, 784))/255
-y = mdict['y'].squeeze()
-
-# split data set into 70% train, 30% test
-X, X_test, y, y_test = train_test_split(X, y, test_size=0.3, random_state=1226)
-
-# re-format data
-X = torch.from_numpy(X)
-y = torch.from_numpy(y).long()
-X_test = torch.from_numpy(X_test)
-y_test = torch.from_numpy(y_test).long()
-"""""
-
 
 # Neural Network Architecture
 class Net(nn.Module):
