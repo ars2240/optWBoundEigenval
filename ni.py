@@ -8,7 +8,7 @@
 #
 #
 # Dependencies:
-#   Packages: random, numpy, torch, torchvision, requests, gzip, shutil, pandas
+#   Packages: random, numpy, torch, requests, gzip, shutil, pandas
 #   Files: opt
 
 import sys

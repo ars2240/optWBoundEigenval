@@ -7,7 +7,7 @@
 #
 #
 # Dependencies:
-#   Packages: random, numpy, torch, torchvision, scikit-learn
+#   Packages: random, numpy, torch, requests, gzip, shutil, pandas
 #   Files: opt
 
 import sys
@@ -19,6 +19,7 @@ import torch.nn.functional as F
 import torch.utils.data as utils_data
 # import scipy.io as sio
 from opt import OptWBoundEignVal, download
+import pandas as pd
 from sklearn.model_selection import train_test_split
 
 # set seed
@@ -57,6 +58,9 @@ scaler.fit(X)
 X = scaler.transform(X)
 X_test = scaler.transform(X_test)
 
+X = X.reshape((7291, 256))
+X_test = X_test.reshape((2007, 256))
+
 X, X_valid, y, y_valid = train_test_split(np.array(X), np.array(y), test_size=1/7, random_state=1226)
 
 # convert data-types
@@ -73,7 +77,7 @@ class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
         n = 400
-        self.fc1 = nn.Linear(784, n)
+        self.fc1 = nn.Linear(256, n)
         self.fc2 = nn.Linear(n, n)
         self.fc3 = nn.Linear(n, 10)
         self.bn1 = nn.BatchNorm1d(n)
@@ -98,7 +102,7 @@ optimizer = torch.optim.Adam(model.parameters())
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
 opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
-                       max_pow_iter=10000, verbose=False, header='MNIST')
+                       max_pow_iter=10000, verbose=False, header='USPS')
 
 # Train model
 opt.train(X, y, X_valid, y_valid)
