@@ -208,7 +208,7 @@ def download(url):
 class OptWBoundEignVal(object):
     def __init__(self, model, loss, optimizer, scheduler=None, mu=0, K=0, eps=1e-3, pow_iter_eps=1e-3,
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, pow_iter=True,
-                 max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header=''):
+                 max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header='', num_workers=0):
         self.ndim = sum(p.numel() for p in model.parameters())  # number of dimensions
         self.x = 1.0/np.sqrt(self.ndim)*np.ones(self.ndim)  # initial point
         self.f = 0  # loss function value
@@ -260,6 +260,7 @@ class OptWBoundEignVal(object):
         self.ignore_bad_vals = ignore_bad_vals  # whether or not to ignore bad power iteration values
         self.mem_track = mem_track  # whether or not maximum memory usage is tracked
         self.mem_max = 0  # running maximum memory usage
+        self.num_workers = num_workers  # number of GPUs
 
     def comp_rho(self):
         # computes rho, v
@@ -443,12 +444,25 @@ class OptWBoundEignVal(object):
         if self.scheduler is not None:
             self.scheduler.step()
 
-    def train(self, inputs, target, inputs_valid=None, target_valid=None):
+    def train(self, inputs=None, target=None, inputs_valid=None, target_valid=None, loader=None, valid_loader=None):
 
         start = time.time()  # start timer
 
-        self.x = inputs  # input data
-        self.y = target  # output data
+        if loader is not None:
+            self.dataloader = loader
+        elif inputs is not None and target is not None:
+            self.x = inputs  # input data
+            self.y = target  # output data
+
+            # create dataloader
+            train_data = utils_data.TensorDataset(self.x, self.y)
+            if self.use_gpu:
+                self.dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size,
+                                                        num_workers=self.num_workers, pin_memory=True)
+            else:
+                self.dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size)
+        else:
+            raise Exception('No input data')
 
         # make sure logs folder exists
         if not os.path.exists('./logs'):
@@ -462,15 +476,11 @@ class OptWBoundEignVal(object):
 
         f_hist = []  # tracks function value after each epoch
 
-        # create dataloader
-        train_data = utils_data.TensorDataset(self.x, self.y)
-        self.dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size)
-
         log_file = open(self.log_file, "w")  # open log file
         sys.stdout = log_file  # write to log file
 
         # header of log file
-        if (inputs_valid is None) or (target_valid is None):
+        if (inputs_valid is None) or (target_valid is None) or (valid_loader is None):
             print('epoch\t f\t rho\t h\t norm')
         else:
             print('epoch\t f\t rho\t h\t norm\t val_acc\t val_f1')
@@ -485,10 +495,10 @@ class OptWBoundEignVal(object):
             sys.stdout = log_file  # write to log file
 
             # add values to log file
-            if (inputs_valid is None) or (target_valid is None):
+            if (inputs_valid is None) or (target_valid is None) or (valid_loader is None):
                 print('%d\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm))
             else:
-                _, self.val_acc, val_f1 = self.test_model(inputs_valid, target_valid)
+                _, self.val_acc, val_f1 = self.test_model(inputs_valid, target_valid, valid_loader)
                 if self.val_acc > self.best_val_acc:
                     self.best_val_acc = self.val_acc
                     self.best_rho = self.rho
@@ -544,11 +554,21 @@ class OptWBoundEignVal(object):
         # compute loss & accuracy on training set
         self.test_train_set(inputs, target)
 
-    def test_model(self, X, y):
+    def test_model(self, x=None, y=None, loader=None):
         # Computes the loss and accuracy of model on given dataset
 
-        test_data = utils_data.TensorDataset(X, y)
-        dataloader = utils_data.DataLoader(test_data, batch_size=self.batch_size)
+        if loader is not None:
+            dataloader = loader
+        elif x is not None and y is not None:
+            # create dataloader
+            train_data = utils_data.TensorDataset(x, y)
+            if self.use_gpu:
+                dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size,
+                                                   num_workers=self.num_workers, pin_memory=True)
+            else:
+                dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size)
+        else:
+            raise Exception('No test data')
 
         f_list = []
         acc_list = []
@@ -584,7 +604,7 @@ class OptWBoundEignVal(object):
 
         return test_loss, test_acc, test_f1
 
-    def test_model_best(self, X, y):
+    def test_model_best(self, x=None, y=None, loader=None):
         # tests best model, loaded from file
 
         self.model.load_state_dict(torch.load('./models/' + self.header2 + '_trained_model_best.pt'))
@@ -592,14 +612,14 @@ class OptWBoundEignVal(object):
         if self.use_gpu:
             self.model.cuda()
 
-        return self.test_model(X, y)
+        return self.test_model(x, y, loader)
 
-    def test_train_set(self, X, y):
+    def test_train_set(self, x=None, y=None, loader=None):
         old_stdout = sys.stdout  # save old output
         log_file = open(self.log_file, "a")  # open log file
         sys.stdout = log_file  # write to log file
 
-        loss, acc, f1 = self.test_model_best(X, y)  # test best model
+        loss, acc, f1 = self.test_model_best(x, y, loader)  # test best model
 
         print('Train Loss:', loss)
         print('Train Accuracy:', acc)
@@ -608,12 +628,12 @@ class OptWBoundEignVal(object):
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
 
-    def test_test_set(self, X, y):
+    def test_test_set(self, x=None, y=None, loader=None):
         old_stdout = sys.stdout  # save old output
         log_file = open(self.log_file, "a")  # open log file
         sys.stdout = log_file  # write to log file
 
-        loss, acc, f1 = self.test_model_best(X, y)  # test best model
+        loss, acc, f1 = self.test_model_best(x, y, loader)  # test best model
 
         print('Test Loss:', loss)
         print('Test Accuracy:', acc)

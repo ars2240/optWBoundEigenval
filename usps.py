@@ -29,8 +29,8 @@ torch.manual_seed(1226)
 # Parameters
 tol = 0.001
 batch_size = 128
-mu = 0.005
-K = 0
+mu = 0.02
+K = 5
 
 
 # def mu(i):
@@ -82,7 +82,7 @@ y_valid = torch.from_numpy(y_valid).long()
 class Net(nn.Module):
     def __init__(self):
         super(Net, self).__init__()
-        n = 100
+        n = 20
         self.fc1 = nn.Linear(256, n)
         self.fc2 = nn.Linear(n, n)
         self.fc3 = nn.Linear(n, 10)

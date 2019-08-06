@@ -24,6 +24,7 @@ import torchvision.models as tvm
 from opt import OptWBoundEignVal
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
+from cifar100_data import get_train_valid_loader, get_test_loader
 
 # set seed
 np.random.seed(1226)
@@ -44,48 +45,8 @@ if not os.path.exists(root):
     os.mkdir(root)
 
 # Load the dataset
-trans = transforms.Compose([transforms.ToTensor(), transforms.Normalize(mean=[0.50735486, 0.4864332, 0.44048092],
-                                                                        std=[0.2675225, 0.25657794, 0.2763499])])
-# if not exist, download cifar100 dataset
-train_set = utils_data.DataLoader(dset.CIFAR100(root=root, train=True, transform=trans, download=True),
-                                  batch_size=50000)
-test_set = utils_data.DataLoader(dset.CIFAR100(root=root, train=False, transform=trans, download=True),
-                                 batch_size=10000)
-
-_, (X, y) = next(enumerate(train_set))
-_, (X_test, y_test) = next(enumerate(test_set))
-
-X = X.reshape((50000, 3, 32, 32))
-X_test = X_test.reshape((10000, 3, 32, 32))
-
-X, X_valid, y, y_valid = train_test_split(np.array(X), np.array(y), test_size=1/5, random_state=1226)
-
-# convert data-types
-X = torch.from_numpy(X)
-y = torch.from_numpy(y).long()
-X_valid = torch.from_numpy(X_valid)
-y_valid = torch.from_numpy(y_valid).long()
-
-"""
-mdict = sio.loadmat('data')
-X = mdict['X'].astype('float32').reshape((60000, 784))/255
-y = mdict['y'].squeeze()
-
-# split data set into 70% train, 30% test
-X, X_test, y, y_test = train_test_split(X, y, test_size=0.3, random_state=1226)
-
-# re-format data
-X = torch.from_numpy(X)
-y = torch.from_numpy(y).long()
-X_test = torch.from_numpy(X_test)
-y_test = torch.from_numpy(y_test).long()
-"""""
-
-# train_data = utils_data.TensorDataset(X, y)
-
-#   Define Neural Network Architecture
-#
-#   Modify your neural network here!
+train_loader, valid_loader = get_train_valid_loader(batch_size=batch_size, augment=True)
+test_loader = get_test_loader(batch_size=batch_size)
 
 
 # learning rate
