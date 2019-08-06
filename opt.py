@@ -480,7 +480,7 @@ class OptWBoundEignVal(object):
         sys.stdout = log_file  # write to log file
 
         # header of log file
-        if (inputs_valid is None) or (target_valid is None) or (valid_loader is None):
+        if (inputs_valid is None or target_valid is None) and (valid_loader is None):
             print('epoch\t f\t rho\t h\t norm')
         else:
             print('epoch\t f\t rho\t h\t norm\t val_acc\t val_f1')
@@ -495,7 +495,7 @@ class OptWBoundEignVal(object):
             sys.stdout = log_file  # write to log file
 
             # add values to log file
-            if (inputs_valid is None) or (target_valid is None) or (valid_loader is None):
+            if (inputs_valid is None or target_valid is None) and (valid_loader is None):
                 print('%d\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm))
             else:
                 _, self.val_acc, val_f1 = self.test_model(inputs_valid, target_valid, valid_loader)
