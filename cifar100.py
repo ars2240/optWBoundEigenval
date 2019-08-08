@@ -73,6 +73,6 @@ opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size,
                        max_pow_iter=10000, verbose=True, header='CIFAR100', use_gpu=True, pow_iter=False)
 
 # Train model
-opt.train(X, y, X_valid, y_valid)
+opt.train(loader=train_loader, valid_loader=valid_loader)
 
-opt.test_test_set(X_test, y_test)  # test model on test set
+opt.test_test_set(loader=test_loader)  # test model on test set
