@@ -6,7 +6,6 @@ Based on https://gist.github.com/kevinzakka/d33bf8d6c7f06a9d8c76d97a7879f5cb
 import torch
 import numpy as np
 
-from utils import plot_images
 from torchvision import datasets
 from torchvision import transforms
 from torch.utils.data.sampler import SubsetRandomSampler
@@ -99,6 +98,7 @@ def get_train_valid_loader(data_dir='./data', batch_size=1, augment=False, rando
 
     # visualize some images
     if show_sample:
+        from utils import plot_images
         sample_loader = torch.utils.data.DataLoader(
             train_dataset, batch_size=9, shuffle=shuffle,
             num_workers=num_workers, pin_memory=pin_memory,
