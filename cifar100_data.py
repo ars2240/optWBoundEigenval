@@ -108,7 +108,20 @@ def get_train_valid_loader(data_dir='./data', batch_size=1, augment=False, rando
         X = images.numpy().transpose([0, 2, 3, 1])
         plot_images(X, labels)
 
-    return train_loader, valid_loader
+    if augment:
+        # non-augmented training dataset
+        train_dataset_na = datasets.CIFAR100(
+            root=data_dir, train=True,
+            download=True, transform=valid_transform,
+        )
+        train_loader_na = torch.utils.data.DataLoader(
+            train_dataset_na, batch_size=batch_size, sampler=train_sampler,
+            num_workers=num_workers, pin_memory=pin_memory,
+        )
+
+        return train_loader, valid_loader, train_loader_na
+    else:
+        return train_loader, valid_loader
 
 
 def get_test_loader(data_dir='./data', batch_size=1, shuffle=False, num_workers=1, pin_memory=True):

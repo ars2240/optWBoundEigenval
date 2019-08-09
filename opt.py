@@ -444,7 +444,8 @@ class OptWBoundEignVal(object):
         if self.scheduler is not None:
             self.scheduler.step()
 
-    def train(self, inputs=None, target=None, inputs_valid=None, target_valid=None, loader=None, valid_loader=None):
+    def train(self, inputs=None, target=None, inputs_valid=None, target_valid=None, loader=None, valid_loader=None,
+              train_loader=None):
 
         start = time.time()  # start timer
 
@@ -552,7 +553,10 @@ class OptWBoundEignVal(object):
         sys.stdout = old_stdout  # reset output
 
         # compute loss & accuracy on training set
-        self.test_train_set(inputs, target, loader)
+        if train_loader is not None:
+            self.test_train_set(inputs, target, train_loader)
+        else:
+            self.test_train_set(inputs, target, loader)
 
     def test_model(self, x=None, y=None, loader=None):
         # Computes the loss and accuracy of model on given dataset
