@@ -552,7 +552,7 @@ class OptWBoundEignVal(object):
         sys.stdout = old_stdout  # reset output
 
         # compute loss & accuracy on training set
-        self.test_train_set(inputs, target)
+        self.test_train_set(inputs, target, loader)
 
     def test_model(self, x=None, y=None, loader=None):
         # Computes the loss and accuracy of model on given dataset
