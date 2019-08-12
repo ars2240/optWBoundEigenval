@@ -1,7 +1,7 @@
 # cifar100.py
 #
 # Author: Adam Sandler
-# Date: 5/7/19
+# Date: 8/11/19
 #
 # Classifies images from the CIFAR100 dataset
 #
@@ -66,7 +66,7 @@ def alpha(i):
 # Create neural network
 model = tvm.resnet50(num_classes=100)
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=0.001)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0005)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
 opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,
@@ -76,3 +76,5 @@ opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size,
 opt.train(loader=train_loader, valid_loader=valid_loader, train_loader=train_loader_na)
 
 opt.test_test_set(loader=test_loader)  # test model on test set
+
+opt.parse()

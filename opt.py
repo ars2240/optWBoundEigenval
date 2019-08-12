@@ -775,6 +775,21 @@ class OptWBoundEignVal(object):
         print('Min-weight:', min_weight)
         print('Max-weight:', max_weight)
 
+    def parse(self):
+        with open(self.log_file, "r") as log_file:  # open log file
+            data = log_file.readlines()
+            res = []
+            if len(data) < 8:
+                raise Exception('Not enough log data.')
+            for string in data[-8:]:
+                string = string.split()
+                res.append(string[-1])
+
+        order = [0, 2, 3, 4, 5, 6, 7, 1]
+        res = [res[i] for i in order]
+        print('Best_Val_Acc\tTrain_Loss\tTrain_Acc\tTrain_F1\tTest_Loss\tTest_Acc\tTest_F1\tRho')
+        print('\t'.join(res))
+
 
 def cov_shift_tester(models, X, y, iters=1000, bad_modes=[], header='', mult=.1, prob=0.5, mean_diff=0, sd_diff=0,
                      skew_diff=0, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],

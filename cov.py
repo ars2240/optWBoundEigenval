@@ -131,3 +131,5 @@ opt.train(X, y, X_valid, y_valid)
 
 opt.test_test_set(X_test, y_test)  # test model on test set
 
+opt.parse()
+
