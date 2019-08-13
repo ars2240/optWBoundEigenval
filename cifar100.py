@@ -31,7 +31,7 @@ np.random.seed(1226)
 torch.manual_seed(1226)
 
 # Parameters
-tol = 0.001
+tol = 0.005
 batch_size = 128
 mu = 0
 K = 0
