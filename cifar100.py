@@ -33,7 +33,7 @@ torch.manual_seed(1226)
 # Parameters
 tol = 0.005
 batch_size = 128
-mu = 0
+mu = 0.001
 K = 0
 
 # def mu(i):
@@ -66,11 +66,11 @@ def alpha(i):
 # Create neural network
 model = tvm.resnet50(num_classes=100)
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0001)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0005)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
 opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,
-                       max_pow_iter=10000, verbose=True, header='CIFAR100', use_gpu=True, pow_iter=False)
+                       max_pow_iter=10000, verbose=True, header='CIFAR100', use_gpu=True)
 
 # Train model
 opt.train(loader=train_loader, valid_loader=valid_loader, train_loader=train_loader_na)
