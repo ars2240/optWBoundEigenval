@@ -14,16 +14,10 @@ import sys
 import os
 import numpy as np
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
 import torch.utils.data as utils_data
 # import scipy.io as sio
-import torchvision.datasets as dset
-import torchvision.transforms as transforms
 import torchvision.models as tvm
 from opt import OptWBoundEignVal
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
 from cifar100_data import get_train_valid_loader, get_test_loader
 
 # set seed

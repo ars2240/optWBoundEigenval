@@ -1,7 +1,7 @@
 # usps.py
 #
 # Author: Adam Sandler
-# Date: 8/8/19
+# Date: 8/19/19
 #
 # Classifies digits from the USPS dataset
 #
@@ -18,9 +18,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.data as utils_data
 # import scipy.io as sio
-from opt import OptWBoundEignVal, download
-import pandas as pd
-from sklearn.model_selection import train_test_split
+from opt import OptWBoundEignVal
+from usps_data import get_train_valid_loader, get_test_loader
 
 # set seed
 np.random.seed(1226)
@@ -29,8 +28,8 @@ torch.manual_seed(1226)
 # Parameters
 tol = 0.001
 batch_size = 128
-mu = 0
-K = 0
+mu = 0.1
+K = 2
 
 
 # def mu(i):
@@ -42,6 +41,12 @@ root = './data'
 if not os.path.exists(root):
     os.mkdir(root)
 
+# Load the dataset
+train_loader, valid_loader = get_train_valid_loader(batch_size=batch_size, augment=False)
+test_loader = get_test_loader(batch_size=batch_size)
+
+
+"""
 # Load Data
 u = 'https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.train.gz'
 filename2 = download(u)
@@ -68,6 +73,7 @@ X_sd = X.std()
 X = (X-X_m)/X_sd
 X_valid = (X_valid-X_m)/X_sd
 X_test = (X_test-X_m)/X_sd
+print('Mean: ' + str(X_m) + ', StDev: ' + str(X_sd))
 
 # convert data-types
 X = torch.from_numpy(X).float()
@@ -76,6 +82,7 @@ X_test = torch.from_numpy(X_test).float()
 y_test = torch.from_numpy(y_test).long()
 X_valid = torch.from_numpy(X_valid).float()
 y_valid = torch.from_numpy(y_valid).long()
+"""
 
 
 #   Define Neural Network Architecture
@@ -135,22 +142,26 @@ class CNN(torch.nn.Module):
         return x
 
 
-alpha = lambda k: 1/(1+k)
+alpha = lambda k: 1/(1+np.sqrt(k))
 
 # Train Neural Network
 
 # Create neural network
 model = CNN()
-loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=.5)
+loss = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters())
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
-opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
-                       max_pow_iter=10000, verbose=False, header='USPS')
+opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,
+                       max_pow_iter=10000, verbose=False, header='USPS', use_gpu=False)
 
 # Train model
-opt.train(X, y, X_valid, y_valid)
+opt.train(loader=train_loader, valid_loader=valid_loader)
 
-opt.test_test_set(X_test, y_test)  # test model on test set
+opt.test_test_set(loader=test_loader)  # test model on test set
+
+# Augmented Testing
+test_loader = get_test_loader(batch_size=batch_size, augment=True)
+opt.test_test_set(loader=test_loader)
 
 opt.parse()

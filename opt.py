@@ -670,11 +670,11 @@ class OptWBoundEignVal(object):
 
         return w
 
-    def test_model_cov(self, X, y, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
+    def test_model_cov(self, x, y, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
                        train_skew=[0]):
         # Computes the loss and accuracy of model on given dataset
 
-        test_data = utils_data.TensorDataset(X, y)
+        test_data = utils_data.TensorDataset(x, y)
         dataloader = utils_data.DataLoader(test_data, batch_size=self.batch_size)
 
         f_list = []
@@ -752,7 +752,7 @@ class OptWBoundEignVal(object):
 
         return test_loss, test_acc, test_f1, min_weight, max_weight
 
-    def test_model_best_cov(self, X, y, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
+    def test_model_best_cov(self, x, y, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
                        train_skew=[0]):
         # tests best model, loaded from file
 
@@ -761,13 +761,13 @@ class OptWBoundEignVal(object):
         if self.use_gpu:
             self.model.cuda()
 
-        return self.test_model_cov(X, y, test_mean, test_sd, test_skew, train_mean, train_sd, train_skew)
+        return self.test_model_cov(x, y, test_mean, test_sd, test_skew, train_mean, train_sd, train_skew)
 
-    def test_cov_shift(self, X, y, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
+    def test_cov_shift(self, x, y, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
                        train_skew=[0]):
 
         # test best model
-        loss, acc, f1, min_weight, max_weight = self.test_model_best_cov(X, y, test_mean, test_sd, test_skew,
+        loss, acc, f1, min_weight, max_weight = self.test_model_best_cov(x, y, test_mean, test_sd, test_skew,
                                                                          train_mean, train_sd, train_skew)
 
         print('Test Accuracy:', acc)
@@ -791,14 +791,14 @@ class OptWBoundEignVal(object):
         print('\t'.join(res))
 
 
-def cov_shift_tester(models, X, y, iters=1000, bad_modes=[], header='', mult=.1, prob=0.5, mean_diff=0, sd_diff=0,
+def cov_shift_tester(models, x, y, iters=1000, bad_modes=[], header='', mult=.1, prob=0.5, mean_diff=0, sd_diff=0,
                      skew_diff=0, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
                      train_skew=[0]):
     # make sure logs folder exists
     if not os.path.exists('./logs'):
         os.mkdir('./logs')
 
-    feats = X.shape[1]
+    feats = x.shape[1]
     modes = range(0, feats)
     good_modes = np.setdiff1d(modes, bad_modes)
     good_feats = len(good_modes)
@@ -824,12 +824,10 @@ def cov_shift_tester(models, X, y, iters=1000, bad_modes=[], header='', mult=.1,
 
         for j in range(0, nmod):
             model = models[j]
-            _, acc[j, i], f1[j, i], _, _ = model.test_model_best_cov(X, y, test_mean=mean, test_sd=sd, test_skew=skew,
+            _, acc[j, i], f1[j, i], _, _ = model.test_model_best_cov(x, y, test_mean=mean, test_sd=sd, test_skew=skew,
                                                                      train_mean=train_mean, train_sd=train_sd,
                                                                      train_skew=train_skew)
 
     np.savetxt("./logs/" + header + "_cov_shift_acc.csv", acc, delimiter=",")
     np.savetxt("./logs/" + header + "_cov_shift_f1.csv", f1, delimiter=",")
     np.savetxt("./logs/" + header + "_cov_shift_indices.csv", indices, delimiter=",")
-
-
