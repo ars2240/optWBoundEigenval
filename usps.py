@@ -160,8 +160,11 @@ opt.train(loader=train_loader, valid_loader=valid_loader)
 
 opt.test_test_set(loader=test_loader)  # test model on test set
 
+opt.parse()
+
 # Augmented Testing
 test_loader = get_test_loader(batch_size=batch_size, augment=True)
-opt.test_test_set(loader=test_loader)
+_, acc, f1 = opt.test_model_best(loader=test_loader)
+print('Aug_Test_Acc\tAug_Test_F1')
+print(str(acc) + '\t' + str(f1))
 
-opt.parse()
