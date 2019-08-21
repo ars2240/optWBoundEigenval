@@ -28,8 +28,8 @@ torch.manual_seed(1226)
 # Parameters
 tol = 0.001
 batch_size = 128
-mu = 0.1
-K = 2
+mu = 0.04
+K = 0
 
 
 # def mu(i):
@@ -45,43 +45,19 @@ if not os.path.exists(root):
 train_loader, valid_loader = get_train_valid_loader(batch_size=batch_size, augment=False)
 test_loader = get_test_loader(batch_size=batch_size)
 
-
 """
-# Load Data
-u = 'https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.train.gz'
-filename2 = download(u)
-u = 'https://web.stanford.edu/~hastie/ElemStatLearn/datasets/zip.test.gz'
-filename3 = download(u)
+size = []
+m = []
+sd = []
+for _, data in enumerate(train_loader):
+    inputs, outputs = data
 
-# import dataset
-train = pd.read_csv(filename2, header=None, sep=' ')
-test = pd.read_csv(filename3, header=None, sep=' ')
+    size.append(len(outputs))
+    m.append(inputs.mean())
+    sd.append(inputs.std())
 
-X = np.asarray(-train.loc[:, 1:256])
-y = np.asarray(train.loc[:, 0])
-X_test = np.asarray(-test.loc[:, 1:256])
-y_test = np.asarray(test.loc[:, 0])
-
-X = X.reshape((7291, 256))
-X_test = X_test.reshape((2007, 256))
-
-X, X_valid, y, y_valid = train_test_split(np.array(X), np.array(y), test_size=1/7, random_state=1226)
-
-# normalization
-X_m = X.mean()
-X_sd = X.std()
-X = (X-X_m)/X_sd
-X_valid = (X_valid-X_m)/X_sd
-X_test = (X_test-X_m)/X_sd
-print('Mean: ' + str(X_m) + ', StDev: ' + str(X_sd))
-
-# convert data-types
-X = torch.from_numpy(X).float()
-y = torch.from_numpy(y).long()
-X_test = torch.from_numpy(X_test).float()
-y_test = torch.from_numpy(y_test).long()
-X_valid = torch.from_numpy(X_valid).float()
-y_valid = torch.from_numpy(y_valid).long()
+print(np.average(m, weights=size))
+print(np.average(sd, weights=size))
 """
 
 
@@ -142,24 +118,22 @@ class CNN(torch.nn.Module):
         return x
 
 
-alpha = lambda k: 1/(1+np.sqrt(k))
+def alpha(k):
+    return 1/(1+np.sqrt(k))
 
-# Train Neural Network
 
-# Create neural network
+# Training Setup
 model = CNN()
 loss = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters())
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
-opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,
+opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
                        max_pow_iter=10000, verbose=False, header='USPS', use_gpu=False)
 
 # Train model
 opt.train(loader=train_loader, valid_loader=valid_loader)
-
 opt.test_test_set(loader=test_loader)  # test model on test set
-
 opt.parse()
 
 # Augmented Testing

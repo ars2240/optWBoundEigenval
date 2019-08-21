@@ -11,13 +11,23 @@ from torchvision import transforms
 from torch.utils.data.sampler import SubsetRandomSampler
 
 normalize = transforms.Normalize(
-    mean=[0.4914256487287963],
-    std=[0.7689052528555335],
+    mean=[0.24510024090766908],
+    std=[0.29806136205673217],
 )
+
+trans = transforms.Compose([
+            transforms.ToTensor(),
+            normalize])
+
+aug_trans = transforms.Compose([
+            transforms.RandomCrop(16, padding=1),
+            transforms.RandomRotation(15),
+            transforms.ToTensor(),
+            normalize])
 
 
 def get_train_valid_loader(data_dir='./data', batch_size=1, augment=False, random_seed=1226, valid_size=1/7,
-                           shuffle=False, show_sample=False, num_workers=1, pin_memory=False):
+                           shuffle=False, show_sample=False, num_workers=0, pin_memory=False):
     """
     Utility function for loading and returning train and valid
     multi-process iterators over the USPS dataset. A sample
@@ -46,34 +56,20 @@ def get_train_valid_loader(data_dir='./data', batch_size=1, augment=False, rando
     assert ((valid_size >= 0) and (valid_size <= 1)), error_msg
 
     # define transforms
-    valid_transform = transforms.Compose([
-            transforms.ToTensor(),
-            normalize,
-    ])
+    valid_transform = trans
     if augment:
-        train_transform = transforms.Compose([
-            transforms.RandomCrop(16, padding=2),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomRotation(30),
-            transforms.ToTensor(),
-            normalize,
-        ])
+        train_transform = aug_trans
     else:
-        train_transform = transforms.Compose([
-            transforms.ToTensor(),
-            normalize,
-        ])
+        train_transform = trans
 
     # load the dataset
     train_dataset = datasets.USPS(
         root=data_dir, train=True,
-        download=True, transform=train_transform,
-    )
+        download=True, transform=train_transform)
 
     valid_dataset = datasets.USPS(
         root=data_dir, train=True,
-        download=True, transform=valid_transform,
-    )
+        download=True, transform=valid_transform)
 
     num_train = len(train_dataset)
     indices = list(range(num_train))
@@ -88,21 +84,18 @@ def get_train_valid_loader(data_dir='./data', batch_size=1, augment=False, rando
     valid_sampler = SubsetRandomSampler(valid_idx)
 
     train_loader = torch.utils.data.DataLoader(
-        train_dataset, batch_size=batch_size, sampler=train_sampler,
-        num_workers=num_workers, pin_memory=pin_memory,
-    )
+        train_dataset, batch_size=batch_size, shuffle=shuffle, sampler=train_sampler,
+        num_workers=num_workers, pin_memory=pin_memory)
     valid_loader = torch.utils.data.DataLoader(
-        valid_dataset, batch_size=batch_size, sampler=valid_sampler,
-        num_workers=num_workers, pin_memory=pin_memory,
-    )
+        valid_dataset, batch_size=batch_size, shuffle=shuffle, sampler=valid_sampler,
+        num_workers=num_workers, pin_memory=pin_memory)
 
     # visualize some images
     if show_sample:
         from utils import plot_images
         sample_loader = torch.utils.data.DataLoader(
             train_dataset, batch_size=9, shuffle=shuffle,
-            num_workers=num_workers, pin_memory=pin_memory,
-        )
+            num_workers=num_workers, pin_memory=pin_memory)
         data_iter = iter(sample_loader)
         images, labels = data_iter.next()
         X = images.numpy().transpose([0, 2, 3, 1])
@@ -110,14 +103,12 @@ def get_train_valid_loader(data_dir='./data', batch_size=1, augment=False, rando
 
     if augment:
         # non-augmented training dataset
-        train_dataset_na = datasets.CIFAR100(
+        train_dataset_na = datasets.USPS(
             root=data_dir, train=True,
-            download=True, transform=valid_transform,
-        )
+            download=True, transform=valid_transform)
         train_loader_na = torch.utils.data.DataLoader(
-            train_dataset_na, batch_size=batch_size, sampler=train_sampler,
-            num_workers=num_workers, pin_memory=pin_memory,
-        )
+            train_dataset_na, batch_size=batch_size, shuffle=shuffle, sampler=train_sampler,
+            num_workers=num_workers, pin_memory=pin_memory)
 
         return train_loader, valid_loader, train_loader_na
     else:
@@ -144,28 +135,17 @@ def get_test_loader(data_dir='./data', batch_size=1, augment=False, shuffle=Fals
 
     # define transform
     if augment:
-        transform = transforms.Compose([
-            transforms.RandomCrop(16, padding=2),
-            transforms.RandomHorizontalFlip(),
-            transforms.RandomRotation(30),
-            transforms.ToTensor(),
-            normalize,
-        ])
+        transform = aug_trans
     else:
-        transform = transforms.Compose([
-            transforms.ToTensor(),
-            normalize,
-        ])
+        transform = trans
 
     dataset = datasets.USPS(
         root=data_dir, train=False,
-        download=True, transform=transform,
-    )
+        download=True, transform=transform)
 
     data_loader = torch.utils.data.DataLoader(
         dataset, batch_size=batch_size, shuffle=shuffle,
-        num_workers=num_workers, pin_memory=pin_memory,
-    )
+        num_workers=num_workers, pin_memory=pin_memory)
 
     return data_loader
 
