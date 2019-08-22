@@ -64,7 +64,7 @@ optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_dec
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
 opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,
-                       max_pow_iter=10000, verbose=True, header='CIFAR100_Wide', use_gpu=True, pow_iter=False)
+                       max_pow_iter=10000, verbose=False, header='CIFAR100_Wide', use_gpu=True, pow_iter=False)
 
 # Train model
 opt.train(loader=train_loader, valid_loader=valid_loader, train_loader=train_loader_na)
