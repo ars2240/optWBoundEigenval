@@ -10,8 +10,6 @@
 #   Packages: requests, numpy, scipy, sklearn, torch
 
 import random
-import requests
-import math
 import numpy as np
 import os
 import shutil
@@ -179,6 +177,7 @@ class HVPOperator(object):
 
 # Download and parse the dataset
 def download(url):
+    import requests
     root = './data'
     if not os.path.exists(root):
         os.mkdir(root)
@@ -538,9 +537,9 @@ class OptWBoundEignVal(object):
         # compute time elapsed
         end = time.time()
         tTime = end - start
-        hrs = math.floor(tTime / 3600)
+        hrs = np.floor(tTime / 3600)
         tTime = tTime - hrs * 3600
-        mins = math.floor(tTime / 60)
+        mins = np.floor(tTime / 60)
         secs = tTime - mins * 60
         print('Time elapsed: %2i hrs, %2i min, %4.2f sec ' % (hrs, mins, secs))
 
