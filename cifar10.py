@@ -58,13 +58,13 @@ def alpha(i):
 # Train Neural Network
 
 # Create neural network
-model = tvm.resnet50(num_classes=10)
+model = tvm.wide_resnet50_2(num_classes=10)
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters())
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0005)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
-opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,
-                       max_pow_iter=10000, verbose=False, header='CIFAR10', use_gpu=True, pow_iter=False)
+opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,
+                       max_pow_iter=10000, verbose=False, header='CIFAR10_Wide', use_gpu=True, pow_iter=False)
 
 # Train model
 opt.train(loader=train_loader, valid_loader=valid_loader, train_loader=train_loader_na)
