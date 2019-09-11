@@ -26,7 +26,7 @@ torch.manual_seed(1226)
 
 # Parameters
 tol = 0.005
-batch_size = 128
+batch_size = 64
 mu = 0
 K = 0
 
