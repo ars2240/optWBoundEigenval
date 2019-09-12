@@ -26,7 +26,7 @@ torch.manual_seed(1226)
 
 # Parameters
 tol = 0.005
-batch_size = 64
+batch_size = 128
 mu = 0
 K = 0
 
@@ -58,7 +58,7 @@ def alpha(i):
 # Train Neural Network
 
 # Create neural network
-model = tvm.wide_resnet101_2(num_classes=10)
+model = tvm.densenet201(num_classes=10)
 loss = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0005)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
