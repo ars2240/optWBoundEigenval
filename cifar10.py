@@ -19,6 +19,7 @@ import torch.utils.data as utils_data
 import torchvision.models as tvm
 from opt import OptWBoundEignVal
 from cifar10_data import get_norm, get_train_valid_loader, get_test_loader
+from efficientnet_pytorch import EfficientNet
 
 # set seed
 np.random.seed(1226)
@@ -58,13 +59,13 @@ def alpha(i):
 # Train Neural Network
 
 # Create neural network
-model = tvm.densenet201(num_classes=10)
+model = EfficientNet.from_name('efficientnet-b0')
 loss = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0005)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
 opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,
-                       max_pow_iter=10000, verbose=False, header='CIFAR10_Wide', use_gpu=True, pow_iter=False)
+                       max_pow_iter=10000, verbose=False, header='CIFAR10_Efficient', use_gpu=True, pow_iter=False)
 
 # Train model
 opt.train(loader=train_loader, valid_loader=valid_loader, train_loader=train_loader_na)
