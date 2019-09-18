@@ -98,9 +98,8 @@ def get_train_valid_loader(data_dir='./data', batch_size=1, augment=False, rando
     ])
     if augment:
         train_transform = transforms.Compose([
-            transforms.RandomCrop(32, padding=4, padding_mode='reflect'),
+            transforms.RandomCrop(32, padding=4),
             transforms.RandomHorizontalFlip(),
-            transforms.RandomRotation(30),
             transforms.ToTensor(),
             normalize,
         ])
