@@ -45,9 +45,9 @@ test_loader = get_test_loader(batch_size=batch_size)
 
 # learning rate
 def alpha(i):
-    if i < 150:
+    if i < 81:
         return 1
-    elif i < 250:
+    elif i < 122:
         return 0.1
     else:
         return 0.1**2
@@ -61,7 +61,7 @@ loss = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0001)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
-opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=350,
+opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,
                        max_pow_iter=10000, verbose=False, header='CIFAR10_ResNet', use_gpu=True, pow_iter=False)
 
 # Train model
