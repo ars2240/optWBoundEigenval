@@ -45,12 +45,10 @@ test_loader = get_test_loader(batch_size=batch_size)
 
 # learning rate
 def alpha(i):
-    if i < 81:
+    if i < 100:
         return 1
-    elif i < 122:
-        return 0.1
     else:
-        return 0.1**2
+        return 0.1
 
 
 # Train Neural Network
