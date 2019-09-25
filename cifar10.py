@@ -45,10 +45,7 @@ test_loader = get_test_loader(batch_size=batch_size)
 
 # learning rate
 def alpha(i):
-    if i < 100:
-        return 1
-    else:
-        return 0.1
+    return 0.97**i
 
 
 # Train Neural Network
@@ -56,7 +53,7 @@ def alpha(i):
 # Create neural network
 model = tvm.resnet18(num_classes=10)
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0005)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
 opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,
