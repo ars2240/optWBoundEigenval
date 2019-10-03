@@ -17,9 +17,7 @@ import torch
 import torch.utils.data as utils_data
 # import scipy.io as sio
 from opt import OptWBoundEignVal
-
-sys.path.insert(1, '/home/hddraid/shared_data/chest_xray8/code/VClassifier/')
-
+sys.path.insert(0, '/home/hddraid/shared_data/chest_xray8/code/VClassifier/')  # add folder containing dcnn to path
 from dcnn import *
 
 
@@ -30,10 +28,11 @@ np.random.seed(1226)
 torch.manual_seed(1226)
 
 # Parameters
-tol = 0.005
-batch_size = 16
-mu = 0
-K = 0
+tol = 0.005  # tolerance
+batch_size = 16  # batch size
+mu = 0  # regularization factor
+K = 0  # minimum allowable spectral radius
+enc = 'res50'  # model type
 
 # def mu(i):
 #    return np.max([0.0, (i-50)/1000])
@@ -59,11 +58,7 @@ def alpha(i):
         return 0.2**3
 
 
-# Train Neural Network
-
 # Create neural network
-enc = 'res50'
-
 if enc == 'alex':
     model = MyAlexNet(14)
 elif enc == 'res50':
@@ -77,6 +72,7 @@ elif enc == 'dens201':
 elif enc == 'dens121':
     model = MyDensNet121(14)
 
+# Train NN
 loss = W_BCEWithLogitsLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
 # scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
