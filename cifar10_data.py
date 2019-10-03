@@ -18,7 +18,7 @@ normalize = transforms.Normalize(
 
 def get_norm(data_dir='./data', batch_size=1, random_seed=1226, valid_size=0.2, shuffle=False, num_workers=0,
              pin_memory=False):
-    transform = transforms.Compose([transforms.ToTensor(),])
+    transform = transforms.Compose([transforms.ToTensor()])
 
     train_dataset = datasets.CIFAR10(
         root=data_dir, train=True,
@@ -61,7 +61,6 @@ def get_norm(data_dir='./data', batch_size=1, random_seed=1226, valid_size=0.2, 
     return m, sd
 
 
-
 def get_train_valid_loader(data_dir='./data', batch_size=1, augment=False, random_seed=1226, valid_size=0.2,
                            shuffle=False, show_sample=False, num_workers=1, pin_memory=True):
     """
@@ -100,6 +99,7 @@ def get_train_valid_loader(data_dir='./data', batch_size=1, augment=False, rando
         train_transform = transforms.Compose([
             transforms.RandomCrop(32, padding=4),
             transforms.RandomHorizontalFlip(),
+            transforms.RandomRotation(15),
             transforms.ToTensor(),
             normalize,
         ])
