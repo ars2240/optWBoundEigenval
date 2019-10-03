@@ -22,13 +22,16 @@ sys.path.insert(1, '/home/hddraid/shared_data/chest_xray8/code/VClassifier/')
 
 from dcnn import *
 
+
+transform = transforms.Compose([transforms.ToTensor(),
+                                transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
 # set seed
 np.random.seed(1226)
 torch.manual_seed(1226)
 
 # Parameters
 tol = 0.005
-batch_size = 128
+batch_size = 16
 mu = 0
 K = 0
 
@@ -75,11 +78,12 @@ elif enc == 'dens121':
     model = MyDensNet121(14)
 
 loss = W_BCEWithLogitsLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=0.005)
-scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
+optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
+# scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
-opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,
-                       max_pow_iter=10000, verbose=False, header='chestxray_res50', use_gpu=True, pow_iter=False)
+opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=200,
+                       max_pow_iter=10000, verbose=False, header='chestxray_'+enc, use_gpu=True, pow_iter=False,
+                       test_func='sigmoid auc')
 
 # Train model
 opt.train(loader=train_loader, valid_loader=valid_loader, train_loader=train_loader_na)

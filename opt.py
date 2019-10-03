@@ -16,10 +16,11 @@ import shutil
 import sys
 from scipy.stats import skewnorm
 from scipy.stats import norm
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, roc_auc_score
 import time
 import torch
 import torch.utils.data as utils_data
+import torch.nn.functional as F
 
 
 class HVPOperator(object):
@@ -207,7 +208,8 @@ def download(url):
 class OptWBoundEignVal(object):
     def __init__(self, model, loss, optimizer, scheduler=None, mu=0, K=0, eps=1e-3, pow_iter_eps=1e-3,
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, pow_iter=True,
-                 max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header='', num_workers=0):
+                 max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header='', num_workers=0,
+                 test_func='acc'):
         self.ndim = sum(p.numel() for p in model.parameters())  # number of dimensions
         self.x = 1.0/np.sqrt(self.ndim)*np.ones(self.ndim)  # initial point
         self.f = 0  # loss function value
@@ -260,6 +262,7 @@ class OptWBoundEignVal(object):
         self.mem_track = mem_track  # whether or not maximum memory usage is tracked
         self.mem_max = 0  # running maximum memory usage
         self.num_workers = num_workers  # number of GPUs
+        self.test_func = test_func  # test function
 
     def comp_rho(self):
         # computes rho, v
@@ -577,6 +580,8 @@ class OptWBoundEignVal(object):
         acc_list = []
         f1_list = []
         size = []
+        outputs = []
+        labels = []
         for _, data in enumerate(dataloader):
 
             inputs, target = data
@@ -585,6 +590,9 @@ class OptWBoundEignVal(object):
             f, ops = self.comp_f(inputs, target)
             f_list.append(f)
 
+            if any(x in self.test_func for x in ['sigmoid', 'logit']):
+                ops = F.sigmoid(ops)
+
             # size of dataset
             size.append(len(target))
 
@@ -592,17 +600,26 @@ class OptWBoundEignVal(object):
             _, predicted = torch.max(ops.data, 1)
             if self.use_gpu:
                 target = target.cuda()
-            acc = torch.mean((predicted == target).float()).item() * 100
-            acc_list.append(acc)
+            if 'acc' in self.test_func:
+                acc = torch.mean((predicted == target).float()).item() * 100
+                acc_list.append(acc)
 
             if self.use_gpu:
                 target = target.cpu()
                 predicted = predicted.cpu()
+                ops = ops.cpu()
+            if 'auc' in self.test_func:
+                outputs.append(ops)
+                labels.append(target)
             f1 = f1_score(target, predicted, average='micro')
             f1_list.append(f1)
 
+        if 'auc' in self.test_func:
+            roc = roc_auc_score(labels, outputs, average=None)  # compute AUC of ROC curves
+            test_acc = roc.mean()  # mean AUCs
+        else:
+            test_acc = np.average(acc_list, weights=size)  # weighted mean of accuracy
         test_loss = np.average(f_list, weights=size)  # weighted mean of f values
-        test_acc = np.average(acc_list, weights=size)  # weighted mean of accuracy
         test_f1 = np.average(f1_list, weights=size)  # weighted mean of f1 scores
 
         return test_loss, test_acc, test_f1
