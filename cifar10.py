@@ -40,7 +40,7 @@ if not os.path.exists(root):
     os.mkdir(root)
 
 # Load the dataset
-train_loader, valid_loader, train_loader_na = get_train_valid_loader(batch_size=batch_size, augment=False)
+train_loader, valid_loader = get_train_valid_loader(batch_size=batch_size, augment=False)
 test_loader = get_test_loader(batch_size=batch_size)
 
 
@@ -66,6 +66,6 @@ opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size,
                        max_pow_iter=10000, verbose=False, header='CIFAR10_DenseNet', use_gpu=True, pow_iter=False)
 
 # Train model
-opt.train(loader=train_loader, valid_loader=valid_loader, train_loader=train_loader_na)
+opt.train(loader=train_loader, valid_loader=valid_loader)
 opt.test_test_set(loader=test_loader)  # test model on test set
 opt.parse()
