@@ -26,7 +26,7 @@ torch.manual_seed(1226)
 
 # Parameters
 tol = 0.005
-batch_size = 128
+batch_size = 64
 mu = 0
 K = 0
 
@@ -39,7 +39,7 @@ if not os.path.exists(root):
     os.mkdir(root)
 
 # Load the dataset
-train_loader, valid_loader, train_loader_na = get_train_valid_loader(batch_size=batch_size, augment=True)
+train_loader, valid_loader, train_loader_na = get_train_valid_loader(batch_size=batch_size, augment=False)
 test_loader = get_test_loader(batch_size=batch_size)
 
 
