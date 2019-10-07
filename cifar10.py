@@ -16,9 +16,10 @@ import numpy as np
 import torch
 import torch.utils.data as utils_data
 # import scipy.io as sio
-import torchvision.models as tvm
+# import torchvision.models as tvm
 from opt import OptWBoundEignVal
 from cifar10_data import get_norm, get_train_valid_loader, get_test_loader
+from densenet import DenseNet3
 
 # set seed
 np.random.seed(1226)
@@ -56,7 +57,7 @@ def alpha(i):
 # Train Neural Network
 
 # Create neural network
-model = tvm.densenet121(num_classes=10)
+model = DenseNet3(depth=40, growth_rate=12, num_classes=10)
 loss = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0001)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
