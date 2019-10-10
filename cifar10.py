@@ -40,7 +40,7 @@ if not os.path.exists(root):
     os.mkdir(root)
 
 # Load the dataset
-train_loader, valid_loader, train_loader_na = get_train_valid_loader(batch_size=batch_size, augment=True)
+train_loader, valid_loader = get_train_valid_loader(batch_size=batch_size, augment=False)
 test_loader = get_test_loader(batch_size=batch_size)
 
 
@@ -59,13 +59,13 @@ def alpha(i):
 # Create neural network
 model = DenseNet3(depth=40, growth_rate=12, num_classes=10)
 loss = torch.nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0001)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0005)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
 opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=300,
                        max_pow_iter=10000, verbose=False, header='CIFAR10_DenseNet', use_gpu=True, pow_iter=False)
 
 # Train model
-opt.train(loader=train_loader, valid_loader=valid_loader, train_loader=train_loader_na)
+opt.train(loader=train_loader, valid_loader=valid_loader)
 opt.test_test_set(loader=test_loader)  # test model on test set
 opt.parse()
