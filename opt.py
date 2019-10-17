@@ -393,6 +393,7 @@ class OptWBoundEignVal(object):
             else:
                 # for testing purposes
                 self.optimizer.zero_grad()  # zero gradient
+                print(type(data))
                 inputs, target = data
                 if self.use_gpu:
                     inputs = inputs.cuda()
@@ -432,6 +433,7 @@ class OptWBoundEignVal(object):
         size = []
         # compute f on each batch (to avoid memory issues)
         for _, data in enumerate(self.dataloader):
+            print(type(data))
             inputs, target = data
             size.append(len(target))
             f, _ = self.comp_f(inputs, target)
