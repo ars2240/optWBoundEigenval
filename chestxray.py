@@ -29,7 +29,7 @@ torch.manual_seed(1226)
 
 # Parameters
 tol = 0.005  # tolerance
-batch_size = 16  # batch size
+batch_size = 8  # batch size
 mu = 0  # regularization factor
 K = 0  # minimum allowable spectral radius
 enc = 'res50'  # model type
