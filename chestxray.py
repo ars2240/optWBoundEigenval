@@ -82,6 +82,6 @@ opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu
                        test_func='sigmoid auc')
 
 # Train model
-opt.train(loader=train_loader, valid_loader=valid_loader, train_loader=train_loader_na)
+opt.train(loader=train_loader, valid_loader=valid_loader)
 opt.test_test_set(loader=test_loader)  # test model on test set
 opt.parse()
