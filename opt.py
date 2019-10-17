@@ -157,7 +157,12 @@ class HVPOperator(object):
 
     def prepare_grad(self):
         # Compute gradient w.r.t loss over all parameters and vectorize
-        inputs, target = self.data
+        if type(data) == list:
+            inputs, target = self.data
+        elif type(data) == dict:
+            inputs, targets = Variable(self.data['image']), Variable(self.data['label'])
+        else:
+            raise Exception('Data type not supported')
 
         if self.use_gpu:
             inputs = inputs.cuda()
@@ -393,8 +398,12 @@ class OptWBoundEignVal(object):
             else:
                 # for testing purposes
                 self.optimizer.zero_grad()  # zero gradient
-                print(type(data))
-                inputs, target = data
+                if type(data) == list:
+                    inputs, target = data
+                elif type(data) == dict:
+                    inputs, targets = Variable(data['image']), Variable(data['label'])
+                else:
+                    raise Exception('Data type not supported')
                 if self.use_gpu:
                     inputs = inputs.cuda()
                     target = target.cuda()
@@ -434,7 +443,12 @@ class OptWBoundEignVal(object):
         # compute f on each batch (to avoid memory issues)
         for _, data in enumerate(self.dataloader):
             print(type(data))
-            inputs, target = data
+            if type(data) == list:
+                inputs, target = data
+            elif type(data) == dict:
+                inputs, targets = Variable(data['image']), Variable(data['label'])
+            else:
+                raise Exception('Data type not supported')
             size.append(len(target))
             f, _ = self.comp_f(inputs, target)
             f_list.append(f)  # compute f on each batch
@@ -586,7 +600,12 @@ class OptWBoundEignVal(object):
         labels = []
         for _, data in enumerate(dataloader):
 
-            inputs, target = data
+            if type(data) == list:
+                inputs, target = data
+            elif type(data) == dict:
+                inputs, targets = Variable(data['image']), Variable(data['label'])
+            else:
+                raise Exception('Data type not supported')
 
             # compute loss
             f, ops = self.comp_f(inputs, target)
@@ -709,7 +728,12 @@ class OptWBoundEignVal(object):
 
         for _, data in enumerate(dataloader):
 
-            inputs, target = data
+            if type(data) == list:
+                inputs, target = data
+            elif type(data) == dict:
+                inputs, targets = Variable(data['image']), Variable(data['label'])
+            else:
+                raise Exception('Data type not supported')
 
             feats = inputs.shape[1]
             if len(test_mean) == 1:
