@@ -161,7 +161,7 @@ class HVPOperator(object):
         if type(data) == list:
             inputs, target = self.data
         elif type(data) == dict:
-            inputs, targets = Variable(self.data['image']), Variable(self.data['label'])
+            inputs, target = Variable(self.data['image']), Variable(self.data['label'])
         else:
             raise Exception('Data type not supported')
 
@@ -402,7 +402,7 @@ class OptWBoundEignVal(object):
                 if type(data) == list:
                     inputs, target = data
                 elif type(data) == dict:
-                    inputs, targets = Variable(data['image']), Variable(data['label'])
+                    inputs, target = Variable(data['image']), Variable(data['label'])
                 else:
                     raise Exception('Data type not supported')
                 if self.use_gpu:
@@ -447,7 +447,7 @@ class OptWBoundEignVal(object):
             if type(data) == list:
                 inputs, target = data
             elif type(data) == dict:
-                inputs, targets = Variable(data['image']), Variable(data['label'])
+                inputs, target = Variable(data['image']), Variable(data['label'])
             else:
                 raise Exception('Data type not supported')
             size.append(len(target))
@@ -604,7 +604,7 @@ class OptWBoundEignVal(object):
             if type(data) == list:
                 inputs, target = data
             elif type(data) == dict:
-                inputs, targets = Variable(data['image']), Variable(data['label'])
+                inputs, target = Variable(data['image']), Variable(data['label'])
             else:
                 raise Exception('Data type not supported')
 
@@ -732,7 +732,7 @@ class OptWBoundEignVal(object):
             if type(data) == list:
                 inputs, target = data
             elif type(data) == dict:
-                inputs, targets = Variable(data['image']), Variable(data['label'])
+                inputs, target = Variable(data['image']), Variable(data['label'])
             else:
                 raise Exception('Data type not supported')
 
