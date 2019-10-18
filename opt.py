@@ -830,8 +830,8 @@ class OptWBoundEignVal(object):
 
         order = [0, 2, 3, 4, 5, 6, 7, 1]
         res = [res[i] for i in order]
-        print('Best_Val_Acc\tTrain_Loss\tTrain_Acc\tTrain_F1\tTest_Loss\tTest_Acc\tTest_F1\tRho')
-        print('\t'.join(res))
+        print('Best_Val_Acc  Train_Loss  Train_Acc  Train_F1  Test_Loss  Test_Acc  Test_F1  Rho')
+        print('  '.join(res))
 
 
 def cov_shift_tester(models, x, y, iters=1000, bad_modes=[], header='', mult=.1, prob=0.5, mean_diff=0, sd_diff=0,
