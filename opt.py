@@ -158,9 +158,9 @@ class HVPOperator(object):
 
     def prepare_grad(self):
         # Compute gradient w.r.t loss over all parameters and vectorize
-        if type(data) == list:
+        if type(self.data) == list:
             inputs, target = self.data
-        elif type(data) == dict:
+        elif type(self.data) == dict:
             inputs, target = Variable(self.data['image']), Variable(self.data['label'])
         else:
             raise Exception('Data type not supported')
@@ -443,7 +443,6 @@ class OptWBoundEignVal(object):
         size = []
         # compute f on each batch (to avoid memory issues)
         for _, data in enumerate(self.dataloader):
-            print(type(data))
             if type(data) == list:
                 inputs, target = data
             elif type(data) == dict:
