@@ -27,7 +27,7 @@ torch.manual_seed(1226)
 
 # Parameters
 tol = 0.005
-batch_size = 64
+batch_size = 128
 mu = 0
 K = 0
 
@@ -46,9 +46,9 @@ test_loader = get_test_loader(batch_size=batch_size)
 
 # learning rate
 def alpha(i):
-    if i < 200:
+    if i < 150:
         return 1
-    elif i < 300:
+    elif i < 225:
         return 0.1
     else:
         return 0.1**2
@@ -62,7 +62,7 @@ loss = torch.nn.CrossEntropyLoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0001)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
-opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=400,
+opt = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=300,
                        max_pow_iter=10000, verbose=False, header='CIFAR10_DenseNet', use_gpu=True, pow_iter=False)
 
 # Train model
