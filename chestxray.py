@@ -32,7 +32,7 @@ tol = 0.005  # tolerance
 batch_size = 2  # batch size
 mu = 0  # regularization factor
 K = 0  # minimum allowable spectral radius
-enc = 'res50'  # model type
+enc = 'alex'  # model type
 
 # def mu(i):
 #    return np.max([0.0, (i-50)/1000])
