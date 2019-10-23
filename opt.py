@@ -629,19 +629,20 @@ class OptWBoundEignVal(object):
                 target = target.cpu()
                 predicted = predicted.cpu()
                 ops = ops.cpu()
+                f1 = f1_score(target, predicted, average='micro')
+                f1_list.append(f1)
             if 'auc' in self.test_func:
                 outputs.append(ops)
                 labels.append(target)
-            f1 = f1_score(target, predicted, average='micro')
-            f1_list.append(f1)
 
         if 'auc' in self.test_func:
             roc = roc_auc_score(labels, outputs, average=None)  # compute AUC of ROC curves
             test_acc = roc.mean()  # mean AUCs
+            test_f1 = float('NaN')
         else:
             test_acc = np.average(acc_list, weights=size)  # weighted mean of accuracy
+            test_f1 = np.average(f1_list, weights=size)  # weighted mean of f1 scores
         test_loss = np.average(f_list, weights=size)  # weighted mean of f values
-        test_f1 = np.average(f1_list, weights=size)  # weighted mean of f1 scores
 
         return test_loss, test_acc, test_f1
 
