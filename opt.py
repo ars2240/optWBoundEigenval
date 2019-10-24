@@ -32,7 +32,7 @@ class HVPOperator(object):
     """
 
     def __init__(self, model, data, criterion, use_gpu=True, mem_track=False):
-        if use_gpu and torch.cuda.is_avaliable():
+        if use_gpu and torch.cuda.is_available():
             self.device = torch.device('cuda')
         else:
             self.device = torch.device('cpu')
@@ -200,7 +200,7 @@ class OptWBoundEignVal(object):
                  test_func='acc'):
 
         # set default device
-        if use_gpu and torch.cuda.is_avaliable():
+        if use_gpu and torch.cuda.is_available():
             self.device = torch.device('cuda')
         else:
             self.device = torch.device('cpu')
