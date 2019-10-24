@@ -39,11 +39,11 @@ enc = 'alex'  # model type
 
 # Load the dataset
 train_set = ChestXray_Dataset(use='train', transform=transform)
-train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=16)
+train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=4)
 valid_set = ChestXray_Dataset(use='validation', transform=transform)
-valid_loader = DataLoader(valid_set, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=16)
+valid_loader = DataLoader(valid_set, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=4)
 test_set = ChestXray_Dataset(use='test', transform=transform)
-test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=True, pin_memory=True, num_workers=16)
+test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=4)
 
 
 # learning rate

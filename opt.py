@@ -32,14 +32,15 @@ class HVPOperator(object):
     """
 
     def __init__(self, model, data, criterion, use_gpu=True, mem_track=False):
-        self.model = model  # NN model
-        if use_gpu:
-            self.model = self.model.cuda()
+        if use_gpu and torch.cuda.is_avaliable():
+            self.device = torch.device('cuda')
+        else:
+            self.device = torch.device('cpu')
+        self.model = model.to(self.device)
         self.data = data  # data (inputs, target)
         self.criterion = criterion  # loss function
         self.use_gpu = use_gpu  # whether or not GPUs are used
         self.stored_grad = None  # stored gradient (on CPU)
-        self.stored_grad_gpu = None  # stored gradient (on GPU)
         self.mem_track = mem_track  # whether or not maximum memory usage is tracked
         self.mem_max = 0  # running maximum memory usage
 
@@ -49,25 +50,17 @@ class HVPOperator(object):
         # convert numpy array to torch tensor
         if type(vec) is np.ndarray:
             vec = torch.from_numpy(vec)
-        if self.use_gpu:
-            vec = vec.cuda()
+        vec = vec.to(self.device)
 
         vec = vec.double()  # convert to double if float
 
         # compute original gradient, tracking computation graph
         self.zero_grad()
         if storedGrad and (self.stored_grad is not None):
-            if self.use_gpu:
-                grad_vec = self.stored_grad_gpu
-            else:
-                grad_vec = self.stored_grad
+            grad_vec = self.stored_grad.to(self.device)
         else:
             grad_vec = self.prepare_grad().double()
-            if self.use_gpu:
-                self.stored_grad = grad_vec.cpu()
-                self.stored_grad_gpu = grad_vec
-            else:
-                self.stored_grad = grad_vec
+            self.stored_grad = grad_vec.to('cpu')
 
         # compute the product
         grad_product = torch.sum(grad_vec * vec)
@@ -86,8 +79,7 @@ class HVPOperator(object):
         if self.mem_track and self.use_gpu:
             self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
 
-        if self.use_gpu:
-            hessian_vec_prod = hessian_vec_prod.cpu()
+        hessian_vec_prod = hessian_vec_prod.to('cpu')
 
         return hessian_vec_prod.data
 
@@ -97,25 +89,17 @@ class HVPOperator(object):
         # convert numpy array to torch tensor
         if type(vec) is np.ndarray:
             vec = torch.from_numpy(vec)
-        if self.use_gpu:
-            vec = vec.cuda()
+        vec = vec.to(self.device)
 
         vec = vec.double()  # convert to double if float
 
         # compute original gradient, tracking computation graph
         self.zero_grad()
         if storedGrad and (self.stored_grad is not None):
-            if self.use_gpu:
-                grad_vec = self.stored_grad_gpu
-            else:
-                grad_vec = self.stored_grad
+            grad_vec = self.stored_grad.to(self.device)
         else:
             grad_vec = self.prepare_grad().double()
-            if self.use_gpu:
-                self.stored_grad = grad_vec.cpu()
-                self.stored_grad_gpu = grad_vec
-            else:
-                self.stored_grad = grad_vec
+            self.stored_grad = grad_vec.to('cpu')
 
         # compute the product
         grad_product = torch.sum(grad_vec * vec)
@@ -146,8 +130,7 @@ class HVPOperator(object):
         if self.mem_track and self.use_gpu:
             self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
 
-        if self.use_gpu:
-            vec_grad_hessian_vec = vec_grad_hessian_vec.cpu()
+        vec_grad_hessian_vec = vec_grad_hessian_vec.to('cpu')
         return vec_grad_hessian_vec.data
 
     def zero_grad(self):
@@ -165,9 +148,8 @@ class HVPOperator(object):
         else:
             raise Exception('Data type not supported')
 
-        if self.use_gpu:
-            inputs = inputs.cuda()
-            target = target.cuda()
+        inputs = inputs.to(self.device)
+        target = target.to(self.device)
 
         output = self.model(inputs)
         if self.criterion.__class__.__name__ == 'KLDivLoss':
@@ -216,6 +198,12 @@ class OptWBoundEignVal(object):
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, pow_iter=True,
                  max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header='', num_workers=0,
                  test_func='acc'):
+
+        # set default device
+        if use_gpu and torch.cuda.is_avaliable():
+            self.device = torch.device('cuda')
+        else:
+            self.device = torch.device('cpu')
         self.ndim = sum(p.numel() for p in model.parameters())  # number of dimensions
         self.x = 1.0/np.sqrt(self.ndim)*np.ones(self.ndim)  # initial point
         self.f = 0  # loss function value
@@ -231,9 +219,7 @@ class OptWBoundEignVal(object):
         self.batch_size = batch_size  # batch size
         self.eps = eps  # convergence
         self.pow_iter_eps = pow_iter_eps  # convergence
-        self.model = model  # model (from torch)
-        if use_gpu:
-            self.model.cuda()
+        self.model = model.to(self.device)  # model (from torch)
         self.dataloader = None  # dataloader for training set (from torch)
         self.loss = loss  # loss function (from torch)
         self.optimizer = optimizer  # optimizer function, optional (from torch)
@@ -315,9 +301,8 @@ class OptWBoundEignVal(object):
         # computes f
 
         # if using gpu, move data to it
-        if self.use_gpu:
-            inputs = inputs.cuda()
-            target = target.cuda()
+        inputs = inputs.to(self.device)
+        target = target.to(self.device)
         output = self.model(inputs)  # compute prediction
 
         # compute loss
@@ -387,8 +372,7 @@ class OptWBoundEignVal(object):
                     self.gradg = torch.zeros(self.ndim).double()  # set gradient to zero
 
                 p = self.gradf + mu * self.gradg  # gradient step
-                if self.use_gpu:
-                    p = p.cuda()  # move to GPU
+                p = p.to(self.device)  # move to device
 
                 i = 0
                 for param in self.model.parameters():
@@ -405,9 +389,8 @@ class OptWBoundEignVal(object):
                     inputs, target = Variable(data['image']), Variable(data['label'])
                 else:
                     raise Exception('Data type not supported')
-                if self.use_gpu:
-                    inputs = inputs.cuda()
-                    target = target.cuda()
+                inputs = inputs.to(self.device)
+                target = target.to(self.device)
                 output = self.model(inputs)
                 loss = self.loss(output, target)  # loss function
                 loss.backward()  # back prop
@@ -522,12 +505,9 @@ class OptWBoundEignVal(object):
                     self.best_val_acc = self.val_acc
                     self.best_rho = self.rho
                     self.best_val_iter = self.i
-                    if self.use_gpu:
-                        self.model.cpu()
-                        torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model_best.pt')
-                        self.model.cuda()
-                    else:
-                        torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model_best.pt')
+                    self.model.to('cpu')
+                    torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model_best.pt')
+                    self.model.to(self.device)
                 print('%d\t %f\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm, self.val_acc,
                                                             val_f1))
 
@@ -535,12 +515,9 @@ class OptWBoundEignVal(object):
             f_hist.append(self.h)
 
             # Save model weights
-            if self.use_gpu:
-                self.model.cpu()
-                torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model.pt')
-                self.model.cuda()
-            else:
-                torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model.pt')
+            self.model.to('cpu')
+            torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model.pt')
+            self.model.to(self.device)
 
             # check if convergence criteria met
             if self.i >= (self.min_iter - 1):
@@ -619,21 +596,20 @@ class OptWBoundEignVal(object):
 
             # compute accuracy
             _, predicted = torch.max(ops.data, 1)
-            if self.use_gpu:
-                target = target.cuda()
+            target = target.to(self.device)
             if 'acc' in self.test_func:
                 acc = torch.mean((predicted == target).float()).item() * 100
                 acc_list.append(acc)
 
-            if self.use_gpu:
-                target = target.cpu()
-                predicted = predicted.cpu()
-                ops = ops.cpu()
-                f1 = f1_score(target, predicted, average='micro')
-                f1_list.append(f1)
+            target = target.to('cpu')
+            predicted = predicted.to('cpu')
+            ops = ops.to('cpu')
             if 'auc' in self.test_func:
                 outputs.append(ops)
                 labels.append(target)
+            else:
+                f1 = f1_score(target, predicted, average='micro')
+                f1_list.append(f1)
 
         if 'auc' in self.test_func:
             roc = roc_auc_score(labels, outputs, average=None)  # compute AUC of ROC curves
@@ -651,8 +627,7 @@ class OptWBoundEignVal(object):
 
         self.model.load_state_dict(torch.load('./models/' + self.header2 + '_trained_model_best.pt'))
 
-        if self.use_gpu:
-            self.model.cuda()
+        self.model.to(self.device)
 
         return self.test_model(x, y, loader)
 
@@ -772,15 +747,13 @@ class OptWBoundEignVal(object):
             min_weight = np.min([min_weight, np.min(wm)])
             max_weight = np.max([max_weight, np.max(wm)])
             weights /= wm * len(target)
-            if self.use_gpu:
-                target = target.cuda()
-                weights = weights.cuda()
+            target = target.to(self.device)
+            weights = weights.to(self.device)
             acc = torch.sum(weights.float() * (predicted == target).float()).item() * 100
             acc_list.append(acc)
 
-            if self.use_gpu:
-                target = target.cpu()
-                predicted = predicted.cpu()
+            target = target.to('cpu')
+            predicted = predicted.to('cpu')
             f1 = f1_score(target, predicted, average='micro', sample_weight=weights)
             f1_list.append(f1)
 
@@ -800,9 +773,7 @@ class OptWBoundEignVal(object):
         # tests best model, loaded from file
 
         self.model.load_state_dict(torch.load('./models/' + self.header2 + '_trained_model_best.pt'))
-
-        if self.use_gpu:
-            self.model.cuda()
+        self.model.to(self.device)
 
         return self.test_model_cov(x, y, test_mean, test_sd, test_skew, train_mean, train_sd, train_skew)
 
