@@ -51,37 +51,32 @@ class HVPOperator(object):
         if type(vec) is np.ndarray:
             vec = torch.from_numpy(vec)
         vec = vec.to(self.device)
-
-        vec = vec.double()  # convert to double if float
+        vec = vec.double()  # convert to double
 
         # compute original gradient, tracking computation graph
-        self.zero_grad()
         if storedGrad and (self.stored_grad is not None):
             grad_vec = self.stored_grad.to(self.device)
         else:
-            grad_vec = self.prepare_grad().double()
+            self.zero_grad()
+            grad_vec = self.prepare_grad()
             self.stored_grad = grad_vec.to('cpu')
-
-        # compute the product
-        grad_product = torch.sum(grad_vec * vec)
 
         # check memory usage
         if self.mem_track and self.use_gpu:
             self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
 
         self.zero_grad()
-        # take the second gradient
-        grad_grad = torch.autograd.grad(grad_product, self.model.parameters(), retain_graph=True)
+        # compute gradient of vector product
+        grad_grad = torch.autograd.grad(grad_vec, self.model.parameters(), grad_outputs=vec, retain_graph=True)
         # concatenate the results over the different components of the network
-        hessian_vec_prod = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad])).double()
+        hessian_vec_prod = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad]))
 
         # check memory usage
         if self.mem_track and self.use_gpu:
             self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
 
         hessian_vec_prod = hessian_vec_prod.to('cpu')
-
-        return hessian_vec_prod.data
+        return hessian_vec_prod.data.double()
 
     def vGHv(self, vec, storedGrad=False):
         # Returns vec*grad H*vec where H is the hessian of the loss w.r.t. the vectorized model parameters
@@ -90,48 +85,42 @@ class HVPOperator(object):
         if type(vec) is np.ndarray:
             vec = torch.from_numpy(vec)
         vec = vec.to(self.device)
-
-        vec = vec.double()  # convert to double if float
+        vec = vec.double()  # convert to double
 
         # compute original gradient, tracking computation graph
-        self.zero_grad()
         if storedGrad and (self.stored_grad is not None):
             grad_vec = self.stored_grad.to(self.device)
         else:
-            grad_vec = self.prepare_grad().double()
+            self.zero_grad()
+            grad_vec = self.prepare_grad()
             self.stored_grad = grad_vec.to('cpu')
 
-        # compute the product
-        grad_product = torch.sum(grad_vec * vec)
+        # check memory usage
+        if self.mem_track and self.use_gpu:
+            self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
+
+        self.zero_grad()
+        # compute gradient of vector product
+        grad_grad = torch.autograd.grad(grad_vec, self.model.parameters(), grad_outputs=vec, create_graph=True)
+        # concatenate the results over the different components of the network
+        hessian_vec_prod = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad]))
 
         # check memory usage
         if self.mem_track and self.use_gpu:
             self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
 
         self.zero_grad()
-        # take the second gradient
-        grad_grad = torch.autograd.grad(grad_product, self.model.parameters(), retain_graph=True, create_graph=True)
+        # compute second gradient of vector product
+        grad_grad = torch.autograd.grad(hessian_vec_prod.double(), self.model.parameters(), grad_outputs=vec)
         # concatenate the results over the different components of the network
-        hessian_vec_prod = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad])).double()
-        # compute the product
-        grad_product = torch.sum(hessian_vec_prod * vec)
-
-        # check memory usage
-        if self.mem_track and self.use_gpu:
-            self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
-
-        self.zero_grad()
-        # take the second gradient
-        grad_grad = torch.autograd.grad(grad_product, self.model.parameters(), retain_graph=True)
-        # concatenate the results over the different components of the network
-        vec_grad_hessian_vec = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad])).double()
+        vec_grad_hessian_vec = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad]))
 
         # check memory usage
         if self.mem_track and self.use_gpu:
             self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
 
         vec_grad_hessian_vec = vec_grad_hessian_vec.to('cpu')
-        return vec_grad_hessian_vec.data
+        return vec_grad_hessian_vec.data.double()
 
     def zero_grad(self):
         # Zeros out the gradient info for each parameter in the model
@@ -160,8 +149,7 @@ class HVPOperator(object):
             loss = self.criterion(output, target)
         grad_dict = torch.autograd.grad(loss, self.model.parameters(), create_graph=True)
         grad_vec = torch.cat(tuple([g.contiguous().view(-1) for g in grad_dict]))
-        grad_vec = grad_vec.double()  # / len(target)  # convert to double if float
-        return grad_vec
+        return grad_vec.double()
 
 
 # Download and parse the dataset
@@ -276,7 +264,7 @@ class OptWBoundEignVal(object):
             if n < self.pow_iter_eps:
                 break
 
-            v = 1.0/np.linalg.norm(vnew)*vnew.double()  # update vector and normalize
+            v = 1.0/np.linalg.norm(vnew)*vnew  # update vector and normalize
 
         self.v = v  # update eigenvector
         self.rho = np.abs(lam)  # update spectral radius
@@ -754,6 +742,7 @@ class OptWBoundEignVal(object):
 
             target = target.to('cpu')
             predicted = predicted.to('cpu')
+            weights = weights.to('cpu')
             f1 = f1_score(target, predicted, average='micro', sample_weight=weights)
             f1_list.append(f1)
 
