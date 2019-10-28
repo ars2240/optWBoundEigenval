@@ -45,6 +45,10 @@ valid_loader = DataLoader(valid_set, batch_size=batch_size, shuffle=False, pin_m
 test_set = ChestXray_Dataset(use='test', transform=transform)
 test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=1)
 
+for _, data in enumerate(train_loader):
+    target = Variable(data['label'])
+    print(target)
+
 
 # learning rate
 def alpha(i):

@@ -488,7 +488,8 @@ class OptWBoundEignVal(object):
             if (inputs_valid is None or target_valid is None) and (valid_loader is None):
                 print('%d\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm))
             else:
-                _, self.val_acc, val_f1 = self.test_model(inputs_valid, target_valid, valid_loader)
+                with torch.no_grad():
+                    _, self.val_acc, val_f1 = self.test_model(inputs_valid, target_valid, valid_loader)
                 if self.val_acc > self.best_val_acc:
                     self.best_val_acc = self.val_acc
                     self.best_rho = self.rho
@@ -600,7 +601,7 @@ class OptWBoundEignVal(object):
                 f1_list.append(f1)
 
         if 'auc' in self.test_func:
-            roc = roc_auc_score(labels, outputs, average=None)  # compute AUC of ROC curves
+            roc = roc_auc_score(torch.cat(labels), torch.cat(outputs), average=None)  # compute AUC of ROC curves
             test_acc = roc.mean()  # mean AUCs
             test_f1 = float('NaN')
         else:
