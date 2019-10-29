@@ -48,7 +48,7 @@ test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, pin_mem
 
 print('CPU %: ' + str(psutil.cpu_percent()) + ', Mem %:', str(psutil.virtual_memory()[2]))
 
-t = []
+t = torch.zeros((1, 14))
 n = 0
 for _, data in enumerate(train_loader):
     target = Variable(data['label'])
