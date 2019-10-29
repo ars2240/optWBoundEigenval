@@ -52,7 +52,7 @@ t = []
 n = 0
 for _, data in enumerate(train_loader):
     target = Variable(data['label'])
-    t = np.sum(target.append(t), axis=0)
+    t = np.sum(target.cat(t), axis=0)
     n += len(target)
 print(t)
 print(n)
