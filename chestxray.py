@@ -54,7 +54,7 @@ for _, data in enumerate(train_loader):
     target = Variable(data['label']).to('cuda')
     print(target)
     print(t)
-    t = torch.sum(torch.cat((target, t)), dim=0)
+    t = torch.sum(torch.cat((target, t)), dim=0).unsqueeze(0)
     n += len(target)
 print(t.to('cpu'))
 print(n)
