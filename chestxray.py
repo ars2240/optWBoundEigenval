@@ -14,6 +14,7 @@ import sys
 import os
 import numpy as np
 import torch
+import psutil
 import torch.utils.data as utils_data
 # import scipy.io as sio
 from opt import OptWBoundEignVal
@@ -45,14 +46,18 @@ valid_loader = DataLoader(valid_set, batch_size=batch_size, shuffle=False, pin_m
 test_set = ChestXray_Dataset(use='test', transform=transform)
 test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=1)
 
+print('CPU %: ' + psutil.cpu_percent() + ', Mem %:', psutil.virtual_memory()[2])
+
 t = []
 n = 0
 for _, data in enumerate(train_loader):
     target = Variable(data['label'])
-    t = np.sum(np.append(target, t), axis=0)
+    t = np.sum(target.append(t), axis=0)
     n += len(target)
 print(t)
 print(n)
+
+print('CPU %: ' + psutil.cpu_percent() + ', Mem %:', psutil.virtual_memory()[2])
 
 
 # learning rate
@@ -89,6 +94,8 @@ optimizer = torch.optim.Adam(model.parameters(), lr=1e-5)
 opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
                        max_pow_iter=10000, verbose=False, header='chestxray_'+enc, use_gpu=True, pow_iter=False,
                        test_func='sigmoid auc')
+
+print('CPU %: ' + psutil.cpu_percent() + ', Mem %:', psutil.virtual_memory()[2])
 
 # Train model
 opt.train(loader=train_loader, valid_loader=valid_loader)
