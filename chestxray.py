@@ -52,7 +52,7 @@ t = torch.zeros((1, 14)).to('cuda')
 n = 0
 for _, data in enumerate(train_loader):
     target = Variable(data['label']).to('cuda')
-    t = np.sum(torch.cat((target, t)), axis=0)
+    t = torch.sum(torch.cat((target, t)), dim=1)
     n += len(target)
 print(t.to('cpu'))
 print(n)
