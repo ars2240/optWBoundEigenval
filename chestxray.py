@@ -48,13 +48,13 @@ test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, pin_mem
 
 print('CPU %: ' + str(psutil.cpu_percent()) + ', Mem %:', str(psutil.virtual_memory()[2]))
 
-t = torch.zeros((1, 14))
+t = torch.zeros((1, 14)).to('cuda')
 n = 0
 for _, data in enumerate(train_loader):
-    target = Variable(data['label'])
+    target = Variable(data['label']).to('cuda')
     t = np.sum(torch.cat((target, t)), axis=0)
     n += len(target)
-print(t)
+print(t.to('cpu'))
 print(n)
 
 print('CPU %: ' + str(psutil.cpu_percent()) + ', Mem %:', str(psutil.virtual_memory()[2]))
