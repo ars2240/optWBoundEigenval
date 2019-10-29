@@ -46,7 +46,7 @@ valid_loader = DataLoader(valid_set, batch_size=batch_size, shuffle=False, pin_m
 test_set = ChestXray_Dataset(use='test', transform=transform)
 test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=1)
 
-print('CPU %: ' + psutil.cpu_percent() + ', Mem %:', psutil.virtual_memory()[2])
+print('CPU %: ' + str(psutil.cpu_percent()) + ', Mem %:', str(psutil.virtual_memory()[2]))
 
 t = []
 n = 0
@@ -57,7 +57,7 @@ for _, data in enumerate(train_loader):
 print(t)
 print(n)
 
-print('CPU %: ' + psutil.cpu_percent() + ', Mem %:', psutil.virtual_memory()[2])
+print('CPU %: ' + str(psutil.cpu_percent()) + ', Mem %:', str(psutil.virtual_memory()[2]))
 
 
 # learning rate
@@ -95,7 +95,7 @@ opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu
                        max_pow_iter=10000, verbose=False, header='chestxray_'+enc, use_gpu=True, pow_iter=False,
                        test_func='sigmoid auc')
 
-print('CPU %: ' + psutil.cpu_percent() + ', Mem %:', psutil.virtual_memory()[2])
+print('CPU %: ' + str(psutil.cpu_percent()) + ', Mem %:', str(psutil.virtual_memory()[2]))
 
 # Train model
 opt.train(loader=train_loader, valid_loader=valid_loader)
