@@ -46,7 +46,8 @@ valid_loader = DataLoader(valid_set, batch_size=batch_size, shuffle=False, pin_m
 test_set = ChestXray_Dataset(use='test', transform=transform)
 test_loader = DataLoader(test_set, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=1)
 
-print('CPU %: ' + str(psutil.cpu_percent()) + ', Mem %:', str(psutil.virtual_memory()[2]))
+print('CPU %: ' + str(psutil.cpu_percent()) + ', CPU Cores: ' + str(torch.get_num_threads()) + ', Mem %: ' +
+      str(psutil.virtual_memory()[2]))
 
 t = torch.zeros((1, 14)).to('cuda')
 n = 0
@@ -54,11 +55,13 @@ for _, data in enumerate(train_loader):
     target = Variable(data['label']).to('cuda')
     t = torch.sum(torch.cat((target, t)), dim=0).unsqueeze(0)
     n += len(target)
-    print('CPU %: ' + str(psutil.cpu_percent()) + ', Mem %:', str(psutil.virtual_memory()[2]))
+    print('CPU %: ' + str(psutil.cpu_percent()) + ', CPU Cores: ' + str(torch.get_num_threads()) + ', Mem %: ' +
+          str(psutil.virtual_memory()[2]))
 print(t.to('cpu'))
 print(n)
 
-print('CPU %: ' + str(psutil.cpu_percent()) + ', Mem %:', str(psutil.virtual_memory()[2]))
+print('CPU %: ' + str(psutil.cpu_percent()) + ', CPU Cores: ' + str(torch.get_num_threads()) + ', Mem %: ' +
+      str(psutil.virtual_memory()[2]))
 
 
 # learning rate
@@ -96,7 +99,8 @@ opt = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu
                        max_pow_iter=10000, verbose=False, header='chestxray_'+enc, use_gpu=True, pow_iter=False,
                        test_func='sigmoid auc')
 
-print('CPU %: ' + str(psutil.cpu_percent()) + ', Mem %:', str(psutil.virtual_memory()[2]))
+print('CPU %: ' + str(psutil.cpu_percent()) + ', CPU Cores: ' + str(torch.get_num_threads()) + ', Mem %: ' +
+      str(psutil.virtual_memory()[2]))
 
 # Train model
 opt.train(loader=train_loader, valid_loader=valid_loader)
