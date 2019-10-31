@@ -52,7 +52,7 @@ print('CPU %: ' + str(psutil.cpu_percent()) + ', CPU Cores: ' + str(torch.get_nu
 t = torch.zeros((1, 14)).to('cuda')
 n = 0
 for _, data in enumerate(train_loader):
-    target = Variable(data['label']).to('cuda')
+    target = Variable(data['label'].to('cuda'))
     t = torch.sum(torch.cat((target, t)), dim=0).unsqueeze(0)
     n += len(target)
     print('CPU %: ' + str(psutil.cpu_percent()) + ', CPU Cores: ' + str(torch.get_num_threads()) + ', Mem %: ' +
