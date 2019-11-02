@@ -9,6 +9,7 @@
 # Dependencies:
 #   Packages: requests, numpy, scipy, sklearn, torch
 
+import inspect
 import random
 import numpy as np
 import os
@@ -258,13 +259,13 @@ class OptWBoundEignVal(object):
             vnew = self.hvp_op.Hv(v, storedGrad=True)  # compute H*v
 
             # if converged, break
-            lam = np.dot(vnew, v)  # update eigenvalue
-            n = np.linalg.norm(vnew-lam*v)  # norm of H*v-lambda*v
+            lam = torch.dot(vnew, v)  # update eigenvalue
+            n = torch.norm(vnew-lam*v)  # norm of H*v-lambda*v
 
             if n < self.pow_iter_eps:
                 break
 
-            v = 1.0/np.linalg.norm(vnew)*vnew  # update vector and normalize
+            v = 1.0/torch.norm(vnew)*vnew  # update vector and normalize
 
         self.v = v  # update eigenvector
         self.rho = np.abs(lam)  # update spectral radius
@@ -295,7 +296,7 @@ class OptWBoundEignVal(object):
 
         # compute loss
         if self.loss.__class__.__name__ == 'KLDivLoss':
-            target_onehot = torch.zeros(np.shape(output))
+            target_onehot = torch.zeros(output.shape)
             target_onehot.scatter_(1, target.view(-1, 1), 1)
             f = self.loss(output.float(), target_onehot.float()).item()
         else:
@@ -365,7 +366,7 @@ class OptWBoundEignVal(object):
                 i = 0
                 for param in self.model.parameters():
                     s = param.data.size()  # number of input & output nodes
-                    l = np.product(s)  # total number of parameters
+                    l = torch.prod(torch.tensor(s))  # total number of parameters
                     param.grad = p[i:(i + l)].view(s).float()  # adjust gradient
                     i += l  # increment
             else:
@@ -391,13 +392,11 @@ class OptWBoundEignVal(object):
                 log_file = open(self.verbose_log_file, "a")  # open log file
                 sys.stdout = log_file  # write to log file
                 if self.pow_iter:
-                    print('%d\t %f\t %f\t %f\t %f' % (j, self.rho, self.norm,
-                                                    np.linalg.norm(self.gradf.detach().numpy()),
-                                                    np.linalg.norm(self.gradg.detach().numpy())))
+                    print('%d\t %f\t %f\t %f\t %f' % (j, self.rho, self.norm, torch.norm(self.gradf.detach()),
+                                                      torch.norm(self.gradg.detach())))
                 else:
-                    print('%d\t %f\t %f\t %f\t %f' % (j, self.rho, self.norm,
-                                                      np.linalg.norm(self.gradf),
-                                                      np.linalg.norm(self.gradg)))
+                    print('%d\t %f\t %f\t %f\t %f' % (j, self.rho, self.norm, torch.norm(self.gradf),
+                                                      torch.norm(self.gradg)))
                 log_file.close()  # close log file
                 sys.stdout = old_stdout  # reset output
 
@@ -648,30 +647,6 @@ class OptWBoundEignVal(object):
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
 
-    def get_prob(self, inputs,  m=[0], sd=[1], skew=[0]):
-        # computes log pdf of inputs given mean (m), standard deviation (sd), and skewness (skew)
-        if len(m) != 1 or len(sd) != 1 or len(skew) != 1:
-            if len(m) == 1:
-                if len(sd) > 1:
-                    m = m*np.ones(len(sd))
-                else:
-                    m = m*np.ones(len(skew))
-            if len(sd) == 1:
-                sd = sd*np.ones(len(m))
-            if len(skew) == 1:
-                skew = skew*np.ones(len(m))
-
-        if not np.any(skew):
-            w = norm.logpdf(inputs, m, sd)
-        else:
-            w = skewnorm.logpdf(inputs, skew, m, sd)
-        bad = np.where(np.isinf(w))[0]
-        if len(bad) > 0:
-            w[bad] = norm.logpdf(inputs[bad, :], m, sd)
-        w = np.sum(w, axis=1)
-
-        return w
-
     def test_model_cov(self, x, y, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
                        train_skew=[0]):
         # Computes the loss and accuracy of model on given dataset
@@ -795,6 +770,31 @@ class OptWBoundEignVal(object):
         print('  '.join(res))
 
 
+def get_prob(inputs,  m=[0], sd=[1], skew=[0]):
+    # computes log pdf of inputs given mean (m), standard deviation (sd), and skewness (skew)
+    if len(m) != 1 or len(sd) != 1 or len(skew) != 1:
+        if len(m) == 1:
+            if len(sd) > 1:
+                m = m*np.ones(len(sd))
+            else:
+                m = m*np.ones(len(skew))
+        if len(sd) == 1:
+            sd = sd*np.ones(len(m))
+        if len(skew) == 1:
+            skew = skew*np.ones(len(m))
+
+    if not np.any(skew):
+        w = norm.logpdf(inputs, m, sd)
+    else:
+        w = skewnorm.logpdf(inputs, skew, m, sd)
+    bad = np.where(np.isinf(w))[0]
+    if len(bad) > 0:
+        w[bad] = norm.logpdf(inputs[bad, :], m, sd)
+    w = np.sum(w, axis=1)
+
+    return w
+
+
 def cov_shift_tester(models, x, y, iters=1000, bad_modes=[], header='', mult=.1, prob=0.5, mean_diff=0, sd_diff=0,
                      skew_diff=0, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
                      train_skew=[0]):
@@ -835,3 +835,51 @@ def cov_shift_tester(models, x, y, iters=1000, bad_modes=[], header='', mult=.1,
     np.savetxt("./logs/" + header + "_cov_shift_acc.csv", acc, delimiter=",")
     np.savetxt("./logs/" + header + "_cov_shift_f1.csv", f1, delimiter=",")
     np.savetxt("./logs/" + header + "_cov_shift_indices.csv", indices, delimiter=",")
+
+
+def main(pfile):
+    # Load Data
+    root = './data'
+    if not os.path.exists(root):
+        os.mkdir(root)
+
+    root = './params'
+    if not os.path.exists(root):
+        os.mkdir(root)
+
+    sys.path.insert(0, './params')  # add folder containing dcnn to path
+    params = __import__(pfile)
+    options = params.options()
+
+    # get options
+    parameters = inspect.getfullargspec(OptWBoundEignVal)
+    npar = len(parameters.args)
+    ndef = len(parameters.defaults)
+    diff = npar - ndef
+    for i in range(0, npar):
+        if parameters.args[i] != 'self' and parameters.args[i] not in options.keys():
+            if i < diff:
+                raise Exception('Missing ' + parameters.args[i])
+            else:
+                options[parameters.args[i]] = parameters.defaults[i-diff]
+
+    opt = OptWBoundEignVal(model=options['model'], loss=options['loss'], optimizer=options['optimizer'],
+                           scheduler=options['scheduler'], mu=options['mu'], K=options['K'], eps=options['eps'],
+                           pow_iter_eps=options['pow_iter_eps'], use_gpu=options['use_gpu'],
+                           batch_size=options['batch_size'], min_iter=options['min_iter'], max_iter=options['max_iter'],
+                           max_pow_iter=options['max_pow_iter'], pow_iter=options['pow_iter'],
+                           max_samples=options['max_samples'], ignore_bad_vals=options['ignore_bad_vals'],
+                           verbose=options['verbose'], mem_track=options['mem_track'], header=options['header'],
+                           num_workers=options['num_workers'], test_func=options['test_func'])
+
+    # Train model
+    opt.train(loader=options['train_loader'], valid_loader=options['valid_loader'])
+    opt.test_test_set(loader=options['test_loader'])  # test model on test set
+    opt.parse()
+
+    if 'aug_test' in options.keys() and options['aug_test']:
+        # Augmented Testing
+        test_loader = get_test_loader(batch_size=options['batch_size'], augment=True)
+        _, acc, f1 = opt.test_model_best(loader=test_loader)
+        print('Aug_Test_Acc\tAug_Test_F1')
+        print(str(acc) + '\t' + str(f1))
