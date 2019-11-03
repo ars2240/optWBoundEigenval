@@ -102,4 +102,4 @@ def options():
 
     opt['aug_test'] = True
 
-    return options
+    return opt
