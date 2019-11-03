@@ -45,6 +45,11 @@ class HVPOperator(object):
         self.mem_track = mem_track  # whether or not maximum memory usage is tracked
         self.mem_max = 0  # running maximum memory usage
 
+    def mem_check(self):
+        # checks max memory used
+        if self.mem_track and self.use_gpu:
+            self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
+
     def Hv(self, vec, storedGrad=False):
         # Returns H*vec where H is the hessian of the loss w.r.t. the vectorized model parameters
 
@@ -63,8 +68,7 @@ class HVPOperator(object):
             self.stored_grad = grad_vec.to('cpu')
 
         # check memory usage
-        if self.mem_track and self.use_gpu:
-            self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
+        self.mem_check()
 
         self.zero_grad()
         # compute gradient of vector product
@@ -73,10 +77,9 @@ class HVPOperator(object):
         hessian_vec_prod = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad]))
 
         # check memory usage
-        if self.mem_track and self.use_gpu:
-            self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
+        self.mem_check()
 
-        hessian_vec_prod = hessian_vec_prod.to('cpu')
+        # hessian_vec_prod = hessian_vec_prod.to('cpu')
         return hessian_vec_prod.data.double()
 
     def vGHv(self, vec, storedGrad=False):
@@ -97,8 +100,7 @@ class HVPOperator(object):
             self.stored_grad = grad_vec.to('cpu')
 
         # check memory usage
-        if self.mem_track and self.use_gpu:
-            self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
+        self.mem_check()
 
         self.zero_grad()
         # compute gradient of vector product
@@ -107,8 +109,7 @@ class HVPOperator(object):
         hessian_vec_prod = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad]))
 
         # check memory usage
-        if self.mem_track and self.use_gpu:
-            self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
+        self.mem_check()
 
         self.zero_grad()
         # compute second gradient of vector product
@@ -117,10 +118,9 @@ class HVPOperator(object):
         vec_grad_hessian_vec = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad]))
 
         # check memory usage
-        if self.mem_track and self.use_gpu:
-            self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
+        self.mem_check()
 
-        vec_grad_hessian_vec = vec_grad_hessian_vec.to('cpu')
+        # vec_grad_hessian_vec = vec_grad_hessian_vec.to('cpu')
         return vec_grad_hessian_vec.data.double()
 
     def zero_grad(self):
@@ -244,6 +244,12 @@ class OptWBoundEignVal(object):
         self.mem_max = 0  # running maximum memory usage
         self.num_workers = num_workers  # number of GPUs
         self.test_func = test_func  # test function
+
+    def mem_check(self):
+        # checks & prints max memory used
+        if self.mem_track and self.use_gpu:
+            self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
+            print('Running Max GPU Memory used (in bytes): %d' % self.mem_max)
 
     def comp_rho(self):
         # computes rho, v
@@ -404,9 +410,7 @@ class OptWBoundEignVal(object):
             if self.use_gpu:
                 torch.cuda.empty_cache()
                 # check max memory usage
-                if self.mem_track:
-                    self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
-                    print('Running Max GPU Memory used (in bytes): %d' % self.mem_max)
+                self.mem_check()
 
         # compute overall estimates
         f_list = []
@@ -864,6 +868,13 @@ def missing_params(func, options, replace={}):
 def check_folder(root):
     if not os.path.exists(root):
         os.mkdir(root)
+
+
+# Prints CPU%, # of cores, and Memory %
+def check_cpu():
+    import psutil
+    print('CPU %: ' + str(psutil.cpu_percent()) + ', CPU Cores: ' + str(torch.get_num_threads()) + ', Mem %: ' +
+          str(psutil.virtual_memory()[2]))
 
 
 # main method
