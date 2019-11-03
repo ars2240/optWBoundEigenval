@@ -183,7 +183,7 @@ def download(url):
 
 
 class OptWBoundEignVal(object):
-    def __init__(self, model, loss, optimizer, scheduler=None, mu=0, K=0, eps=1e-3, pow_iter_eps=1e-3,
+    def __init__(self, model, loss, optimizer, scheduler=None, mu=0, K=0, eps=-1, pow_iter_eps=1e-3,
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, pow_iter=True,
                  max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header='', num_workers=0,
                  test_func='acc'):
@@ -268,7 +268,7 @@ class OptWBoundEignVal(object):
             v = 1.0/torch.norm(vnew)*vnew  # update vector and normalize
 
         self.v = v  # update eigenvector
-        self.rho = np.abs(lam)  # update spectral radius
+        self.rho = torch.abs(lam)  # update spectral radius
         self.norm = n  # update norm
 
         if n > self.pow_iter_eps:
@@ -392,10 +392,10 @@ class OptWBoundEignVal(object):
                 log_file = open(self.verbose_log_file, "a")  # open log file
                 sys.stdout = log_file  # write to log file
                 if self.pow_iter:
-                    print('%d\t %f\t %f\t %f\t %f' % (j, self.rho, self.norm, torch.norm(self.gradf.detach()),
+                    print('%d\t %f\t %f\t %f\t %f' % (j, self.rho.item(), self.norm, torch.norm(self.gradf.detach()),
                                                       torch.norm(self.gradg.detach())))
                 else:
-                    print('%d\t %f\t %f\t %f\t %f' % (j, self.rho, self.norm, torch.norm(self.gradf),
+                    print('%d\t %f\t %f\t %f\t %f' % (j, self.rho.item(), self.norm, torch.norm(self.gradf),
                                                       torch.norm(self.gradg)))
                 log_file.close()  # close log file
                 sys.stdout = old_stdout  # reset output
@@ -485,7 +485,7 @@ class OptWBoundEignVal(object):
 
             # add values to log file
             if (inputs_valid is None or target_valid is None) and (valid_loader is None):
-                print('%d\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm))
+                print('%d\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho.item(), self.h, self.norm))
             else:
                 with torch.no_grad():
                     _, self.val_acc, val_f1 = self.test_model(inputs_valid, target_valid, valid_loader)
@@ -496,8 +496,8 @@ class OptWBoundEignVal(object):
                     self.model.to('cpu')
                     torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model_best.pt')
                     self.model.to(self.device)
-                print('%d\t %f\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm, self.val_acc,
-                                                            val_f1))
+                print('%d\t %f\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho.item(), self.h, self.norm,
+                                                            self.val_acc, val_f1))
 
             # add function value to history log
             f_hist.append(self.h)
@@ -530,7 +530,7 @@ class OptWBoundEignVal(object):
         # best validation accuracy
         print('Best Validation Iterate:', self.best_val_iter)
         print('Best Validation Accuracy:', self.best_val_acc)
-        print('Rho:', self.best_rho)
+        print('Rho:', self.best_rho.item())
 
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
@@ -837,32 +837,52 @@ def cov_shift_tester(models, x, y, iters=1000, bad_modes=[], header='', mult=.1,
     np.savetxt("./logs/" + header + "_cov_shift_indices.csv", indices, delimiter=",")
 
 
+# fill in missing parameters (with their defaults) for function in options dictionary
+def missing_params(func, options, replace={}):
+    # func = function
+    # options = options dictionary
+    # preplace = dictionary of options to replace
+    parameters = inspect.getfullargspec(func)
+    npar = len(parameters.args)  # number of arguments
+    ndef = len(parameters.defaults)  # number of defaults
+    diff = npar - ndef
+    for i in range(0, npar):
+        if parameters.args[i] in replace.keys():
+            opt = replace[parameters.args[i]]
+        else:
+            opt = parameters.args[i]
+        if parameters.args[i] != 'self' and opt not in options.keys():
+            if i < diff:
+                raise Exception('Missing ' + opt)
+            else:
+                options[opt] = parameters.defaults[i - diff]
+
+    return options
+
+
+# check if folder exists; if not, create it
+def check_folder(root):
+    if not os.path.exists(root):
+        os.mkdir(root)
+
+
+# main method
 def main(pfile):
-    # Load Data
-    root = './data'
-    if not os.path.exists(root):
-        os.mkdir(root)
+    # check if folders exist
+    check_folder('./data')
+    check_folder('./params')
 
-    root = './params'
-    if not os.path.exists(root):
-        os.mkdir(root)
+    # add params folder to path
+    sys.path.insert(0, './params')
 
-    sys.path.insert(0, './params')  # add folder containing dcnn to path
+    # load params file and options
     params = __import__(pfile)
     options = params.options()
 
-    # get options
-    parameters = inspect.getfullargspec(OptWBoundEignVal)
-    npar = len(parameters.args)
-    ndef = len(parameters.defaults)
-    diff = npar - ndef
-    for i in range(0, npar):
-        if parameters.args[i] != 'self' and parameters.args[i] not in options.keys():
-            if i < diff:
-                raise Exception('Missing ' + parameters.args[i])
-            else:
-                options[parameters.args[i]] = parameters.defaults[i-diff]
+    # get missing options
+    options = missing_params(OptWBoundEignVal, options)
 
+    # init class
     opt = OptWBoundEignVal(model=options['model'], loss=options['loss'], optimizer=options['optimizer'],
                            scheduler=options['scheduler'], mu=options['mu'], K=options['K'], eps=options['eps'],
                            pow_iter_eps=options['pow_iter_eps'], use_gpu=options['use_gpu'],
@@ -872,9 +892,15 @@ def main(pfile):
                            verbose=options['verbose'], mem_track=options['mem_track'], header=options['header'],
                            num_workers=options['num_workers'], test_func=options['test_func'])
 
+    # get missing options for train & test
+    options = missing_params(opt.train, options, replace={'loader': 'train_loader', 'train_loader': 'train_loader_na'})
+    options = missing_params(opt.test_test_set, options, replace={'loader': 'test_loader'})
+
     # Train model
-    opt.train(loader=options['train_loader'], valid_loader=options['valid_loader'])
-    opt.test_test_set(loader=options['test_loader'])  # test model on test set
+    opt.train(inputs=options['inputs'], target=options['target'], inputs_valid=options['inputs_valid'],
+              target_valid=options['target_valid'], loader=options['train_loader'],
+              valid_loader=options['valid_loader'], train_loader=options['train_loader_na'])
+    opt.test_test_set(x=options['x'], y=options['y'], loader=options['test_loader'])  # test model on test set
     opt.parse()
 
     if 'aug_test' in options.keys() and options['aug_test']:

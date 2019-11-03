@@ -26,7 +26,7 @@ np.random.seed(1226)
 torch.manual_seed(1226)
 
 # Parameters
-tol = 0.005
+tol = 0.001
 batch_size = 64
 mu = 0.001
 K = 0
@@ -53,8 +53,6 @@ def alpha(i):
     else:
         return 0.1**2
 
-
-# Train Neural Network
 
 # Create neural network
 model = DenseNet3(depth=40, growth_rate=12, num_classes=10)

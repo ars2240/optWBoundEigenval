@@ -11,4 +11,4 @@
 #   Files: opt
 
 from opt import main
-main('usps_CNN_mu0_01_K2')
+main('usps_CNN_mu0_1_K2')
