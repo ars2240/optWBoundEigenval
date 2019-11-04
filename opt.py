@@ -153,12 +153,17 @@ class HVPOperator(object):
         return grad_vec.double()
 
 
+# check if folder exists; if not, create it
+def check_folder(root):
+    if not os.path.exists(root):
+        os.mkdir(root)
+
+
 # Download and parse the dataset
 def download(url):
     import requests
     root = './data'
-    if not os.path.exists(root):
-        os.mkdir(root)
+    check_folder(root)  # make sure data folder exists
     filename = root + '/' + url.split("/")[-1]
     exists = os.path.isfile(filename)
     if not exists:
@@ -196,12 +201,12 @@ class OptWBoundEignVal(object):
         self.ndim = sum(p.numel() for p in model.parameters())  # number of dimensions
         self.x = 1.0/np.sqrt(self.ndim)*np.ones(self.ndim)  # initial point
         self.f = 0  # loss function value
-        self.gradf = np.zeros(self.ndim)  # gradient of f
+        self.gradf = torch.zeros(self.ndim)  # gradient of f
         self.rho = 0  # spectral radius (maximal absolute value eignevalue)
         self.v = torch.from_numpy(1.0/np.sqrt(self.ndim)*np.ones(self.ndim))  # eigenvector
-        self.gradrho = np.zeros(self.ndim)  # gradient of rho
+        self.gradrho = torch.zeros(self.ndim)  # gradient of rho
         self.g = 0  # regularizer function
-        self.gradg = np.zeros(self.ndim)  # gradient of g
+        self.gradg = torch.zeros(self.ndim)  # gradient of g
         self.h = 0  # objective function f+mu*g
         self.mu = mu  # coefficient in front of regularizer
         self.K = float(K)  # constant, spectral radius < K
@@ -457,13 +462,9 @@ class OptWBoundEignVal(object):
         else:
             raise Exception('No input data')
 
-        # make sure logs folder exists
-        if not os.path.exists('./logs'):
-            os.mkdir('./logs')
-
-        # make sure models folder exists
-        if not os.path.exists('./models'):
-            os.mkdir('./models')
+        # make sure logs & models folders exist
+        check_folder('./logs')
+        check_folder('./models')
 
         old_stdout = sys.stdout  # save old output
 
@@ -803,8 +804,7 @@ def cov_shift_tester(models, x, y, iters=1000, bad_modes=[], header='', mult=.1,
                      skew_diff=0, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
                      train_skew=[0]):
     # make sure logs folder exists
-    if not os.path.exists('./logs'):
-        os.mkdir('./logs')
+    check_folder('./logs')
 
     feats = x.shape[1]
     modes = range(0, feats)
@@ -864,12 +864,6 @@ def missing_params(func, options, replace={}):
     return options
 
 
-# check if folder exists; if not, create it
-def check_folder(root):
-    if not os.path.exists(root):
-        os.mkdir(root)
-
-
 # Prints CPU%, # of cores, and Memory %
 def check_cpu():
     import psutil
@@ -916,7 +910,6 @@ def main(pfile):
 
     if 'aug_test' in options.keys() and options['aug_test']:
         # Augmented Testing
-        test_loader = get_test_loader(batch_size=options['batch_size'], augment=True)
-        _, acc, f1 = opt.test_model_best(loader=test_loader)
+        _, acc, f1 = opt.test_model_best(loader=options['test_loader_aug'])
         print('Aug_Test_Acc\tAug_Test_F1')
         print(str(acc) + '\t' + str(f1))

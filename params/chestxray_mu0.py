@@ -11,10 +11,8 @@
 #   Files: opt
 
 import sys
-import os
 import numpy as np
 import torch
-from opt import OptWBoundEignVal
 sys.path.insert(0, '/home/hddraid/shared_data/chest_xray8/code/VClassifier/')  # add folder containing dcnn to path
 from dcnn import *
 
