@@ -45,7 +45,7 @@ def options():
     # Training Setup
     opt['model'] = DenseNet3(depth=40, growth_rate=12, num_classes=10)
     opt['loss'] = nn.CrossEntropyLoss()
-    opt['optimizer'] = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=0.0001)
+    opt['optimizer'] = torch.optim.SGD(opt['model'].parameters(), lr=0.1, momentum=0.9, weight_decay=0.0001)
     opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
     opt['header'] = 'CIFAR10_DenseNet'
     opt['use_gpu'] = True
