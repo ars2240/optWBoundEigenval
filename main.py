@@ -10,5 +10,10 @@
 #   Packages: bz2, gzip, numpy, pandas, requests, shutil, sklearn, torch
 #   Files: opt, ./params/file
 
+import sys
 from opt import main
-main('usps_CNN_mu0_1_K2')
+
+if len(sys.argv) == 2:
+    main(sys.argv[1])
+else:
+    main('cifar10_DenseNet_mu0_001_K0')
