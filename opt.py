@@ -203,7 +203,7 @@ class OptWBoundEignVal(object):
         self.f = 0  # loss function value
         self.gradf = torch.zeros(self.ndim)  # gradient of f
         self.rho = 0  # spectral radius (maximal absolute value eignevalue)
-        self.v = torch.from_numpy(1.0/np.sqrt(self.ndim)*np.ones(self.ndim))  # eigenvector
+        self.v = torch.from_numpy(1.0/np.sqrt(self.ndim)*np.ones(self.ndim)).to(self.device)  # eigenvector
         self.gradrho = torch.zeros(self.ndim)  # gradient of rho
         self.g = 0  # regularizer function
         self.gradg = torch.zeros(self.ndim)  # gradient of g
