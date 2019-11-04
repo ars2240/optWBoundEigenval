@@ -362,16 +362,18 @@ class OptWBoundEignVal(object):
                 if self.hvp_op.stored_grad is not None:
                     self.gradf = self.hvp_op.stored_grad.data
                 else:
-                    self.gradf = torch.zeros(self.ndim).double()  # set gradient to zero
+                    self.gradf = torch.zeros(self.ndim).double().to(self.device)  # set gradient to zero
 
                 # compute grad g
                 if self.g > 0:
                     self.comp_gradrho()  # compute gradient of rho
                     self.gradg = self.gradrho  # compute g
                 else:
-                    self.gradg = torch.zeros(self.ndim).double()  # set gradient to zero
+                    self.gradg = torch.zeros(self.ndim).double().to(self.device)  # set gradient to zero
 
-                p = self.gradf + mu.to(self.device) * self.gradg  # gradient step
+                print(self.gradf)
+                print(self.gradg)
+                p = self.gradf + mu * self.gradg  # gradient step
 
                 i = 0
                 for param in self.model.parameters():
