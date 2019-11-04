@@ -371,8 +371,7 @@ class OptWBoundEignVal(object):
                 else:
                     self.gradg = torch.zeros(self.ndim).double()  # set gradient to zero
 
-                p = self.gradf + mu * self.gradg  # gradient step
-                p = p.to(self.device)  # move to device
+                p = self.gradf + mu.to(self.device) * self.gradg  # gradient step
 
                 i = 0
                 for param in self.model.parameters():
