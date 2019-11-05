@@ -43,7 +43,7 @@ def options():
 
     t = torch.zeros((1, 14)).to('cuda')
     n = 0
-    for _, data in enumerate(train_loader):
+    for _, data in enumerate(opt['train_loader']):
         target = Variable(data['label'].to('cuda'))
         t = torch.sum(torch.cat((target, t)), dim=0).unsqueeze(0)
         n += len(target)
@@ -65,9 +65,9 @@ def options():
         model = MyDensNet121(14)
 
     # Training Setup
-    opt['model'] = DenseNet3(depth=40, growth_rate=12, num_classes=10)
+    opt['model'] = model
     opt['loss'] = W_BCEWithLogitsLoss()
-    opt['optimizer'] = torch.optim.Adam(model.parameters(), lr=1e-5)
+    opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-5)
     opt['header'] = 'chestxray_' + enc
     opt['use_gpu'] = True
 
