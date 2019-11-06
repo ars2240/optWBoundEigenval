@@ -49,5 +49,6 @@ def options():
     opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(opt['optimizer'], lr_lambda=alpha)
     opt['header'] = 'CIFAR10_DenseNet'
     opt['use_gpu'] = True
+    opt['verbose'] = True
 
     return opt
