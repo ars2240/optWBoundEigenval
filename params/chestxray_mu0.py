@@ -20,7 +20,7 @@ from dcnn import *
 def options():
     # create options dictionary and some parameters
     opt = {'seed': 1226, 'tol': 0.001, 'mu': 0, 'K': 0}
-    enc = 'alex'  # model type
+    enc = 'dens161'  # model type
 
     # batch size
     batch_size = 2
@@ -43,7 +43,7 @@ def options():
 
     t = torch.zeros((1, 14)).to('cuda')
     n = 0
-    for _, data in enumerate(opt['train_loader']):
+    for _, data in enumerate(opt['test_loader']):
         target = Variable(data['label'].to('cuda'))
         t = torch.sum(torch.cat((target, t)), dim=0).unsqueeze(0)
         n += len(target)
