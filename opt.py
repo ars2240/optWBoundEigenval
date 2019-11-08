@@ -738,7 +738,7 @@ class OptWBoundEignVal(object):
         return test_loss, test_acc, test_f1, min_weight, max_weight
 
     def test_model_best_cov(self, x, y, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
-                       train_skew=[0]):
+                            train_skew=[0]):
         # tests best model, loaded from file
 
         self.model.load_state_dict(torch.load('./models/' + self.header2 + '_trained_model_best.pt'))
@@ -907,8 +907,8 @@ def main(pfile):
     opt.test_test_set(x=options['x'], y=options['y'], loader=options['test_loader'])  # test model on test set
     opt.parse()
 
+    # Augmented Testing
     if 'aug_test' in options.keys() and options['aug_test']:
-        # Augmented Testing
         _, acc, f1 = opt.test_model_best(loader=options['test_loader_aug'])
         print('Aug_Test_Acc\tAug_Test_F1')
         print(str(acc) + '\t' + str(f1))
