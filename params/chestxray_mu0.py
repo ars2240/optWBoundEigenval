@@ -41,15 +41,6 @@ def options():
     test_set = ChestXray_Dataset(use='test', transform=transform)
     opt['test_loader'] = DataLoader(test_set, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=1)
 
-    t = torch.zeros((1, 14)).to('cuda')
-    n = 0
-    for _, data in enumerate(opt['test_loader']):
-        target = Variable(data['label'].to('cuda'))
-        t = torch.sum(torch.cat((target, t)), dim=0).unsqueeze(0)
-        n += len(target)
-    print(t.to('cpu'))
-    print(n)
-
     # Create neural network
     if enc == 'alex':
         model = MyAlexNet(14)
