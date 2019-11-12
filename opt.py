@@ -191,7 +191,7 @@ class OptWBoundEignVal(object):
     def __init__(self, model, loss, optimizer, scheduler=None, mu=0, K=0, eps=-1, pow_iter_eps=1e-3,
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, pow_iter=True,
                  max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header='', num_workers=0,
-                 test_func='acc'):
+                 test_func='maxacc'):
 
         # set default device
         if use_gpu and torch.cuda.is_available():
@@ -588,6 +588,8 @@ class OptWBoundEignVal(object):
 
             # compute accuracy
             _, predicted = torch.max(ops.data, 1)
+            if 'max' in self.test_func:
+                predicted = torch.max(predicted, 1)
             target = target.to(self.device)
             if 'acc' in self.test_func:
                 acc = torch.mean((predicted == target).float()).item() * 100

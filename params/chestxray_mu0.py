@@ -62,5 +62,6 @@ def options():
     opt['header'] = 'chestxray_' + enc
     opt['use_gpu'] = True
     opt['pow_iter'] = False
+    opt['test_func'] = 'accauc'
 
     return opt

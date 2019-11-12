@@ -22,7 +22,7 @@ def options():
     opt = {'seed': 1226, 'tol': 0.001, 'mu': 0.001, 'K': 0}
 
     # batch size
-    batch_size = 64
+    batch_size = 32
     opt['batch_size'] = batch_size
 
     # def mu(i):
