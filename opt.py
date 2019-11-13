@@ -401,11 +401,14 @@ class OptWBoundEignVal(object):
             if self.verbose:
                 log_file = open(self.verbose_log_file, "a")  # open log file
                 sys.stdout = log_file  # write to log file
+                # check if rho is tensor
+                if torch.is_tensor(self.rho):
+                    self.rho = self.rho.item()
                 if self.pow_iter:
-                    print('%d\t %f\t %f\t %f\t %f' % (j, self.rho.item(), self.norm, torch.norm(self.gradf.detach()),
+                    print('%d\t %f\t %f\t %f\t %f' % (j, self.rho, self.norm, torch.norm(self.gradf.detach()),
                                                       torch.norm(self.gradg.detach())))
                 else:
-                    print('%d\t %f\t %f\t %f\t %f' % (j, self.rho.item(), self.norm, torch.norm(self.gradf),
+                    print('%d\t %f\t %f\t %f\t %f' % (j, self.rho, self.norm, torch.norm(self.gradf),
                                                       torch.norm(self.gradg)))
                 log_file.close()  # close log file
                 sys.stdout = old_stdout  # reset output
@@ -487,9 +490,12 @@ class OptWBoundEignVal(object):
             log_file = open(self.log_file, "a")  # open log file
             sys.stdout = log_file  # write to log file
 
+            # check if rho is tensor
+            if torch.is_tensor(self.rho):
+                self.rho = self.rho.item()
             # add values to log file
             if (inputs_valid is None or target_valid is None) and (valid_loader is None):
-                print('%d\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho.item(), self.h, self.norm))
+                print('%d\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm))
             else:
                 with torch.no_grad():
                     _, self.val_acc, val_f1 = self.test_model(inputs_valid, target_valid, valid_loader)
@@ -500,7 +506,7 @@ class OptWBoundEignVal(object):
                     self.model.to('cpu')
                     torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model_best.pt')
                     self.model.to(self.device)
-                print('%d\t %f\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho.item(), self.h, self.norm,
+                print('%d\t %f\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm,
                                                             self.val_acc, val_f1))
 
             # add function value to history log
@@ -587,7 +593,7 @@ class OptWBoundEignVal(object):
             size.append(len(target))
 
             # compute accuracy
-            _, predicted = torch.max(ops.data, 1)
+            _, predicted = ops.data
             if 'max' in self.test_func:
                 predicted = torch.max(predicted, 1)
             target = target.to(self.device)
