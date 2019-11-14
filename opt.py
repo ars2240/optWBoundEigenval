@@ -593,9 +593,10 @@ class OptWBoundEignVal(object):
             size.append(len(target))
 
             # compute accuracy
-            _, predicted = ops.data
             if 'max' in self.test_func:
-                predicted = torch.max(predicted, 1)
+                _, predicted = torch.max(ops.data, 1)
+            else:
+                predicted = ops.data
             target = target.to(self.device)
             if 'acc' in self.test_func:
                 acc = torch.mean((predicted == target).float()).item() * 100
