@@ -61,6 +61,7 @@ def options():
     opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-5)
     opt['header'] = 'chestxray_' + enc
     opt['use_gpu'] = True
+    opt['verbose'] = True
     opt['pow_iter'] = False
     opt['test_func'] = 'accauc'
 
