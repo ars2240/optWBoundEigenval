@@ -303,19 +303,22 @@ class OptWBoundEignVal(object):
     def comp_f(self, inputs, target):
         # computes f
 
-        # if using gpu, move data to it
-        inputs = inputs.to(self.device)
-        target = target.to(self.device)
-        output = self.model(inputs)  # compute prediction
+        self.model.eval()  # set model to evaluation mode
 
-        # compute loss
-        if self.loss.__class__.__name__ == 'KLDivLoss':
-            target_onehot = torch.zeros(output.shape)
-            target_onehot.scatter_(1, target.view(-1, 1), 1)
-            f = self.loss(output.float(), target_onehot.float()).item()
-        else:
-            f = self.loss(output, target).item()
-        return f, output
+        # if using gpu, move data to it
+        with torch.no_grad():
+            inputs = inputs.to(self.device)
+            target = target.to(self.device)
+            output = self.model(inputs)  # compute prediction
+
+            # compute loss
+            if self.loss.__class__.__name__ == 'KLDivLoss':
+                target_onehot = torch.zeros(output.shape)
+                target_onehot.scatter_(1, target.view(-1, 1), 1)
+                f = self.loss(output.float(), target_onehot.float()).item()
+            else:
+                f = self.loss(output, target).item()
+            return f, output
 
     def comp_g(self):
         # computes g
@@ -325,6 +328,8 @@ class OptWBoundEignVal(object):
 
     def iter(self):
         # performs one gradient descent iteration
+
+        self.model.train()  # set model to training mode
 
         # if verbose, make header for file
         if self.verbose:
@@ -551,72 +556,75 @@ class OptWBoundEignVal(object):
     def test_model(self, x=None, y=None, loader=None):
         # Computes the loss and accuracy of model on given dataset
 
-        if loader is not None:
-            dataloader = loader
-        elif x is not None and y is not None:
-            # create dataloader
-            train_data = utils_data.TensorDataset(x, y)
-            if self.use_gpu:
-                dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size,
-                                                   num_workers=self.num_workers, pin_memory=True)
+        self.model.eval()  # set model to evaluation mode
+
+        with torch.no_grad():
+            if loader is not None:
+                dataloader = loader
+            elif x is not None and y is not None:
+                # create dataloader
+                train_data = utils_data.TensorDataset(x, y)
+                if self.use_gpu:
+                    dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size,
+                                                       num_workers=self.num_workers, pin_memory=True)
+                else:
+                    dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size)
             else:
-                dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size)
-        else:
-            raise Exception('No test data')
+                raise Exception('No test data')
 
-        f_list = []
-        acc_list = []
-        f1_list = []
-        size = []
-        outputs = []
-        labels = []
-        for _, data in enumerate(dataloader):
+            f_list = []
+            acc_list = []
+            f1_list = []
+            size = []
+            outputs = []
+            labels = []
+            for _, data in enumerate(dataloader):
 
-            if type(data) == list:
-                inputs, target = data
-            elif type(data) == dict:
-                inputs, target = Variable(data['image']), Variable(data['label'])
-            else:
-                raise Exception('Data type not supported')
+                if type(data) == list:
+                    inputs, target = data
+                elif type(data) == dict:
+                    inputs, target = Variable(data['image']), Variable(data['label'])
+                else:
+                    raise Exception('Data type not supported')
 
-            # compute loss
-            f, ops = self.comp_f(inputs, target)
-            f_list.append(f)
+                # compute loss
+                f, ops = self.comp_f(inputs, target)
+                f_list.append(f)
 
-            if any(x in self.test_func for x in ['sigmoid', 'logit']):
-                ops = F.sigmoid(ops)
+                if any(x in self.test_func for x in ['sigmoid', 'logit']):
+                    ops = F.sigmoid(ops)
 
-            # size of dataset
-            size.append(len(target))
+                # size of dataset
+                size.append(len(target))
 
-            # compute accuracy
-            if 'max' in self.test_func:
-                _, predicted = torch.max(ops.data, 1)
-            else:
-                predicted = ops.data
-            target = target.to(self.device)
-            if 'acc' in self.test_func:
-                acc = torch.mean((predicted == target).float()).item() * 100
-                acc_list.append(acc)
+                # compute accuracy
+                if 'max' in self.test_func:
+                    _, predicted = torch.max(ops.data, 1)
+                else:
+                    predicted = ops.data
+                target = target.to(self.device)
+                if 'acc' in self.test_func:
+                    acc = torch.mean((predicted == target).float()).item() * 100
+                    acc_list.append(acc)
 
-            target = target.to('cpu')
-            predicted = predicted.to('cpu')
-            ops = ops.to('cpu')
+                target = target.to('cpu')
+                predicted = predicted.to('cpu')
+                ops = ops.to('cpu')
+                if 'auc' in self.test_func:
+                    outputs.append(ops)
+                    labels.append(target)
+                else:
+                    f1 = f1_score(target, predicted, average='micro')
+                    f1_list.append(f1)
+
             if 'auc' in self.test_func:
-                outputs.append(ops)
-                labels.append(target)
+                roc = roc_auc_score(torch.cat(labels), torch.cat(outputs), average=None)  # compute AUC of ROC curves
+                test_acc = roc.mean()  # mean AUCs
+                test_f1 = float('NaN')
             else:
-                f1 = f1_score(target, predicted, average='micro')
-                f1_list.append(f1)
-
-        if 'auc' in self.test_func:
-            roc = roc_auc_score(torch.cat(labels), torch.cat(outputs), average=None)  # compute AUC of ROC curves
-            test_acc = roc.mean()  # mean AUCs
-            test_f1 = float('NaN')
-        else:
-            test_acc = np.average(acc_list, weights=size)  # weighted mean of accuracy
-            test_f1 = np.average(f1_list, weights=size)  # weighted mean of f1 scores
-        test_loss = np.average(f_list, weights=size)  # weighted mean of f values
+                test_acc = np.average(acc_list, weights=size)  # weighted mean of accuracy
+                test_f1 = np.average(f1_list, weights=size)  # weighted mean of f1 scores
+            test_loss = np.average(f_list, weights=size)  # weighted mean of f values
 
         return test_loss, test_acc, test_f1
 
