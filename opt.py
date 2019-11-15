@@ -399,9 +399,7 @@ class OptWBoundEignVal(object):
                 inputs = inputs.to(self.device)
                 target = target.to(self.device)
                 output = self.model(inputs)
-                print(inputs)
-                print(target)
-                print(output)
+                print(self.model)
                 loss = self.loss(output, target)  # loss function
                 print(loss)
                 loss.backward()  # back prop
