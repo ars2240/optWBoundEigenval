@@ -199,7 +199,6 @@ class OptWBoundEignVal(object):
         else:
             self.device = torch.device('cpu')
         self.ndim = sum(p.numel() for p in model.parameters())  # number of dimensions
-        self.x = 1.0/np.sqrt(self.ndim)*np.ones(self.ndim)  # initial point
         self.f = 0  # loss function value
         self.gradf = torch.zeros(self.ndim).to(self.device)  # gradient of f
         self.rho = 0  # spectral radius (maximal absolute value eignevalue)
@@ -281,6 +280,10 @@ class OptWBoundEignVal(object):
         self.v = v  # update eigenvector
         self.rho = torch.abs(lam)  # update spectral radius
         self.norm = n  # update norm
+
+        # check if rho is tensor
+        if torch.is_tensor(self.rho):
+            self.rho = self.rho.item()
 
         if n > self.pow_iter_eps:
             print('Warning: power iteration has not fully converged')
@@ -401,9 +404,6 @@ class OptWBoundEignVal(object):
             if self.verbose:
                 log_file = open(self.verbose_log_file, "a")  # open log file
                 sys.stdout = log_file  # write to log file
-                # check if rho is tensor
-                if torch.is_tensor(self.rho):
-                    self.rho = self.rho.item()
                 if self.pow_iter:
                     print('%d\t %f\t %f\t %f\t %f' % (j, self.rho, self.norm, torch.norm(self.gradf.detach()),
                                                       torch.norm(self.gradg.detach())))
@@ -490,9 +490,6 @@ class OptWBoundEignVal(object):
             log_file = open(self.log_file, "a")  # open log file
             sys.stdout = log_file  # write to log file
 
-            # check if rho is tensor
-            if torch.is_tensor(self.rho):
-                self.rho = self.rho.item()
             # add values to log file
             if (inputs_valid is None or target_valid is None) and (valid_loader is None):
                 print('%d\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm))
