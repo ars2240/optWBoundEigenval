@@ -400,6 +400,7 @@ class OptWBoundEignVal(object):
                 target = target.to(self.device)
                 output = self.model(inputs)
                 print(self.model)
+                print(next(model.parameters()).is_cuda)
                 loss = self.loss(output, target)  # loss function
                 print(loss)
                 loss.backward()  # back prop
