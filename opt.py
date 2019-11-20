@@ -391,13 +391,13 @@ class OptWBoundEignVal(object):
                 # for testing purposes
                 self.optimizer.zero_grad()  # zero gradient
                 if type(data) == list:
-                    inputs, target = data
+                    inputs, target = data.to(self.device)
                 elif type(data) == dict:
-                    inputs, target = Variable(data['image']), Variable(data['label'])
+                    inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
                 else:
                     raise Exception('Data type not supported')
-                inputs = inputs.to(self.device)
-                target = target.to(self.device)
+                #inputs = inputs.to(self.device)
+                #target = target.to(self.device)
                 output = self.model(inputs)
                 loss = self.loss(output, target)  # loss function
                 loss.backward()  # back prop
