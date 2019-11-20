@@ -390,15 +390,14 @@ class OptWBoundEignVal(object):
             else:
                 # for testing purposes
                 self.optimizer.zero_grad()  # zero gradient
-                data = data.to(self.device)
                 if type(data) == list:
                     inputs, target = data
                 elif type(data) == dict:
                     inputs, target = Variable(data['image']), Variable(data['label'])
                 else:
                     raise Exception('Data type not supported')
-                #inputs = inputs.to(self.device)
-                #target = target.to(self.device)
+                inputs = inputs.to(self.device)
+                target = target.to(self.device)
                 output = self.model(inputs)
                 loss = self.loss(output, target)  # loss function
                 loss.backward()  # back prop
@@ -421,7 +420,7 @@ class OptWBoundEignVal(object):
 
             # if using GPU, memory cleanup & tracking
             if self.use_gpu:
-                # torch.cuda.empty_cache()
+                torch.cuda.empty_cache()
                 # check max memory usage
                 self.mem_check()
 
