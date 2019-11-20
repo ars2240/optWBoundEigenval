@@ -384,9 +384,9 @@ class OptWBoundEignVal(object):
                 i = 0
                 for param in self.model.parameters():
                     s = param.data.size()  # number of input & output nodes
-                    l = torch.prod(torch.tensor(s))  # total number of parameters
-                    param.grad = p[i:(i + l)].view(s).float()  # adjust gradient
-                    i += l  # increment
+                    n = torch.prod(torch.tensor(s))  # total number of parameters
+                    param.grad = p[i:(i + n)].view(s).float()  # adjust gradient
+                    i += n  # increment
             else:
                 # for testing purposes
                 self.optimizer.zero_grad()  # zero gradient
@@ -399,10 +399,7 @@ class OptWBoundEignVal(object):
                 inputs = inputs.to(self.device)
                 target = target.to(self.device)
                 output = self.model(inputs)
-                print(self.model)
-                print(next(self.model.parameters()).is_cuda)
                 loss = self.loss(output, target)  # loss function
-                print(loss)
                 loss.backward()  # back prop
 
             # optimizer step
@@ -423,7 +420,7 @@ class OptWBoundEignVal(object):
 
             # if using GPU, memory cleanup & tracking
             if self.use_gpu:
-                torch.cuda.empty_cache()
+                # torch.cuda.empty_cache()
                 # check max memory usage
                 self.mem_check()
 
