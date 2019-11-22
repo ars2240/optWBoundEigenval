@@ -512,6 +512,9 @@ class OptWBoundEignVal(object):
                                                             self.val_acc, val_f1))
 
             # add function value to history log
+            # check if h is tensor
+            if torch.is_tensor(self.h):
+                self.h = self.h.item()
             f_hist.append(self.h)
 
             # Save model weights
