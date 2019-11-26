@@ -23,7 +23,7 @@ def options():
     enc = 'alex'  # model type
 
     # batch size
-    batch_size = 2
+    batch_size = 16
     opt['batch_size'] = batch_size
 
     # def mu(i):
