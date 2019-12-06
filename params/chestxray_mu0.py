@@ -28,7 +28,9 @@ def options():
     opt['batch_size'] = batch_size
 
     # set number of threads
-    os.environ["OMP_NUM_THREADS"] = "4"
+    nthreads = 4
+    os.environ["OMP_NUM_THREADS"] = str(nthreads)
+    torch.set_num_threads(nthreads)
 
     # def mu(i):
     #    return np.max([0.0, (i-50)/1000])
