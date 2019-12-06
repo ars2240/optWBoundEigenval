@@ -10,8 +10,9 @@
 #   Packages: random, numpy, torch, torchvision, scikit-learn
 #   Files: opt
 
-import sys
+import os
 import numpy as np
+import sys
 import torch
 sys.path.insert(0, '/home/hddraid/shared_data/chest_xray8/code/VClassifier/')  # add folder containing dcnn to path
 from dcnn import *
@@ -25,6 +26,9 @@ def options():
     # batch size
     batch_size = 16
     opt['batch_size'] = batch_size
+
+    # set number of threads
+    os.environ["OMP_NUM_THREADS"] = "4"
 
     # def mu(i):
     #    return np.max([0.0, (i-50)/1000])
