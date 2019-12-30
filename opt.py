@@ -545,7 +545,7 @@ class OptWBoundEignVal(object):
         # best validation accuracy
         print('Best Validation Iterate:', self.best_val_iter)
         print('Best Validation Accuracy:', self.best_val_acc)
-        print('Rho:', self.best_rho.item())
+        print('Rho:', self.best_rho)
 
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
