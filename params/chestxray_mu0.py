@@ -69,5 +69,6 @@ def options():
     opt['use_gpu'] = True
     opt['pow_iter'] = False
     opt['test_func'] = 'accauc'
+    opt['max_iter'] = 10
 
     return opt
