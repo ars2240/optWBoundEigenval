@@ -29,8 +29,8 @@ def options():
 
     # set number of threads
     nthreads = 4
-    os.environ["OMP_NUM_THREADS"] = str(nthreads)
-    torch.set_num_threads(nthreads)
+    from multiprocessing import Pool
+    Pool(nthreads-1, main())
 
     # def mu(i):
     #    return np.max([0.0, (i-50)/1000])
