@@ -14,7 +14,7 @@ import os
 import numpy as np
 import sys
 import torch
-sys.path.insert(0, '/home/hddraid/shared_data/chest_xray8/code/VClassifier/')  # add folder containing dcnn to path
+#sys.path.insert(0, '/home/hddraid/shared_data/chest_xray8/code/VClassifier/')  # add folder containing dcnn to path
 from dcnn import *
 
 
@@ -70,5 +70,6 @@ def options():
     opt['pow_iter'] = False
     opt['test_func'] = 'accauc'
     opt['max_iter'] = 10
+    opt['max_pow_iter'] = 10000
 
     return opt
