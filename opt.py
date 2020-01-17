@@ -926,6 +926,7 @@ def main(pfile):
         from nvsmi import NVLog
         log = NVLog()
         print(log.as_table())
+        print(str(os.system("top -n1")))
     opt.test_test_set(x=options['x'], y=options['y'], loader=options['test_loader'])  # test model on test set
     opt.parse()
 
