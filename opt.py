@@ -264,6 +264,9 @@ class OptWBoundEignVal(object):
         lam = 0
         n = 0
 
+        if self.verbose:
+            print('iter\t lam\t norm')
+
         # power iteration
         for i in range(0, np.min([self.ndim, self.max_pow_iter])):
             vnew = self.hvp_op.Hv(v, storedGrad=True)  # compute H*v
@@ -271,6 +274,8 @@ class OptWBoundEignVal(object):
             # if converged, break
             lam = torch.dot(vnew, v)  # update eigenvalue
             n = torch.norm(vnew-lam*v)  # norm of H*v-lambda*v
+            if self.verbose:
+                print('%d\t %f\t %f' % (i, lam, n))
 
             if n < self.pow_iter_eps:
                 break
