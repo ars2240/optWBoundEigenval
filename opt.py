@@ -58,6 +58,7 @@ class HVPOperator(object):
             vec = torch.from_numpy(vec)
         vec = vec.to(self.device)
         vec = vec.double()  # convert to double
+        print(vec.size())
 
         # compute original gradient, tracking computation graph
         if storedGrad and (self.stored_grad is not None):
@@ -66,6 +67,7 @@ class HVPOperator(object):
             self.zero_grad()
             grad_vec = self.prepare_grad()
             self.stored_grad = grad_vec.to('cpu')
+        print(grad_vec.size())
 
         # check memory usage
         self.mem_check()
@@ -73,6 +75,7 @@ class HVPOperator(object):
         self.zero_grad()
         # compute gradient of vector product
         grad_grad = torch.autograd.grad(grad_vec, self.model.parameters(), grad_outputs=vec, retain_graph=True)
+        print(grad_grad.size())
         # concatenate the results over the different components of the network
         hessian_vec_prod = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad]))
 

@@ -16,7 +16,7 @@ import shutil
 
 # modified by Adam Sandler, originally from Chengsheng Mao's code
 
-#path='/home/shared_data/chest_xray8/'
+# path='/home/shared_data/chest_xray8/'
 
 
 class ChestXray_Dataset(Dataset):
@@ -48,7 +48,7 @@ class ChestXray_Dataset(Dataset):
             self.label_df = label_df.loc[label_df['Image Index'].isin(te)]
         elif use == "bboxtest":
             self.bbox = pd.read_csv(csv_bboxfile)
-            #self.bbox['bbox']=self.bbox.iloc[:,[2,3,4,5]].apply(lambda x: tuple(x),axis=1)
+            # self.bbox['bbox']=self.bbox.iloc[:,[2,3,4,5]].apply(lambda x: tuple(x),axis=1)
             self.label_df = label_df.loc[label_df['Image Index'].isin( self.bbox['Image Index']), :]
         elif use == 'all':
             self.label_df = label_df
@@ -71,7 +71,7 @@ class ChestXray_Dataset(Dataset):
         labels = np.zeros(len(self.classes),dtype=np.float32)
         labels[[self.classes[x.strip()] for x in self.label_df.iloc[idx, 1].split('|') if x.strip() in self.classes]] =\
             1
-        #bbox = self.box_loc.loc[self.box_loc['Image Index']==img_name,['Finding Label','bbox']] \
+        # bbox = self.box_loc.loc[self.box_loc['Image Index']==img_name,['Finding Label','bbox']] \
         #        .set_index('Finding Label').to_dict()['bbox']
         
         sample = {'image': image, 'label': labels, 'pid': self.label_df.iloc[idx, 3],
@@ -245,7 +245,7 @@ class VLoss(nn.Module):
         return BCE+self.w*KLD
 
 
-## train the CNN
+# train the CNN
 def train(train_loader, model, criterion, optimizer, epoch, iter_size=10):
     batch_time = AverageMeter()
     data_time = AverageMeter()
