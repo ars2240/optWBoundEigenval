@@ -58,7 +58,6 @@ class HVPOperator(object):
             vec = torch.from_numpy(vec)
         vec = vec.to(self.device)
         vec = vec.double()  # convert to double
-        print(vec.size())
 
         # compute original gradient, tracking computation graph
         if storedGrad and (self.stored_grad is not None):
@@ -67,7 +66,6 @@ class HVPOperator(object):
             self.zero_grad()
             grad_vec = self.prepare_grad()
             self.stored_grad = grad_vec.to('cpu')
-        print(grad_vec.size())
 
         # check memory usage
         self.mem_check()
@@ -75,7 +73,6 @@ class HVPOperator(object):
         self.zero_grad()
         # compute gradient of vector product
         grad_grad = torch.autograd.grad(grad_vec, self.model.parameters(), grad_outputs=vec, retain_graph=True)
-        print(grad_grad.size())
         # concatenate the results over the different components of the network
         hessian_vec_prod = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad]))
 
@@ -266,6 +263,7 @@ class OptWBoundEignVal(object):
         # initialize lambda and the norm
         lam = 0
         n = 0
+        n_old = 0
 
         if self.verbose:
             print('iter\t lam\t norm')
@@ -280,10 +278,11 @@ class OptWBoundEignVal(object):
             if self.verbose:
                 print('%d\t %f\t %f' % (i, lam, n))
 
-            if n < self.pow_iter_eps:
+            if n < self.pow_iter_eps or (n-n_old)/n_old < self.pow_iter_eps:
                 break
 
             v = 1.0/torch.norm(vnew)*vnew  # update vector and normalize
+            n_old = n
 
         self.v = v  # update eigenvector
         self.rho = torch.abs(lam)  # update spectral radius
