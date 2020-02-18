@@ -292,7 +292,7 @@ class OptWBoundEignVal(object):
         if torch.is_tensor(self.rho):
             self.rho = self.rho.item()
 
-        if n > self.pow_iter_eps:
+        if n > self.pow_iter_eps or (n-n_old)/n_old > self.pow_iter_eps:
             print('Warning: power iteration has not fully converged')
             if self.ignore_bad_vals:
                 print('Ignoring rho.')
