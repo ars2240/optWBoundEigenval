@@ -75,6 +75,6 @@ def options():
     opt['test_func'] = 'accauc'
     opt['max_iter'] = 10
     opt['max_pow_iter'] = 1000
-    opt['verbose'] = True
+    opt['verbose'] = False
 
     return opt
