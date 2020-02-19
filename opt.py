@@ -263,6 +263,7 @@ class OptWBoundEignVal(object):
         # initialize lambda and the norm
         lam = 0
         n = 0
+        r_old = 0
         n_old = 0
 
         if self.verbose:
@@ -274,14 +275,16 @@ class OptWBoundEignVal(object):
 
             # if converged, break
             lam = torch.dot(vnew, v)  # update eigenvalue
-            n = torch.norm(vnew-lam*v)  # norm of H*v-lambda*v
+            r = vnew-lam*v  # residual
+            n = torch.norm(r)  # norm of H*v-lambda*v
             if self.verbose:
                 print('%d\t %f\t %f' % (i, lam, n))
 
-            if n < self.pow_iter_eps or (n-n_old)/n_old < self.pow_iter_eps:
+            if n < self.pow_iter_eps or torch.norm(r-r_old)/n_old < self.pow_iter_eps:
                 break
 
             v = 1.0/torch.norm(vnew)*vnew  # update vector and normalize
+            r_old = r
             n_old = n
 
         self.v = v  # update eigenvector
@@ -292,7 +295,7 @@ class OptWBoundEignVal(object):
         if torch.is_tensor(self.rho):
             self.rho = self.rho.item()
 
-        if n > self.pow_iter_eps and (n-n_old)/n_old > self.pow_iter_eps:
+        if n > self.pow_iter_eps and torch.norm(r-r_old)/n_old > self.pow_iter_eps:
             print('Warning: power iteration has not fully converged')
             if self.ignore_bad_vals:
                 print('Ignoring rho.')
