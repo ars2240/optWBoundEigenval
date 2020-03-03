@@ -284,8 +284,9 @@ class OptWBoundEignVal(object):
                 break
 
             v = 1.0/torch.norm(vnew)*vnew  # update vector and normalize
-            r_old = r
-            n_old = n
+            if i < (np.min([self.ndim, self.max_pow_iter])-1):
+                r_old = r
+                n_old = n
 
         self.v = v  # update eigenvector
         self.rho = torch.abs(lam)  # update spectral radius
