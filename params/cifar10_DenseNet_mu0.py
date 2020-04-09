@@ -35,10 +35,10 @@ def options():
 
     # learning rate
     def alpha(i):
-        if i < 150:
+        if i < 60:
             return 1
-        elif i < 225:
-            return 0.1
+        elif i < 120:
+            return 0.2
         else:
             return 0.1 ** 2
 
