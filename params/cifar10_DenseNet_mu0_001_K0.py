@@ -35,12 +35,12 @@ def options():
 
     # learning rate
     def alpha(i):
-        if i < 150:
+        if i < 60:
             return 1
-        elif i < 225:
-            return 0.1
+        elif i < 80:
+            return 0.2
         else:
-            return 0.1 ** 2
+            return 0.2 ** 2
 
     # Training Setup
     opt['model'] = DenseNet3(depth=40, growth_rate=12, num_classes=10)
