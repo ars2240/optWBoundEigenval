@@ -1,7 +1,7 @@
-# usps.py
+# cifar10 parameter file
 #
 # Author: Adam Sandler
-# Date: 11/1/19
+# Date: 4/14/20
 #
 # Classifies digits from the USPS dataset
 #
@@ -19,7 +19,7 @@ from densenet import DenseNet3
 
 def options():
     # create options dictionary and some parameters
-    opt = {'seed': 1226, 'tol': 0.001, 'mu': 0.01, 'K': 0}
+    opt = {'seed': 1226, 'tol': 0.01, 'mu': 0.001, 'K': 0}
 
     # batch size
     batch_size = 32
@@ -35,12 +35,12 @@ def options():
 
     # learning rate
     def alpha(i):
-        if i < 150:
+        if i < 60:
             return 1
-        elif i < 225:
-            return 0.1
+        elif i < 80:
+            return 0.2
         else:
-            return 0.1 ** 2
+            return 0.2 ** 2
 
     # Training Setup
     opt['model'] = DenseNet3(depth=40, growth_rate=12, num_classes=10)
@@ -49,8 +49,8 @@ def options():
     opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(opt['optimizer'], lr_lambda=alpha)
     opt['header'] = 'CIFAR10_DenseNet'
     opt['use_gpu'] = True
-    opt['verbose'] = True
-    opt['pow_iter_eps'] = 1e-2
+    opt['verbose'] = False
+    opt['pow_iter_eps'] = 5e-2
     opt['max_pow_iter'] = 100
 
     return opt
