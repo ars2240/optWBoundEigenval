@@ -1,7 +1,7 @@
-# usps.py
+# cifar10 parameter file
 #
 # Author: Adam Sandler
-# Date: 11/1/19
+# Date: 4/14/20
 #
 # Classifies digits from the USPS dataset
 #
@@ -35,12 +35,12 @@ def options():
 
     # learning rate
     def alpha(i):
-        if i < 150:
+        if i < 60:
             return 1
-        elif i < 225:
-            return 0.1
+        elif i < 80:
+            return 0.2
         else:
-            return 0.1 ** 2
+            return 0.2 ** 2
 
     # Training Setup
     opt['model'] = DenseNet3(depth=40, growth_rate=12, num_classes=10)
@@ -50,7 +50,7 @@ def options():
     opt['header'] = 'CIFAR10_DenseNet'
     opt['use_gpu'] = True
     opt['verbose'] = False
-    opt['pow_iter_eps'] = 0.1
+    opt['pow_iter_eps'] = 5e-2
     opt['max_pow_iter'] = 100
 
     return opt

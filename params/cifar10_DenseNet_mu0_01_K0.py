@@ -19,7 +19,7 @@ from densenet import DenseNet3
 
 def options():
     # create options dictionary and some parameters
-    opt = {'seed': 1226, 'tol': 0.01, 'mu': 0.001, 'K': 0}
+    opt = {'seed': 1226, 'tol': 0.001, 'mu': 0.01, 'K': 0}
 
     # batch size
     batch_size = 32
