@@ -76,6 +76,6 @@ def options():
     opt['max_iter'] = 10
     opt['max_pow_iter'] = 100
     opt['pow_iter_eps'] = 0.1
-    opt['verbose'] = False
+    opt['verbose'] = True
 
     return opt

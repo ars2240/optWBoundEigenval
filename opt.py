@@ -154,9 +154,9 @@ class HVPOperator(object):
 
 
 # check if folder exists; if not, create it
-def check_folder(root):
-    if not os.path.exists(root):
-        os.mkdir(root)
+def check_folder(path):
+    if not os.path.exists(path):
+        os.mkdir(path)
 
 
 # Download and parse the dataset
@@ -267,6 +267,9 @@ class OptWBoundEignVal(object):
         n_old = 0
 
         if self.verbose:
+            old_stdout = sys.stdout  # save old output
+            log_file = open(self.verbose_log_file, "a")  # open log file
+            sys.stdout = log_file  # write to log file
             print('iter\t lam\t norm')
 
         # power iteration
@@ -287,6 +290,10 @@ class OptWBoundEignVal(object):
             if i < (np.min([self.ndim, self.max_pow_iter])-1):
                 r_old = r
                 n_old = n
+
+        if self.verbose:
+            log_file.close()  # close log file
+            sys.stdout = old_stdout  # reset output
 
         self.v = v  # update eigenvector
         self.rho = torch.abs(lam)  # update spectral radius
