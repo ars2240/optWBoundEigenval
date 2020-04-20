@@ -270,7 +270,7 @@ class OptWBoundEignVal(object):
             old_stdout = sys.stdout  # save old output
             log_file = open(self.verbose_log_file, "a")  # open log file
             sys.stdout = log_file  # write to log file
-            print('iter\t lam\t norm')
+            print('iter\t lam\t norm\t delRes')
 
         # power iteration
         for i in range(0, np.min([self.ndim, self.max_pow_iter])):
@@ -281,7 +281,7 @@ class OptWBoundEignVal(object):
             r = vnew-lam*v  # residual
             n = torch.norm(r)  # norm of H*v-lambda*v
             if self.verbose:
-                print('%d\t %f\t %f' % (i, lam, n))
+                print('%d\t %f\t %f\t %f' % (i, lam, n, torch.norm(r-r_old)))
 
             if n < self.pow_iter_eps or torch.norm(r-r_old)/n_old < self.pow_iter_eps:
                 break
