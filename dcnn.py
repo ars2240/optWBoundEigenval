@@ -98,6 +98,7 @@ class MyAlexNet(nn.Module):
         x = self.features(x)
         x = x.view(-1, 976)
         x = self.classifier(x)
+        print(x.shape)
         return x
     
     
