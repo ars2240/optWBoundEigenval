@@ -24,7 +24,7 @@ class ChestXray_Dataset(Dataset):
     path = '/home/hddraid/shared_data/chest_xray8/'
 
     def __init__(self, csv_labelfile=join(path, 'Data_Entry_2017.csv'), csv_bboxfile=join(path, 'BBox_list_2017.csv'),
-                 root_dir=join(path, 'images/images'), use='train', transform=None):
+                 root_dir=join(path, 'images/cropedimages'), use='train', transform=None):
         """
         Args:
             csv_labelfile (string): Path to the csv file with labels.
