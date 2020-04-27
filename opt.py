@@ -142,7 +142,6 @@ class HVPOperator(object):
         target = target.to(self.device)
 
         output = self.model(inputs)
-        print(output.shape())
         if self.criterion.__class__.__name__ == 'KLDivLoss':
             target_onehot = torch.zeros(np.shape(output))
             target_onehot.scatter_(1, target.view(-1, 1), 1)
