@@ -937,16 +937,20 @@ def main(pfile):
     options = missing_params(opt.test_test_set, options, replace={'loader': 'test_loader'})
 
     # Train model
+    opt.train(inputs=options['inputs'], target=options['target'], inputs_valid=options['inputs_valid'],
+              target_valid=options['target_valid'], loader=options['train_loader'],
+              valid_loader=options['valid_loader'], train_loader=options['train_loader_na'])
+    """
     try:
         opt.train(inputs=options['inputs'], target=options['target'], inputs_valid=options['inputs_valid'],
                   target_valid=options['target_valid'], loader=options['train_loader'],
                   valid_loader=options['valid_loader'], train_loader=options['train_loader_na'])
     except RuntimeError as e:
-        print(e)
         from nvsmi import NVLog
         log = NVLog()
         print(log.as_table())
         print(str(os.system("top -n 1")))
+    """
     opt.test_test_set(x=options['x'], y=options['y'], loader=options['test_loader'])  # test model on test set
     opt.parse()
 
