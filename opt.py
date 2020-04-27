@@ -941,7 +941,8 @@ def main(pfile):
         opt.train(inputs=options['inputs'], target=options['target'], inputs_valid=options['inputs_valid'],
                   target_valid=options['target_valid'], loader=options['train_loader'],
                   valid_loader=options['valid_loader'], train_loader=options['train_loader_na'])
-    except RuntimeError:
+    except RuntimeError as e:
+        print(e)
         from nvsmi import NVLog
         log = NVLog()
         print(log.as_table())
