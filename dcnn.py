@@ -89,9 +89,11 @@ class MyAlexNet(nn.Module):
         super(MyAlexNet, self).__init__()
         original_model = models.alexnet(pretrained=True)
         self.features = original_model.features
+        """
         self.features.add_module('transit', nn.Sequential(nn.Conv2d(256, 1024, 3, padding=1), nn.BatchNorm2d(1024),
                                                           nn.ReLU(inplace=True), nn.MaxPool2d(2, padding=1)))
         self.features.add_module('gpool', nn.MaxPool2d(16))
+        """
         self.classifier = nn.Linear(1024, outnum)
         
     def forward(self, x):
