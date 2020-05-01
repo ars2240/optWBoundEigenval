@@ -50,7 +50,7 @@ def options():
     opt['header'] = 'CIFAR10_DenseNet'
     opt['use_gpu'] = True
     opt['verbose'] = False
-    opt['pow_iter_eps'] = 5e-2
+    opt['pow_iter_eps'] = 0.05
     opt['max_pow_iter'] = 100
 
     return opt
