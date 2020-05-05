@@ -126,7 +126,7 @@ class MyVggNet16_bn(nn.Module):
         self.features = original_model.features
         self.features.add_module('transit', nn.Sequential(nn.Conv2d(512, 1024, 3, padding=1),nn.BatchNorm2d(1024),
                                                           nn.ReLU(inplace=True), nn.MaxPool2d(2,padding=1)))
-        self.features.add_module('gpool', nn.MaxPool2d(16))
+        self.features.add_module('gpool', nn.MaxPool2d(4))
         self.classifier = nn.Linear(1024, outnum)
         
     def forward(self, x):
