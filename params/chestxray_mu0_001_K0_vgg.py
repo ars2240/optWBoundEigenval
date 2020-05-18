@@ -24,7 +24,7 @@ def options():
     enc = 'vgg16bn'  # model type
 
     # batch size
-    batch_size = 8
+    batch_size = 4
     opt['batch_size'] = batch_size
 
     # set number of threads
