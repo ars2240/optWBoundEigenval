@@ -631,6 +631,7 @@ class OptWBoundEignVal(object):
                     else:
                         target = target[:, classes]
                         predicted = predicted[:, classes]
+                        ops = ops[:, classes]
                 if 'acc' in self.test_func:
                     acc = torch.mean((predicted == target).float()).item() * 100
                     acc_list.append(acc)
@@ -828,7 +829,6 @@ class OptWBoundEignVal(object):
             # test model
             if len(classes) > 1:
                 c = [x for x in range(len(c)) if list(c)[x] in overlap]
-                print(c)
                 self.test_test_set(loader=assert_dl(loader, self.batch_size), classes=c)
             else:
                 self.test_test_set(loader=assert_dl(loader, self.batch_size))
