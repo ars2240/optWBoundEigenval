@@ -818,9 +818,9 @@ class OptWBoundEignVal(object):
             # test model
             if len(classes) > 1:
                 c = np.where(classes in overlap)[0]
-                opt.test_test_set(loader=assert_dl(loader, self.batch_size), classes=c)
+                self.test_test_set(loader=assert_dl(loader, self.batch_size), classes=c)
             else:
-                opt.test_test_set(loader=assert_dl(loader, self.batch_size))
+                self.test_test_set(loader=assert_dl(loader, self.batch_size))
             i += 1
 
     def parse(self):
