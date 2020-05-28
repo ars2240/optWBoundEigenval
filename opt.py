@@ -813,6 +813,7 @@ class OptWBoundEignVal(object):
             sys.stdout = log_file  # write to log file
             print(overlap)
             log_file.close()  # close log file
+            sys.stdout = old_stdout  # reset output
         i = 0
         for loader in loaders:
             # print header
@@ -820,6 +821,7 @@ class OptWBoundEignVal(object):
             sys.stdout = log_file  # write to log file
             print('Comparison Test - Data Set {0}'.format(i))
             log_file.close()  # close log file
+            sys.stdout = old_stdout  # reset output
 
             # test model
             if len(classes) > 1:
