@@ -98,8 +98,8 @@ class CheXpert_Dataset(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        tr = pd.read_csv(csv_trainfile, header=0, dtype=str)[0]
-        val = pd.read_csv(csv_validfile, header=0, dtype=str)[0]
+        tr = pd.read_csv(csv_trainfile, header=0, dtype='str')[0]
+        val = pd.read_csv(csv_validfile, header=0, dtype='str')[0]
 
         if use == 'train':
             self.label_df = tr
