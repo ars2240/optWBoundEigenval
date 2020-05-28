@@ -35,7 +35,6 @@ class ChestXray_Dataset(Dataset):
                 on a sample.
         """
         label_df = pd.read_csv(csv_labelfile)
-        n = len(label_df)
         te = pd.read_csv(join(self.path, 'test_list.txt'), header=None)[0]
         tr_val = pd.read_csv(join(self.path, 'train_val_list.txt'), header=None)[0]
         tr, val = np.split(tr_val.sample(frac=1, random_state=0), [int(len(tr_val)*0.875), ])
@@ -49,7 +48,7 @@ class ChestXray_Dataset(Dataset):
         elif use == "bboxtest":
             self.bbox = pd.read_csv(csv_bboxfile)
             # self.bbox['bbox']=self.bbox.iloc[:,[2,3,4,5]].apply(lambda x: tuple(x),axis=1)
-            self.label_df = label_df.loc[label_df['Image Index'].isin( self.bbox['Image Index']), :]
+            self.label_df = label_df.loc[label_df['Image Index'].isin(self.bbox['Image Index']), :]
         elif use == 'all':
             self.label_df = label_df
         else:
@@ -68,7 +67,7 @@ class ChestXray_Dataset(Dataset):
     def __getitem__(self, idx):
         img_name = self.label_df.iloc[idx, 0]
         image = Image.open(join(self.root_dir, img_name)).convert('RGB')
-        labels = np.zeros(len(self.classes),dtype=np.float32)
+        labels = np.zeros(len(self.classes), dtype=np.float32)
         labels[[self.classes[x.strip()] for x in self.label_df.iloc[idx, 1].split('|') if x.strip() in self.classes]] =\
             1
         # bbox = self.box_loc.loc[self.box_loc['Image Index']==img_name,['Finding Label','bbox']] \
@@ -77,6 +76,61 @@ class ChestXray_Dataset(Dataset):
         sample = {'image': image, 'label': labels, 'pid': self.label_df.iloc[idx, 3],
                   'age': self.label_df.iloc[idx, 4], 'gender': self.label_df.iloc[idx, 5],
                   'position': self.label_df.iloc[idx, 6], 'name': img_name}
+
+        if self.transform:
+            sample['image'] = self.transform(sample['image'])
+
+        return sample
+
+
+class CheXpert_Dataset(Dataset):
+    """ChestXray dataset."""
+    path = '/home/hddraid/shared_data/CheXpert-v1.0-small/'
+
+    def __init__(self, csv_trainfile=join(path, 'train.csv'), csv_validfile=join(path, 'valid.csv'),
+                 root_dir='/home/hddraid/shared_data/', use='train', transform=None):
+        """
+        Args:
+            csv_labelfile (string): Path to the csv file with labels.
+            csv_bboxfile (string): Path to the csv file with bbox.
+            root_dir (string): Directory with all the images.
+            use (string): 'train' or 'validation' or 'test'
+            transform (callable, optional): Optional transform to be applied
+                on a sample.
+        """
+        tr = pd.read_csv(csv_trainfile, header=None)[0]
+        val = pd.read_csv(csv_validfile, header=None)[0]
+
+        if use == 'train':
+            self.label_df = tr
+        elif use == 'validation':
+            self.label_df = val
+        elif use == 'all':
+            self.label_df = tr.append(val)
+        else:
+            raise Error('use must be "train" or "validation" or "all"')
+
+        self.root_dir = root_dir
+        self.classes = {'Enlarged Cardiomediastinum': 0, 'Cardiomegaly': 1, 'Lung Opacity': 2, 'Lung Lesion': 3,
+                        'Edema': 4, 'Consolidation': 5, 'Pneumonia': 6, 'Atelectasis': 7,
+                        'Pneumothorax': 8, 'Pleural Effusion': 9, 'Pleural Other': 10, 'Fracture': 11,
+                        'Support Devices': 12}
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.label_df)
+
+    def __getitem__(self, idx):
+        img_name = self.label_df.iloc[idx, 0]
+        image = Image.open(join(self.root_dir, img_name)).convert('RGB')
+        labels = np.zeros(len(self.classes), dtype=np.float32)
+        labels[[self.classes[x] for x in self.classes.keys() if self.label_df[x][idx] == 1]] = 1
+        # bbox = self.box_loc.loc[self.box_loc['Image Index']==img_name,['Finding Label','bbox']] \
+        #        .set_index('Finding Label').to_dict()['bbox']
+
+        sample = {'image': image, 'label': labels, 'pid': idx,
+                  'age': self.label_df.iloc[idx, 2], 'gender': self.label_df.iloc[idx, 1],
+                  'position': self.label_df.iloc[idx, 3], 'name': img_name}
 
         if self.transform:
             sample['image'] = self.transform(sample['image'])

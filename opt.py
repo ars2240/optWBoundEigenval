@@ -575,7 +575,7 @@ class OptWBoundEignVal(object):
         else:
             self.test_train_set(inputs, target, loader)
 
-    def test_model(self, x=None, y=None, loader=None):
+    def test_model(self, x=None, y=None, loader=None, classes=None):
         # Computes the loss and accuracy of model on given dataset
 
         self.model.eval()  # set model to evaluation mode
@@ -625,6 +625,12 @@ class OptWBoundEignVal(object):
                 else:
                     predicted = ops.data
                 target = target.to(self.device)
+                if classes is not None:
+                    if target.shape[1] == 1:
+                        print('"Classes" argument only implemented for one-hot encoding')
+                    else:
+                        target = target[:, classes]
+                        predicted = predicted[:, classes]
                 if 'acc' in self.test_func:
                     acc = torch.mean((predicted == target).float()).item() * 100
                     acc_list.append(acc)
@@ -673,12 +679,12 @@ class OptWBoundEignVal(object):
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
 
-    def test_test_set(self, x=None, y=None, loader=None):
+    def test_test_set(self, x=None, y=None, loader=None, classes=None):
         old_stdout = sys.stdout  # save old output
         log_file = open(self.log_file, "a")  # open log file
         sys.stdout = log_file  # write to log file
 
-        loss, acc, f1 = self.test_model_best(x, y, loader)  # test best model
+        loss, acc, f1 = self.test_model_best(x, y, loader, classes)  # test best model
 
         print('Test Loss:', loss)
         print('Test Accuracy:', acc)
@@ -785,7 +791,7 @@ class OptWBoundEignVal(object):
     def test_cov_shift(self, x, y, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
                        train_skew=[0]):
 
-        # test best model
+        # test best model with covariate shifts
         loss, acc, f1, min_weight, max_weight = self.test_model_best_cov(x, y, test_mean, test_sd, test_skew,
                                                                          train_mean, train_sd, train_skew)
 
@@ -793,6 +799,29 @@ class OptWBoundEignVal(object):
         print('Test F1:', f1)
         print('Min-weight:', min_weight)
         print('Max-weight:', max_weight)
+
+    # comparison test (requires list of data loaders)
+    def comp_test(self, loaders):
+        classes = [loader.classes.keys() for loader in loaders if not isinstance(loader, utils_data.DataLoader)]
+        if len(classes) > 1:
+            overlap = classes[0]
+            for c in classes[1:]:
+                overlap = [x for x in overlap if x in c]
+
+        i = 0
+        for loader in loader:
+            log_file = open(self.log_file, "a")  # open log file
+            sys.stdout = log_file  # write to log file
+            print('Comparison Test - Data Set {0}'.format(i))
+            log_file.close()  # close log file
+
+            # test model
+            if len(classes) > 1:
+                c = np.which(classes in overlap)
+                opt.test_test_set(loader=assert_dl(loader, self.batch_size), classes=c)
+            else:
+                opt.test_test_set(loader=assert_dl(loader, self.batch_size))
+            i += 1
 
     def parse(self):
         with open(self.log_file, "r") as log_file:  # open log file
@@ -899,6 +928,14 @@ def missing_params(func, options, replace={}):
     return options
 
 
+# Assert DataLoader class
+def assert_dl(x, batch_size):
+    if isinstance(x, utils_data.DataLoader):
+        return x
+    else:
+        return utils_data.DataLoader(x, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=1)
+
+
 # Prints CPU%, # of cores, and Memory %
 def check_cpu():
     import psutil
@@ -935,11 +972,14 @@ def main(pfile):
     # get missing options for train & test
     options = missing_params(opt.train, options, replace={'loader': 'train_loader', 'train_loader': 'train_loader_na'})
     options = missing_params(opt.test_test_set, options, replace={'loader': 'test_loader'})
+    bs = options['batch_size']
 
     # Train model
-    opt.train(inputs=options['inputs'], target=options['target'], inputs_valid=options['inputs_valid'],
-              target_valid=options['target_valid'], loader=options['train_loader'],
-              valid_loader=options['valid_loader'], train_loader=options['train_loader_na'])
+    if ('train' in options.keys() and options['test']) or 'train' not in options.keys():
+        opt.train(inputs=options['inputs'], target=options['target'], inputs_valid=options['inputs_valid'],
+                  target_valid=options['target_valid'], loader=assert_dl(options['train_loader'], bs),
+                  valid_loader=assert_dl(options['valid_loader'], bs),
+                  train_loader=assert_dl(options['train_loader_na'], bs))
     """
     try:
         opt.train(inputs=options['inputs'], target=options['target'], inputs_valid=options['inputs_valid'],
@@ -951,11 +991,20 @@ def main(pfile):
         print(log.as_table())
         print(str(os.system("top -n 1")))
     """
-    opt.test_test_set(x=options['x'], y=options['y'], loader=options['test_loader'])  # test model on test set
-    opt.parse()
+    if ('test' in options.keys() and options['test']) or 'test' not in options.keys():
+        if type(options['test_loader']) is list:
+            loader = options['test_loader'][0]
+        else:
+            loader = options['test_loader']
+        opt.test_test_set(x=options['x'], y=options['y'], loader=assert_dl(loader, bs))  # test model on test set
+        opt.parse()
 
     # Augmented Testing
     if 'aug_test' in options.keys() and options['aug_test']:
         _, acc, f1 = opt.test_model_best(loader=options['test_loader_aug'])
         print('Aug_Test_Acc\tAug_Test_F1')
         print(str(acc) + '\t' + str(f1))
+
+    # Comparison Test (requires data loader)
+    if 'comp_test' in options.keys() and options['comp_test'] and type(options['test_loader']) is list:
+        opt.comp_test(options['test_loader'])
