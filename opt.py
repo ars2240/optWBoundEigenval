@@ -656,21 +656,21 @@ class OptWBoundEignVal(object):
 
         return test_loss, test_acc, test_f1
 
-    def test_model_best(self, x=None, y=None, loader=None):
+    def test_model_best(self, x=None, y=None, loader=None, classes=None):
         # tests best model, loaded from file
 
         self.model.load_state_dict(torch.load('./models/' + self.header2 + '_trained_model_best.pt'))
 
         self.model.to(self.device)
 
-        return self.test_model(x, y, loader)
+        return self.test_model(x, y, loader, classes)
 
-    def test_train_set(self, x=None, y=None, loader=None):
+    def test_train_set(self, x=None, y=None, loader=None, classes=None):
         old_stdout = sys.stdout  # save old output
         log_file = open(self.log_file, "a")  # open log file
         sys.stdout = log_file  # write to log file
 
-        loss, acc, f1 = self.test_model_best(x, y, loader)  # test best model
+        loss, acc, f1 = self.test_model_best(x, y, loader, classes)  # test best model
 
         print('Train Loss:', loss)
         print('Train Accuracy:', acc)
