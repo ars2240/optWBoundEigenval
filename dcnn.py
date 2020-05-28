@@ -124,9 +124,7 @@ class CheXpert_Dataset(Dataset):
         img_name = self.label_df.iloc[idx, 0]
         image = Image.open(join(self.root_dir, img_name)).convert('RGB')
         labels = np.zeros(len(self.classes), dtype=np.float32)
-        print(idx)
-        print([self.label_df[[x]].iloc[idx] for x in self.classes.keys()])
-        labels[[self.classes[x] for x in self.classes.keys() if self.label_df[[x]].iloc[idx] == 1]] = 1
+        labels[[self.classes[x] for x in self.classes.keys() if self.label_df[[x]].iloc[idx].values == 1]] = 1
         # bbox = self.box_loc.loc[self.box_loc['Image Index']==img_name,['Finding Label','bbox']] \
         #        .set_index('Finding Label').to_dict()['bbox']
 
