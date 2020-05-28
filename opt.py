@@ -681,9 +681,9 @@ class OptWBoundEignVal(object):
         sys.stdout = old_stdout  # reset output
 
     def test_test_set(self, x=None, y=None, loader=None, classes=None):
-        old_stdout = sys.stdout  # save old output
-        log_file = open(self.log_file, "a")  # open log file
-        sys.stdout = log_file  # write to log file
+        #old_stdout = sys.stdout  # save old output
+        #log_file = open(self.log_file, "a")  # open log file
+        #sys.stdout = log_file  # write to log file
 
         loss, acc, f1 = self.test_model_best(x, y, loader, classes)  # test best model
 
@@ -691,8 +691,8 @@ class OptWBoundEignVal(object):
         print('Test Accuracy:', acc)
         print('Test F1:', f1)
 
-        log_file.close()  # close log file
-        sys.stdout = old_stdout  # reset output
+        #log_file.close()  # close log file
+        #sys.stdout = old_stdout  # reset output
 
     def test_model_cov(self, x, y, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
                        train_skew=[0]):
