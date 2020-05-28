@@ -808,8 +808,6 @@ class OptWBoundEignVal(object):
             for c in classes[1:]:
                 overlap = [x for x in overlap if x in c]
 
-            print(overlap)
-
             # print overlap
             log_file = open(self.log_file, "a")  # open log file
             sys.stdout = log_file  # write to log file
@@ -826,6 +824,7 @@ class OptWBoundEignVal(object):
             # test model
             if len(classes) > 1:
                 c = np.where(classes in overlap)[0]
+                print(c)
                 self.test_test_set(loader=assert_dl(loader, self.batch_size), classes=c)
             else:
                 self.test_test_set(loader=assert_dl(loader, self.batch_size))
