@@ -319,7 +319,7 @@ class OptWBoundEignVal(object):
 
         self.gradrho = self.hvp_op.vGHv(self.v, storedGrad=True)  # compute v*gradH*v
 
-    def comp_f(self, inputs, target):
+    def comp_f(self, inputs, target, classes=None):
         # computes f
 
         self.model.eval()  # set model to evaluation mode
@@ -329,6 +329,14 @@ class OptWBoundEignVal(object):
             inputs = inputs.to(self.device)
             target = target.to(self.device)
             output = self.model(inputs)  # compute prediction
+
+            # subset classes
+            if classes is not None:
+                if target.shape[1] == 1:
+                    print('"Classes" argument only implemented for one-hot encoding')
+                else:
+                    target = target[:, classes]
+                    output = output[:, classes]
 
             # compute loss
             if self.loss.__class__.__name__ == 'KLDivLoss':
@@ -610,8 +618,15 @@ class OptWBoundEignVal(object):
                     raise Exception('Data type not supported')
 
                 # compute loss
-                f, ops = self.comp_f(inputs, target)
+                f, ops = self.comp_f(inputs, target, classes)
                 f_list.append(f)
+
+                # subset classes
+                if classes is not None:
+                    if target.shape[1] == 1:
+                        print('"Classes" argument only implemented for one-hot encoding')
+                    else:
+                        target = target[:, classes]
 
                 if any(x in self.test_func for x in ['sigmoid', 'logit']):
                     ops = F.sigmoid(ops)
@@ -625,13 +640,6 @@ class OptWBoundEignVal(object):
                 else:
                     predicted = ops.data
                 target = target.to(self.device)
-                if classes is not None:
-                    if target.shape[1] == 1:
-                        print('"Classes" argument only implemented for one-hot encoding')
-                    else:
-                        target = target[:, classes]
-                        predicted = predicted[:, classes]
-                        ops = ops[:, classes]
                 if 'acc' in self.test_func:
                     acc = torch.mean((predicted == target).float()).item() * 100
                     acc_list.append(acc)
@@ -681,9 +689,9 @@ class OptWBoundEignVal(object):
         sys.stdout = old_stdout  # reset output
 
     def test_test_set(self, x=None, y=None, loader=None, classes=None):
-        #old_stdout = sys.stdout  # save old output
-        #log_file = open(self.log_file, "a")  # open log file
-        #sys.stdout = log_file  # write to log file
+        old_stdout = sys.stdout  # save old output
+        log_file = open(self.log_file, "a")  # open log file
+        sys.stdout = log_file  # write to log file
 
         loss, acc, f1 = self.test_model_best(x, y, loader, classes)  # test best model
 
@@ -691,8 +699,8 @@ class OptWBoundEignVal(object):
         print('Test Accuracy:', acc)
         print('Test F1:', f1)
 
-        #log_file.close()  # close log file
-        #sys.stdout = old_stdout  # reset output
+        log_file.close()  # close log file
+        sys.stdout = old_stdout  # reset output
 
     def test_model_cov(self, x, y, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
                        train_skew=[0]):
