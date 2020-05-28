@@ -808,6 +808,8 @@ class OptWBoundEignVal(object):
             for c in classes[1:]:
                 overlap = [x for x in overlap if x in c]
 
+            print(overlap)
+
             # print overlap
             log_file = open(self.log_file, "a")  # open log file
             sys.stdout = log_file  # write to log file
