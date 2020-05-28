@@ -809,6 +809,7 @@ class OptWBoundEignVal(object):
                 overlap = [x for x in overlap if x in c]
 
             # print overlap
+            old_stdout = sys.stdout  # save old output
             log_file = open(self.log_file, "a")  # open log file
             sys.stdout = log_file  # write to log file
             print(overlap)
@@ -817,6 +818,7 @@ class OptWBoundEignVal(object):
         i = 0
         for loader in loaders:
             # print header
+            old_stdout = sys.stdout  # save old output
             log_file = open(self.log_file, "a")  # open log file
             sys.stdout = log_file  # write to log file
             print('Comparison Test - Data Set {0}'.format(i))
