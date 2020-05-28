@@ -827,7 +827,7 @@ class OptWBoundEignVal(object):
 
             # test model
             if len(classes) > 1:
-                c = np.where(classes in overlap)[0]
+                c = [x for x in range(len(c)) if c[x] in overlap]
                 print(c)
                 self.test_test_set(loader=assert_dl(loader, self.batch_size), classes=c)
             else:
