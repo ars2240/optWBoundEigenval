@@ -99,6 +99,7 @@ class CheXpert_Dataset(Dataset):
                 on a sample.
         """
         tr = pd.read_csv(csv_trainfile, header=0)
+        print(tr)
         val = pd.read_csv(csv_validfile, header=0)
 
         if use == 'train':
