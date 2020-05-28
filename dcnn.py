@@ -99,7 +99,6 @@ class CheXpert_Dataset(Dataset):
                 on a sample.
         """
         tr = pd.read_csv(csv_trainfile, header=0)
-        print(tr)
         val = pd.read_csv(csv_validfile, header=0)
 
         if use == 'train':
@@ -127,7 +126,7 @@ class CheXpert_Dataset(Dataset):
         labels = np.zeros(len(self.classes), dtype=np.float32)
         print(idx)
         print([self.label_df[x][idx] for x in self.classes.keys()])
-        labels[[self.classes[x] for x in self.classes.keys() if self.label_df.iloc[idx, x] == 1]] = 1
+        labels[[self.classes[x] for x in self.classes.keys() if self.label_df[[x]][idx] == 1]] = 1
         # bbox = self.box_loc.loc[self.box_loc['Image Index']==img_name,['Finding Label','bbox']] \
         #        .set_index('Finding Label').to_dict()['bbox']
 
