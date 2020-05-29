@@ -48,8 +48,17 @@ def options():
     opt['train_loader'] = DataLoader(train_set, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=1)
     valid_set = ChestXray_Dataset(use='validation', transform=transform)
     opt['valid_loader'] = DataLoader(valid_set, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=1)
+    opt['test_loader'] = []
     test_set = ChestXray_Dataset(use='test', transform=transform)
-    opt['test_loader'] = DataLoader(test_set, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=1)
+    opt['test_loader'].append(test_set)
+
+    transform = transforms.Compose([transforms.Resize((256, 256)), transforms.CenterCrop((224, 224)),
+                                    transforms.ToTensor(),
+                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+    test_set = CheXpert_Dataset(use='validation', transform=transform)
+    opt['test_loader'].append(test_set)
+    test_set = MIMICCXR_Dataset(use='validation', transform=transform)
+    opt['test_loader'].append(test_set)
 
     # Create neural network
     if enc == 'alex':
@@ -77,5 +86,8 @@ def options():
     opt['max_pow_iter'] = 100
     opt['pow_iter_eps'] = 0.1
     opt['verbose'] = True
+    opt['train'] = False
+    opt['test'] = False
+    opt['comp_test'] = True
 
     return opt
