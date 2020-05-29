@@ -647,6 +647,8 @@ class OptWBoundEignVal(object):
                 target = target.to('cpu')
                 predicted = predicted.to('cpu')
                 ops = ops.to('cpu')
+                print(target)
+                print(ops)
                 if 'auc' in self.test_func:
                     outputs.append(ops)
                     labels.append(target)
