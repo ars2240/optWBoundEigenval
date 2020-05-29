@@ -84,7 +84,7 @@ class ChestXray_Dataset(Dataset):
 
 
 class CheXpert_Dataset(Dataset):
-    """ChestXray dataset."""
+    """CheXpert dataset."""
     path = '/home/hddraid/shared_data/CheXpert-v1.0-small/'
 
     def __init__(self, csv_trainfile=join(path, 'train.csv'), csv_validfile=join(path, 'valid.csv'),
@@ -131,6 +131,60 @@ class CheXpert_Dataset(Dataset):
         sample = {'image': image, 'label': labels, 'pid': idx,
                   'age': self.label_df.iloc[idx, 2], 'gender': self.label_df.iloc[idx, 1],
                   'position': self.label_df.iloc[idx, 3], 'name': img_name}
+
+        if self.transform:
+            sample['image'] = self.transform(sample['image'])
+
+        return sample
+
+
+class MIMICCXR(Dataset):
+    """MIMIC Chest X-Ray dataset."""
+    path = '/home/hddraid/shared_data/MIMICCXR/'
+
+    def __init__(self, csv_trainfile=join(path, 'train.csv'), csv_validfile=join(path, 'valid.csv'),
+                 root_dir=path, use='train', transform=None):
+        """
+        Args:
+            csv_labelfile (string): Path to the csv file with labels.
+            csv_bboxfile (string): Path to the csv file with bbox.
+            root_dir (string): Directory with all the images.
+            use (string): 'train' or 'validation' or 'test'
+            transform (callable, optional): Optional transform to be applied
+                on a sample.
+        """
+        tr = pd.read_csv(csv_trainfile, header=0)
+        val = pd.read_csv(csv_validfile, header=0)
+
+        if use == 'train':
+            self.label_df = tr
+        elif use == 'validation':
+            self.label_df = val
+        elif use == 'all':
+            self.label_df = tr.append(val)
+        else:
+            raise Error('use must be "train" or "validation" or "all"')
+
+        self.root_dir = root_dir
+        self.classes = {'Enlarged Cardiomediastinum': 0, 'Cardiomegaly': 1, 'Airspace Opacity': 2, 'Lung Lesion': 3,
+                        'Edema': 4, 'Consolidation': 5, 'Pneumonia': 6, 'Atelectasis': 7,
+                        'Pneumothorax': 8, 'Pleural Effusion': 9, 'Pleural Other': 10, 'Fracture': 11,
+                        'Support Devices': 12}
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.label_df)
+
+    def __getitem__(self, idx):
+        img_name = self.label_df.iloc[idx, 0]
+        image = Image.open(join(self.root_dir, img_name)).convert('RGB')
+        labels = np.zeros(len(self.classes), dtype=np.float32)
+        labels[[self.classes[x] for x in self.classes.keys() if self.label_df[[x]].iloc[idx].values == 1]] = 1
+        # bbox = self.box_loc.loc[self.box_loc['Image Index']==img_name,['Finding Label','bbox']] \
+        #        .set_index('Finding Label').to_dict()['bbox']
+
+        sample = {'image': image, 'label': labels, 'pid': idx,
+                  'position': self.label_df.iloc[idx, 1], 'name': img_name}
 
         if self.transform:
             sample['image'] = self.transform(sample['image'])
