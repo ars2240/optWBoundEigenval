@@ -138,7 +138,7 @@ class CheXpert_Dataset(Dataset):
         return sample
 
 
-class MIMICCXR(Dataset):
+class MIMICCXR_Dataset(Dataset):
     """MIMIC Chest X-Ray dataset."""
     path = '/home/hddraid/shared_data/MIMICCXR/'
 
