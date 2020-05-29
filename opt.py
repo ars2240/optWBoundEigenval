@@ -319,7 +319,7 @@ class OptWBoundEignVal(object):
 
         self.gradrho = self.hvp_op.vGHv(self.v, storedGrad=True)  # compute v*gradH*v
 
-    def comp_f(self, inputs, target, classes=None):
+    def comp_f(self, inputs, target, classes=None, model_classes=None):
         # computes f
 
         self.model.eval()  # set model to evaluation mode
@@ -332,11 +332,13 @@ class OptWBoundEignVal(object):
 
             # subset classes
             if classes is not None:
+                if model_classes is None:
+                    model_classes = classes
                 if target.shape[1] == 1:
                     print('"Classes" argument only implemented for one-hot encoding')
                 else:
                     target = target[:, classes]
-                    output = output[:, classes]
+                    output = output[:, model_classes]
 
             # compute loss
             if self.loss.__class__.__name__ == 'KLDivLoss':
@@ -583,7 +585,7 @@ class OptWBoundEignVal(object):
         else:
             self.test_train_set(inputs, target, loader)
 
-    def test_model(self, x=None, y=None, loader=None, classes=None):
+    def test_model(self, x=None, y=None, loader=None, classes=None, model_classes=None):
         # Computes the loss and accuracy of model on given dataset
 
         self.model.eval()  # set model to evaluation mode
@@ -618,7 +620,7 @@ class OptWBoundEignVal(object):
                     raise Exception('Data type not supported')
 
                 # compute loss
-                f, ops = self.comp_f(inputs, target, classes)
+                f, ops = self.comp_f(inputs, target, classes, model_classes)
                 f_list.append(f)
 
                 # subset classes
@@ -647,8 +649,6 @@ class OptWBoundEignVal(object):
                 target = target.to('cpu')
                 predicted = predicted.to('cpu')
                 ops = ops.to('cpu')
-                print(target)
-                print(ops)
                 if 'auc' in self.test_func:
                     outputs.append(ops)
                     labels.append(target)
@@ -667,21 +667,21 @@ class OptWBoundEignVal(object):
 
         return test_loss, test_acc, test_f1
 
-    def test_model_best(self, x=None, y=None, loader=None, classes=None):
+    def test_model_best(self, x=None, y=None, loader=None, classes=None, model_classes=None):
         # tests best model, loaded from file
 
         self.model.load_state_dict(torch.load('./models/' + self.header2 + '_trained_model_best.pt'))
 
         self.model.to(self.device)
 
-        return self.test_model(x, y, loader, classes)
+        return self.test_model(x, y, loader, classes, model_classes)
 
-    def test_train_set(self, x=None, y=None, loader=None, classes=None):
+    def test_train_set(self, x=None, y=None, loader=None, classes=None, model_classes=None):
         old_stdout = sys.stdout  # save old output
         log_file = open(self.log_file, "a")  # open log file
         sys.stdout = log_file  # write to log file
 
-        loss, acc, f1 = self.test_model_best(x, y, loader, classes)  # test best model
+        loss, acc, f1 = self.test_model_best(x, y, loader, classes, model_classes)  # test best model
 
         print('Train Loss:', loss)
         print('Train Accuracy:', acc)
@@ -690,12 +690,12 @@ class OptWBoundEignVal(object):
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
 
-    def test_test_set(self, x=None, y=None, loader=None, classes=None):
+    def test_test_set(self, x=None, y=None, loader=None, classes=None, model_classes=None):
         old_stdout = sys.stdout  # save old output
         log_file = open(self.log_file, "a")  # open log file
         sys.stdout = log_file  # write to log file
 
-        loss, acc, f1 = self.test_model_best(x, y, loader, classes)  # test best model
+        loss, acc, f1 = self.test_model_best(x, y, loader, classes, model_classes)  # test best model
 
         print('Test Loss:', loss)
         print('Test Accuracy:', acc)
@@ -813,6 +813,7 @@ class OptWBoundEignVal(object):
 
     # comparison test (requires list of data loaders)
     def comp_test(self, loaders):
+        # test loader for model must be 0 index in list
         classes = [loader.classes.keys() for loader in loaders if not isinstance(loader, utils_data.DataLoader)]
         if len(classes) > 1:
             overlap = classes[0]
@@ -826,6 +827,9 @@ class OptWBoundEignVal(object):
             print(overlap)
             log_file.close()  # close log file
             sys.stdout = old_stdout  # reset output
+
+            # model classes
+            mc = [x for x in range(len(classes[0])) if list(classes[0])[x] in overlap]
         i = 0
         for loader in loaders:
             # print header
@@ -838,8 +842,8 @@ class OptWBoundEignVal(object):
 
             # test model
             if len(classes) > 1:
-                c = [x for x in range(len(c)) if list(c)[x] in overlap]
-                self.test_test_set(loader=assert_dl(loader, self.batch_size), classes=c)
+                c = [x for x in range(len(classes[i])) if list(classes[i])[x] in overlap]
+                self.test_test_set(loader=assert_dl(loader, self.batch_size), classes=c, model_classes=mc)
             else:
                 self.test_test_set(loader=assert_dl(loader, self.batch_size))
             i += 1
