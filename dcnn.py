@@ -347,7 +347,7 @@ class W_BCEWithLogitsLoss(nn.Module):
             s = int(np.prod(target2.size()))
             try:
                 weight = target2 * (s / p - s / (s - p)) + s / (s - p) if p != 0 else target2 + 1
-            except Exception as e:
+            except Exception:
                 print(p)
                 print(s)
                 print(i)
