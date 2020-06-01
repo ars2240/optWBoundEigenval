@@ -330,19 +330,24 @@ class VAE(nn.Module):
 
 
 class W_BCEWithLogitsLoss(nn.Module):
-    def __init__(self, reduction='mean'):
+    def __init__(self):
         super(W_BCEWithLogitsLoss, self).__init__()
-        self.reduction = reduction
         
     def forward(self, input, target):
-        if all(target == target):
-            p = int(target.sum().cpu().data.numpy())
-            s = int(np.prod(target.size()))
-        else:
-            p = target.sum().cpu().data.numpy().astype(np.int32)
-            s = np.prod(target.size()).astype(np.int32)
-        weight = target*(s/p-s/(s-p))+s/(s-p) if p != 0 else target+1
-        return F.binary_cross_entropy_with_logits(input, target, weight, reduction=self.reduction)
+        classes = input.size()[1]
+        f = np.zeros(classes)
+        for i in range(classes):
+            input2 = input[:, i]
+            target2 = target[:, i]
+            bad = target2 != target2
+            input2 = input2[~bad]
+            target2 = target2[~bad]
+
+            p = int(target2.sum().cpu().data.numpy())
+            s = int(np.prod(target2.size()))
+            weight = target * (s / p - s / (s - p)) + s / (s - p) if p != 0 else target + 1
+            f[i] = F.binary_cross_entropy_with_logits(input2, target2, weight)
+        return f.mean()
 
 
 class VLoss(nn.Module):
