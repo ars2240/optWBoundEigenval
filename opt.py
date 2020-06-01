@@ -659,7 +659,7 @@ class OptWBoundEignVal(object):
             if 'auc' in self.test_func:
                 labels = torch.cat(labels)
                 outputs = torch.cat(outputs)
-                classes = outputs.size[1]
+                classes = outputs.size()[1]
                 roc = np.zeros(classes)
                 f1 = np.zeros(classes)
                 for i in range(classes):
