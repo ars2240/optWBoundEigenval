@@ -640,7 +640,7 @@ class OptWBoundEignVal(object):
                 if 'max' in self.test_func:
                     _, predicted = torch.max(ops.data, 1)
                 else:
-                    predicted = ops.data > 0.5
+                    predicted = int(ops.data > 0.5)
                 target = target.to(self.device)
                 if 'acc' in self.test_func:
                     acc = torch.mean((predicted == target).float()).item() * 100
