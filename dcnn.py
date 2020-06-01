@@ -339,9 +339,9 @@ class W_BCEWithLogitsLoss(nn.Module):
         for i in range(classes):
             input2 = input[:, i]
             target2 = target[:, i]
-            bad = target2 != target2
-            input2 = input2[not bad]
-            target2 = target2[not bad]
+            good = target2 == target2
+            input2 = input2[good]
+            target2 = target2[good]
 
             p = int(target2.sum().cpu().data.numpy())
             s = int(np.prod(target2.size()))

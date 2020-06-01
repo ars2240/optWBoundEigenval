@@ -666,9 +666,9 @@ class OptWBoundEignVal(object):
                     # remove NaN labels
                     outputs2 = outputs[:, i]
                     labels2 = labels[:, i]
-                    bad = labels2 != labels2
-                    outputs2 = outputs2[not bad]
-                    labels2 = labels2[not bad]
+                    good = labels2 == labels2
+                    outputs2 = outputs2[good]
+                    labels2 = labels2[good]
 
                     roc[i] = roc_auc_score(labels2, outputs2, average=None)  # compute AUC of ROC curves
                     f1[i] = f1_score(labels2, (outputs2 > 0.5).float(), average='micro')
