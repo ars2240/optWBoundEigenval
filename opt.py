@@ -657,10 +657,20 @@ class OptWBoundEignVal(object):
                     f1_list.append(f1)
 
             if 'auc' in self.test_func:
-                roc = roc_auc_score(torch.cat(labels), torch.cat(outputs), average=None)  # compute AUC of ROC curves
+                labels = torch.cat(labels)
+                outputs = torch.cat(outputs)
+                classes = outputs.size[1]
+                roc = np.zeros(classes)
+                f1 = np.zeros(classes)
+                for i in range(classes):
+                    outputs2 = outputs[:, i]
+                    bad = output2.isnan()
+                    outputs2 = output2[~bad]
+                    labels2 = labels[~bad, i]
+                    roc[i] = roc_auc_score(labels2, outputs2, average=None)  # compute AUC of ROC curves
+                    f1[i] = f1_score(labels2, (outputs2 > 0.5).float(), average='micro')
                 test_acc = roc.mean()  # mean AUCs
                 # weighted mean of f1 scores
-                f1 = f1_score(torch.cat(labels), (torch.cat(outputs) > 0.5).float(), average='micro')
                 test_f1 = f1.mean()  # mean AUCs
             else:
                 test_acc = np.average(acc_list, weights=size)  # weighted mean of accuracy
