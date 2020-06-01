@@ -643,6 +643,8 @@ class OptWBoundEignVal(object):
                     predicted = (ops.data > 0.5).int()
                 target = target.to(self.device)
                 if 'acc' in self.test_func:
+                    print(predicted)
+                    print(target)
                     acc = torch.mean((predicted == target).float()).item() * 100
                     acc_list.append(acc)
 
