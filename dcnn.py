@@ -335,8 +335,12 @@ class W_BCEWithLogitsLoss(nn.Module):
         self.reduction = reduction
         
     def forward(self, input, target):
-        p = target.sum().cpu().data.numpy().astype(np.int32)
-        s = np.prod(target.size()).astype(np.int32)
+        if all(target == target):
+            p = int(target.sum().cpu().data.numpy())
+            s = int(np.prod(target.size()))
+        else:
+            p = target.sum().cpu().data.numpy().astype(np.int32)
+            s = np.prod(target.size()).astype(np.int32)
         weight = target*(s/p-s/(s-p))+s/(s-p) if p != 0 else target+1
         return F.binary_cross_entropy_with_logits(input, target, weight, reduction=self.reduction)
 
