@@ -340,8 +340,8 @@ class W_BCEWithLogitsLoss(nn.Module):
             input2 = input[:, i]
             target2 = target[:, i]
             bad = target2 != target2
-            input2 = input2[~bad]
-            target2 = target2[~bad]
+            input2 = input2[not bad]
+            target2 = target2[not bad]
 
             p = int(target2.sum().cpu().data.numpy())
             s = int(np.prod(target2.size()))
