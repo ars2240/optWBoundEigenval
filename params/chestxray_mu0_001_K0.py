@@ -81,7 +81,7 @@ def options():
     opt['header'] = 'chestxray_' + enc
     opt['use_gpu'] = True
     opt['pow_iter'] = True
-    opt['test_func'] = 'accauc'
+    opt['test_func'] = 'accauc sigmoid'
     opt['max_iter'] = 10
     opt['max_pow_iter'] = 100
     opt['pow_iter_eps'] = 0.1
