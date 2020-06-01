@@ -664,8 +664,8 @@ class OptWBoundEignVal(object):
                 f1 = np.zeros(classes)
                 for i in range(classes):
                     outputs2 = outputs[:, i]
-                    bad = output2.isnan()
-                    outputs2 = output2[~bad]
+                    bad = outputs2.isnan()
+                    outputs2 = outputs2[~bad]
                     labels2 = labels[~bad, i]
                     roc[i] = roc_auc_score(labels2, outputs2, average=None)  # compute AUC of ROC curves
                     f1[i] = f1_score(labels2, (outputs2 > 0.5).float(), average='micro')
