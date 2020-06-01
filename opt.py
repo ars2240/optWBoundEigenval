@@ -631,7 +631,7 @@ class OptWBoundEignVal(object):
                         target = target[:, classes]
 
                 if any(x in self.test_func for x in ['sigmoid', 'logit']):
-                    ops = F.sigmoid(ops)
+                    ops = torch.sigmoid(ops)
 
                 # size of dataset
                 size.append(len(target))
@@ -666,6 +666,7 @@ class OptWBoundEignVal(object):
                     outputs2 = outputs[:, i]
                     bad = outputs2 != outputs2
                     outputs2 = outputs2[~bad]
+                    np.savetxt('outputs.csv', outputs2.numpy(), delimiter=',')
                     labels2 = labels[~bad, i]
                     print(outputs2)
                     print(labels2)
