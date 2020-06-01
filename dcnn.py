@@ -345,7 +345,7 @@ class W_BCEWithLogitsLoss(nn.Module):
 
             p = int(target2.sum().cpu().data.numpy())
             s = int(np.prod(target2.size()))
-            weight = target * (s / p - s / (s - p)) + s / (s - p) if p != 0 else target + 1
+            weight = target2 * (s / p - s / (s - p)) + s / (s - p) if p != 0 else target2 + 1
             f[i] = F.binary_cross_entropy_with_logits(input2, target2, weight)
         return f.mean()
 
