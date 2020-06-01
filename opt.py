@@ -663,13 +663,13 @@ class OptWBoundEignVal(object):
                 roc = np.zeros(classes)
                 f1 = np.zeros(classes)
                 for i in range(classes):
+                    # remove NaN labels
                     outputs2 = outputs[:, i]
-                    bad = outputs2 != outputs2
+                    labels2 = labels[:, i]
+                    bad = labels2 != labels2
                     outputs2 = outputs2[~bad]
-                    np.savetxt('outputs.csv', outputs2.numpy(), delimiter=',')
-                    labels2 = labels[~bad, i]
-                    print(outputs2)
-                    print(labels2)
+                    labels2 = labels2[~bad]
+
                     roc[i] = roc_auc_score(labels2, outputs2, average=None)  # compute AUC of ROC curves
                     f1[i] = f1_score(labels2, (outputs2 > 0.5).float(), average='micro')
                 test_acc = roc.mean()  # mean AUCs
