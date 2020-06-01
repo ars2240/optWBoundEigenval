@@ -643,8 +643,6 @@ class OptWBoundEignVal(object):
                     predicted = (ops.data > 0.5).float()
                 target = target.to(self.device)
                 if 'acc' in self.test_func:
-                    print(predicted)
-                    print(target)
                     acc = torch.mean((predicted == target).float()).item() * 100
                     acc_list.append(acc)
 
@@ -654,13 +652,15 @@ class OptWBoundEignVal(object):
                 if 'auc' in self.test_func:
                     outputs.append(ops)
                     labels.append(target)
-                f1 = f1_score(target, predicted, average='micro')
-                f1_list.append(f1)
+                else:
+                    f1 = f1_score(target, predicted, average='micro')
+                    f1_list.append(f1)
 
             if 'auc' in self.test_func:
                 roc = roc_auc_score(torch.cat(labels), torch.cat(outputs), average=None)  # compute AUC of ROC curves
                 test_acc = roc.mean()  # mean AUCs
-                test_f1 = np.average(f1_list, weights=size).mean()  # weighted mean of f1 scores
+                f1 = f1_score(torch.cat(labels), (torch.cat(outputs) > 0.5).float())  # weighted mean of f1 scores
+                test_f1 = f1.mean()  # mean AUCs
             else:
                 test_acc = np.average(acc_list, weights=size)  # weighted mean of accuracy
                 test_f1 = np.average(f1_list, weights=size)  # weighted mean of f1 scores
