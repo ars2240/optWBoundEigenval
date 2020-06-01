@@ -183,7 +183,7 @@ class MIMICCXR_Dataset(Dataset):
         labels = np.zeros(len(self.classes), dtype=np.float32)
         labels[[self.classes[x] for x in self.classes.keys() if self.label_df[[x]].iloc[idx].values == 1]] = 1
         labels[[self.classes[x] for x in self.classes.keys() if self.label_df[[x]].iloc[idx].values == -1]] = \
-            float('nan')
+            int('nan')
         # bbox = self.box_loc.loc[self.box_loc['Image Index']==img_name,['Finding Label','bbox']] \
         #        .set_index('Finding Label').to_dict()['bbox']
 
