@@ -667,6 +667,8 @@ class OptWBoundEignVal(object):
                     bad = outputs2 != outputs2
                     outputs2 = outputs2[~bad]
                     labels2 = labels[~bad, i]
+                    print(outputs2)
+                    print(labels2)
                     roc[i] = roc_auc_score(labels2, outputs2, average=None)  # compute AUC of ROC curves
                     f1[i] = f1_score(labels2, (outputs2 > 0.5).float(), average='micro')
                 test_acc = roc.mean()  # mean AUCs
