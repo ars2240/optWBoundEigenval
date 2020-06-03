@@ -336,6 +336,9 @@ class W_BCEWithLogitsLoss(nn.Module):
     def forward(self, input, target):
         classes = input.size()[1]
         f = np.zeros(classes)
+        target2 = target[target == target]
+        p = int(target2.sum().cpu().data.numpy())
+        s = int(np.prod(target2.size()))
         for i in range(classes):
             input2 = input[:, i]
             target2 = target[:, i]
@@ -343,13 +346,11 @@ class W_BCEWithLogitsLoss(nn.Module):
             input2 = input2[good]
             target2 = target2[good]
 
-            """
-            p = int(target2.sum().cpu().data.numpy())
-            s = int(np.prod(target2.size()))
             weight = target2 * (s / p - s / (s - p)) + s / (s - p) if p != 0 and p != s else target2 + 1
             f[i] = F.binary_cross_entropy_with_logits(input2, target2, weight)
             """
             f[i] = F.binary_cross_entropy_with_logits(input2, target2)
+            """
         return f.mean()
 
 
