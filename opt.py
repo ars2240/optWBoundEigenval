@@ -682,9 +682,11 @@ class OptWBoundEignVal(object):
 
         return test_loss, test_acc, test_f1
 
-    def test_model_best(self, x=None, y=None, loader=None, classes=None, model_classes=None,
-                        fname='./models/' + self.header2 + '_trained_model_best.pt'):
+    def test_model_best(self, x=None, y=None, loader=None, classes=None, model_classes=None, fname=None):
         # tests best model, loaded from file
+
+        if fname is None:
+            fname = './models/' + self.header2 + '_trained_model_best.pt'
 
         self.model.load_state_dict(torch.load(fname))
 
@@ -692,8 +694,7 @@ class OptWBoundEignVal(object):
 
         return self.test_model(x, y, loader, classes, model_classes)
 
-    def test_train_set(self, x=None, y=None, loader=None, classes=None, model_classes=None,
-                       fname='./models/' + self.header2 + '_trained_model_best.pt'):
+    def test_train_set(self, x=None, y=None, loader=None, classes=None, model_classes=None, fname=None):
         old_stdout = sys.stdout  # save old output
         log_file = open(self.log_file, "a")  # open log file
         sys.stdout = log_file  # write to log file
@@ -707,8 +708,7 @@ class OptWBoundEignVal(object):
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
 
-    def test_test_set(self, x=None, y=None, loader=None, classes=None, model_classes=None,
-                      fname='./models/' + self.header2 + '_trained_model_best.pt'):
+    def test_test_set(self, x=None, y=None, loader=None, classes=None, model_classes=None, fname=None):
         old_stdout = sys.stdout  # save old output
         log_file = open(self.log_file, "a")  # open log file
         sys.stdout = log_file  # write to log file
@@ -1040,24 +1040,15 @@ def main(pfile):
         else:
             loader = options['test_loader']
         # test model on test set
-        if 'fname' in options.keys():
-            opt.test_test_set(x=options['x'], y=options['y'], loader=assert_dl(loader, bs), fname=options['fname'])
-        else:
-            opt.test_test_set(x=options['x'], y=options['y'], loader=assert_dl(loader, bs))
+        opt.test_test_set(x=options['x'], y=options['y'], loader=assert_dl(loader, bs), fname=options['fname'])
         opt.parse()
 
     # Augmented Testing
     if 'aug_test' in options.keys() and options['aug_test']:
-        if 'fname' in options.keys():
-            _, acc, f1 = opt.test_model_best(loader=options['test_loader_aug'], fname=options['fname'])
-        else:
-            _, acc, f1 = opt.test_model_best(loader=options['test_loader_aug'])
+        _, acc, f1 = opt.test_model_best(loader=options['test_loader_aug'], fname=options['fname'])
         print('Aug_Test_Acc\tAug_Test_F1')
         print(str(acc) + '\t' + str(f1))
 
     # Comparison Test (requires data loader)
     if 'comp_test' in options.keys() and options['comp_test'] and type(options['test_loader']) is list:
-        if 'fname' in options.keys():
-            opt.comp_test(options['test_loader'], fname=options['fname'])
-        else:
-            opt.comp_test(options['test_loader'])
+        opt.comp_test(options['test_loader'], fname=options['fname'])
