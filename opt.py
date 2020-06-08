@@ -688,7 +688,11 @@ class OptWBoundEignVal(object):
         if fname is None:
             fname = './models/' + self.header2 + '_trained_model_best.pt'
 
-        self.model.load_state_dict(torch.load(fname))
+        state = torch.load(fname)
+        if 'state_dict' in state.keys():
+            state = state['state_dict']
+
+        self.model.load_state_dict(state)
 
         self.model.to(self.device)
 
