@@ -690,7 +690,14 @@ class OptWBoundEignVal(object):
 
         state = torch.load(fname)
         if 'state_dict' in state.keys():
-            state = state['state_dict']
+            state2 = state['state_dict']
+
+            from collections import OrderedDict
+            state = OrderedDict()
+
+            for k, v in state2.items():
+                k = k.replace('encoder.', 'features.')
+                new_state_dict[k] = v
 
         self.model.load_state_dict(state)
 
