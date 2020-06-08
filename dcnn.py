@@ -348,9 +348,6 @@ class W_BCEWithLogitsLoss(nn.Module):
 
             weight = target2 * (s / p - s / (s - p)) + s / (s - p) if p != 0 and p != s else target2 + 1
             f[i] = F.binary_cross_entropy_with_logits(input2, target2, weight)
-            """
-            f[i] = F.binary_cross_entropy_with_logits(input2, target2)
-            """
         return f.mean()
 
 
@@ -500,7 +497,7 @@ class AverageMeter(object):
 def save_checkpoint(state, is_best, filename='checkpoint.pth.tar'):
     torch.save(state, filename)
     if is_best:
-        shutil.copyfile(filename, filename.replace('checkpoint','best'))
+        shutil.copyfile(filename, filename.replace('checkpoint', 'best'))
 
 
 def test(test_loader, model):
