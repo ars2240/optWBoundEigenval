@@ -697,7 +697,7 @@ class OptWBoundEignVal(object):
 
             for k, v in state2.items():
                 k = k.replace('encoder.', 'features.')
-                new_state_dict[k] = v
+                state[k] = v
 
         self.model.load_state_dict(state)
 
