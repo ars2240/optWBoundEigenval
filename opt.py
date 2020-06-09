@@ -1056,6 +1056,10 @@ def main(pfile):
             loader = options['test_loader']
         # test model on test set
         opt.test_test_set(x=options['x'], y=options['y'], loader=assert_dl(loader, bs), fname=options['fname'])
+
+    # Parse log file
+    if (('train' in options.keys() and options['train']) or 'train' not in options.keys()) and\
+            (('test' in options.keys() and options['test']) or 'test' not in options.keys()):
         opt.parse()
 
     # Augmented Testing
