@@ -72,6 +72,8 @@ def options():
     elif enc == 'vgg16bn':
         model = MyVggNet16_bn(14)
     elif enc == 'dens161':
+        model = DenseNet121(14)
+    elif enc == 'dens161':
         model = MyDensNet161(14)
     elif enc == 'dens201':
         model = MyDensNet201(14)
@@ -93,6 +95,6 @@ def options():
     opt['train'] = False
     opt['test'] = True
     opt['comp_test'] = False
-    opt['fname'] = '/home/hddraid/shared_data/chest_xray8/models/crop224/best_auc_w0.0_alex.pth.tar'
+    opt['fname'] = '/models/m-25012018-123527.pth.tar'
 
     return opt
