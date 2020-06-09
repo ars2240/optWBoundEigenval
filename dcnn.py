@@ -234,8 +234,8 @@ class MyVggNet16_bn(nn.Module):
         super(MyVggNet16_bn, self).__init__()
         original_model = models.vgg16_bn(pretrained=True)
         self.features = original_model.features
-        self.features.add_module('transit', nn.Sequential(nn.Conv2d(512, 1024, 3, padding=1),nn.BatchNorm2d(1024),
-                                                          nn.ReLU(inplace=True), nn.MaxPool2d(2,padding=1)))
+        self.features.add_module('transit', nn.Sequential(nn.Conv2d(512, 1024, 3, padding=1), nn.BatchNorm2d(1024),
+                                                          nn.ReLU(inplace=True), nn.MaxPool2d(2, padding=1)))
         self.features.add_module('gpool', nn.MaxPool2d(4))
         self.classifier = nn.Linear(1024, outnum)
         
@@ -246,13 +246,26 @@ class MyVggNet16_bn(nn.Module):
         return x
 
 
+class DenseNet121(nn.Module):
+    def __init__(self, classCount, isTrained=True):
+        super(DenseNet121, self).__init__()
+
+        self.densenet121 = models.densenet121(pretrained=isTrained)
+        kernelCount = self.densenet121.classifier.in_features
+        self.densenet121.classifier = nn.Sequential(nn.Linear(kernelCount, classCount), nn.Sigmoid())
+
+    def forward(self, x):
+        x = self.densenet121(x)
+        return x
+
+
 class MyDensNet161(nn.Module):
     def __init__(self, outnum=14):
         super(MyDensNet161, self).__init__()
         original_model = models.densenet161(pretrained=True)
         self.features = original_model.features
         self.features.add_module('transit', nn.Sequential(nn.Conv2d(2208, 1024, 3, padding=1), nn.BatchNorm2d(1024),
-                                                          nn.ReLU(inplace=True), nn.MaxPool2d(2,padding=1)))
+                                                          nn.ReLU(inplace=True), nn.MaxPool2d(2, padding=1)))
         self.features.add_module('gpool', nn.MaxPool2d(16))
         self.classifier = nn.Linear(1024, outnum)
         
@@ -269,7 +282,7 @@ class MyDensNet201(nn.Module):
         original_model = models.densenet201(pretrained=True)
         self.features = original_model.features
         self.features.add_module('transit', nn.Sequential(nn.Conv2d(1920, 1024, 3, padding=1), nn.BatchNorm2d(1024),
-                                                          nn.ReLU(inplace=True), nn.MaxPool2d(2,padding=1)))
+                                                          nn.ReLU(inplace=True), nn.MaxPool2d(2, padding=1)))
         self.features.add_module('gpool', nn.MaxPool2d(16))
         self.classifier = nn.Linear(1024, outnum)
         
@@ -286,7 +299,7 @@ class MyDensNet121(nn.Module):
         original_model = models.densenet121(pretrained=True)
         self.features = original_model.features
         self.features.add_module('transit', nn.Sequential(nn.Conv2d(1024, 1024, 3, padding=1), nn.BatchNorm2d(1024),
-                                                          nn.ReLU(inplace=True), nn.MaxPool2d(2,padding=1)))
+                                                          nn.ReLU(inplace=True), nn.MaxPool2d(2, padding=1)))
         self.features.add_module('gpool', nn.MaxPool2d(16))
         self.classifier = nn.Linear(1024, outnum)
         
@@ -452,7 +465,7 @@ def validate(val_loader, model, criterion):
             inputs, targets = data['image'].cuda(), data['label'].cuda()
             output = model(inputs)
             loss = criterion(output, targets)  
-            losses.update(loss.item(),inputs.size(0))
+            losses.update(loss.item(), inputs.size(0))
             outputs.append(output.cpu())
             labels.append(targets.cpu())
 
@@ -517,7 +530,7 @@ def test(test_loader, model):
             # measure elapsed time
             batch_time = time.time() - end
             end = time.time()
-            print("batch: [{}/{}], \t time:{}".format(i,len(test_loader),batch_time))
+            print("batch: [{}/{}], \t time:{}".format(i, len(test_loader), batch_time))
 
         outputs = torch.cat(outputs).numpy()
         labels = torch.cat(labels).numpy()

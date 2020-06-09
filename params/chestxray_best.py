@@ -21,7 +21,7 @@ from dcnn import *
 def options():
     # create options dictionary and some parameters
     opt = {'seed': 1226, 'tol': 0.001, 'mu': 0, 'K': 0}
-    enc = 'alex'  # model type
+    enc = 'dens121'  # model type
 
     # batch size
     batch_size = 16
@@ -71,7 +71,7 @@ def options():
         model = MyResNet50(14)
     elif enc == 'vgg16bn':
         model = MyVggNet16_bn(14)
-    elif enc == 'dens161':
+    elif enc == 'dens121':
         model = DenseNet121(14)
     elif enc == 'dens161':
         model = MyDensNet161(14)
