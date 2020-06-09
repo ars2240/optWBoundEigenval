@@ -700,7 +700,7 @@ class OptWBoundEignVal(object):
                 k = k.replace('encoder.', 'features.')
                 k = k.replace('module.', '')
                 p = re.compile("(norm|conv)\.([0-9+])")
-                k = p.sub(r'{\1}{\2}', k)
+                k = p.sub(r'\1\2', k)
                 state[k] = v
 
         self.model.load_state_dict(state)
