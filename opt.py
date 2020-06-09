@@ -698,6 +698,8 @@ class OptWBoundEignVal(object):
             for k, v in state2.items():
                 k = k.replace('encoder.', 'features.')
                 k = k.replace('module.', '')
+                k = k.replace('norm.', 'norm')
+                k = k.replace('conv.', 'conv')
                 state[k] = v
 
         self.model.load_state_dict(state)
