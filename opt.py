@@ -11,6 +11,7 @@
 
 import inspect
 import random
+import re
 import numpy as np
 import os
 import shutil
@@ -698,8 +699,8 @@ class OptWBoundEignVal(object):
             for k, v in state2.items():
                 k = k.replace('encoder.', 'features.')
                 k = k.replace('module.', '')
-                k = k.replace('norm.', 'norm')
-                k = k.replace('conv.', 'conv')
+                p = re.compile("(norm|conv)\.([0-9+])")
+                k = p.sub(r'{\1}{\2}', k)
                 state[k] = v
 
         self.model.load_state_dict(state)
