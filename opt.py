@@ -256,10 +256,13 @@ class OptWBoundEignVal(object):
             self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
             print('Running Max GPU Memory used (in bytes): %d' % self.mem_max)
 
-    def comp_rho(self, p=False):
+    def comp_rho(self, data, p=False):
         # computes rho, v
 
         self.model.train()
+
+        # initialize hessian vector operation class
+        self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
 
         v = self.v  # initial guess for eigenvector (prior eigenvector)
 
@@ -360,10 +363,10 @@ class OptWBoundEignVal(object):
                 f = self.loss(output, target).item()
             return f, output
 
-    def comp_g(self):
+    def comp_g(self, data):
         # computes g
 
-        self.comp_rho()
+        self.comp_rho(data)
         self.g = np.max([0.0, self.rho - self.K])
 
     def iter(self):
@@ -399,10 +402,7 @@ class OptWBoundEignVal(object):
                 rdata = data
 
             if self.pow_iter:
-                # initialize hessian vector operation class
-                self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
-
-                self.comp_g()  # compute g
+                self.comp_g(data)  # compute g
 
                 self.optimizer.zero_grad()  # zero gradient
 
@@ -479,9 +479,7 @@ class OptWBoundEignVal(object):
             f, _ = self.comp_f(inputs, target)
             f_list.append(f)  # compute f on each batch
         self.f = np.average(f_list, weights=size)  # weighted mean of f values
-        # initialize hessian vector operation class for random batch
-        self.hvp_op = HVPOperator(self.model, rdata, self.loss, use_gpu=self.use_gpu)
-        self.comp_g()  # compute g
+        self.comp_g(rdata)  # compute g
         self.h = self.f + mu * self.g  # compute objective function
 
         # adjust learning rate
@@ -1064,10 +1062,6 @@ def main(pfile):
         print(str(os.system("top -n 1")))
     """
     if ('test' in options.keys() and options['test']) or 'test' not in options.keys():
-        if type(options['test_loader']) is list:
-            loader = options['test_loader'][0]
-        else:
-            loader = options['test_loader']
         if 'train' in options.keys() and not options['train']:
             if options['train_loader_na'] is None:
                 loader = options['train_loader']
@@ -1075,9 +1069,11 @@ def main(pfile):
                 loader = options['train_loader_na']
             #opt.test_train_set(options['inputs'], options['target'], loader, fname=options['fname'])
             data = iter(loader).next()
-            print(data)
-            opt.hvp_op = HVPOperator(opt.model, data, opt.loss, use_gpu=opt.use_gpu)
-            opt.comp_rho(p=True)
+            opt.comp_rho(data, p=True)
+        if type(options['test_loader']) is list:
+            loader = options['test_loader'][0]
+        else:
+            loader = options['test_loader']
         # test model on test set
         opt.test_test_set(x=options['x'], y=options['y'], loader=assert_dl(loader, bs), fname=options['fname'])
 
