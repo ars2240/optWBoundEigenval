@@ -92,7 +92,7 @@ def options():
     opt['max_pow_iter'] = 1000
     opt['pow_iter_eps'] = 0.1
     opt['verbose'] = True
-    opt['train'] = False
+    opt['train'] = True
     opt['test'] = True
     opt['comp_test'] = False
     opt['fname'] = './models/m-25012018-123527.pth.tar'
