@@ -259,9 +259,6 @@ class OptWBoundEignVal(object):
     def comp_rho(self, p=False):
         # computes rho, v
 
-        if p:
-            self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
-
         v = self.v  # initial guess for eigenvector (prior eigenvector)
 
         # initialize lambda and the norm
@@ -1067,6 +1064,8 @@ def main(pfile):
             loader = options['test_loader']
         if 'train' in options.keys() and not options['train']:
             opt.test_train_set(options['inputs'], options['target'], options['valid_loader'], fname=options['fname'])
+            _, data = random.choice(enumerate(opt.dataloader))
+            opt.hvp_op = HVPOperator(opt.model, data, opt.loss, use_gpu=opt.use_gpu)
             opt.comp_rho(p=True)
         # test model on test set
         opt.test_test_set(x=options['x'], y=options['y'], loader=assert_dl(loader, bs), fname=options['fname'])
