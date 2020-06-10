@@ -149,6 +149,8 @@ class HVPOperator(object):
             loss = self.criterion(output.float(), target_onehot.float())
         else:
             loss = self.criterion(output, target)
+        print(loss)
+        print(self.model.parameters())
         grad_dict = torch.autograd.grad(loss, self.model.parameters(), create_graph=True)
         grad_vec = torch.cat(tuple([g.contiguous().view(-1) for g in grad_dict]))
         return grad_vec.double()
@@ -691,8 +693,8 @@ class OptWBoundEignVal(object):
 
         return test_loss, test_acc, test_f1
 
-    def test_model_best(self, x=None, y=None, loader=None, classes=None, model_classes=None, fname=None):
-        # tests best model, loaded from file
+    def model_load(self, fname=None):
+        # load model from file
 
         if fname is None:
             fname = './models/' + self.header2 + '_trained_model_best.pt'
@@ -715,6 +717,10 @@ class OptWBoundEignVal(object):
 
         self.model.to(self.device)
 
+    def test_model_best(self, x=None, y=None, loader=None, classes=None, model_classes=None, fname=None):
+        # tests best model, loaded from file
+
+        self.model_load(fname)
         return self.test_model(x, y, loader, classes, model_classes)
 
     def test_train_set(self, x=None, y=None, loader=None, classes=None, model_classes=None, fname=None):
