@@ -95,6 +95,6 @@ def options():
     opt['train'] = True
     opt['test'] = True
     opt['comp_test'] = False
-    opt['fname'] = './models/m-25012018-123527.pth.tar'
+    #opt['fname'] = './models/m-25012018-123527.pth.tar'
 
     return opt
