@@ -259,6 +259,9 @@ class OptWBoundEignVal(object):
     def comp_rho(self, p=False):
         # computes rho, v
 
+        if p:
+            self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
+
         v = self.v  # initial guess for eigenvector (prior eigenvector)
 
         # initialize lambda and the norm
