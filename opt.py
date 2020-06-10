@@ -1063,8 +1063,12 @@ def main(pfile):
         else:
             loader = options['test_loader']
         if 'train' in options.keys() and not options['train']:
-            opt.test_train_set(options['inputs'], options['target'], options['train_loader_na'], fname=options['fname'])
-            _, data = random.choice(enumerate(options['train_loader_na']))
+            if options['train_loader_na'] is None:
+                loader = options['train_loader']
+            else:
+                loader = options['train_loader_na']
+            opt.test_train_set(options['inputs'], options['target'], loader, fname=options['fname'])
+            _, data = random.choice(enumerate(loader))
             opt.hvp_op = HVPOperator(opt.model, data, opt.loss, use_gpu=opt.use_gpu)
             opt.comp_rho(p=True)
         # test model on test set
