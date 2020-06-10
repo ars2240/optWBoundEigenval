@@ -149,8 +149,6 @@ class HVPOperator(object):
             loss = self.criterion(output.float(), target_onehot.float())
         else:
             loss = self.criterion(output, target)
-        print(loss)
-        print(self.model.parameters())
         grad_dict = torch.autograd.grad(loss, self.model.parameters(), create_graph=True)
         grad_vec = torch.cat(tuple([g.contiguous().view(-1) for g in grad_dict]))
         return grad_vec.double()
@@ -1073,7 +1071,7 @@ def main(pfile):
                 loader = options['train_loader']
             else:
                 loader = options['train_loader_na']
-            opt.test_train_set(options['inputs'], options['target'], loader, fname=options['fname'])
+            #opt.test_train_set(options['inputs'], options['target'], loader, fname=options['fname'])
             data = iter(loader).next()
             opt.hvp_op = HVPOperator(opt.model, data, opt.loss, use_gpu=opt.use_gpu)
             opt.comp_rho(p=True)
