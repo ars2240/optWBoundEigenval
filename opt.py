@@ -256,7 +256,7 @@ class OptWBoundEignVal(object):
             self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
             print('Running Max GPU Memory used (in bytes): %d' % self.mem_max)
 
-    def comp_rho(self):
+    def comp_rho(self, p=False):
         # computes rho, v
 
         v = self.v  # initial guess for eigenvector (prior eigenvector)
@@ -314,6 +314,14 @@ class OptWBoundEignVal(object):
 
         if lam == 0:
             print('Warning: rho = 0')
+
+        if p:
+            old_stdout = sys.stdout  # save old output
+            log_file = open(self.log_file, "a")  # open log file
+            sys.stdout = log_file  # write to log file
+            print('Rho:', self.rho)
+            log_file.close()  # close log file
+            sys.stdout = old_stdout  # reset output
 
     def comp_gradrho(self):
         # computes grad rho
@@ -1054,6 +1062,9 @@ def main(pfile):
             loader = options['test_loader'][0]
         else:
             loader = options['test_loader']
+        if 'train' in options.keys() and not options['train']:
+            opt.test_train_set(options['inputs'], options['target'], options['valid_loader'], fname=options['fname'])
+            opt.comp_rho(p=True)
         # test model on test set
         opt.test_test_set(x=options['x'], y=options['y'], loader=assert_dl(loader, bs), fname=options['fname'])
 
