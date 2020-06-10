@@ -1068,8 +1068,7 @@ def main(pfile):
             else:
                 loader = options['train_loader_na']
             opt.test_train_set(options['inputs'], options['target'], loader, fname=options['fname'])
-            iterator = iter(loader)
-            data = iterator.next()
+            _, data = enumerate(loader)[np.random.randint(len(loader))]
             opt.hvp_op = HVPOperator(opt.model, data, opt.loss, use_gpu=opt.use_gpu)
             opt.comp_rho(p=True)
         # test model on test set
