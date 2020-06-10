@@ -348,7 +348,7 @@ class W_BCEWithLogitsLoss(nn.Module):
         
     def forward(self, input, target):
         classes = input.size()[1]
-        f = np.zeros(classes)
+        f = torch.zeros(classes)
         target2 = target[target == target]
         p = int(target2.sum().cpu().data.numpy())
         s = int(np.prod(target2.size()))
