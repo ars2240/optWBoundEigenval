@@ -88,11 +88,11 @@ def options():
     opt['use_gpu'] = True
     opt['pow_iter'] = False
     opt['test_func'] = 'accauc sigmoid'
-    opt['max_iter'] = 10
+    opt['max_iter'] = 5
     opt['max_pow_iter'] = 1000
     opt['pow_iter_eps'] = 0.1
     opt['verbose'] = True
-    opt['train'] = False
+    opt['train'] = True
     opt['test'] = True
     opt['comp_test'] = False
     opt['fname'] = './models/m-25012018-123527.pth.tar'
