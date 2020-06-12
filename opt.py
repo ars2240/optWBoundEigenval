@@ -486,13 +486,13 @@ class OptWBoundEignVal(object):
         if self.scheduler is not None:
             self.scheduler.step()
 
-    def train(self, inputs=None, target=None, inputs_valid=None, target_valid=None, loader=None, valid_loader=None,
-              train_loader=None):
+    def train(self, inputs=None, target=None, inputs_valid=None, target_valid=None, train_loader=None,
+              valid_loader=None, train_loader_na=None):
 
         start = time.time()  # start timer
 
-        if loader is not None:
-            self.dataloader = loader
+        if train_loader is not None:
+            self.dataloader = train_loader
         elif inputs is not None and target is not None:
             self.x = inputs  # input data
             self.y = target  # output data
@@ -589,10 +589,10 @@ class OptWBoundEignVal(object):
         sys.stdout = old_stdout  # reset output
 
         # compute loss & accuracy on training set
-        if train_loader is not None:
-            self.test_train_set(inputs, target, train_loader)
+        if train_loader_na is not None:
+            self.test_train_set(inputs, target, train_loader_na)
         else:
-            self.test_train_set(inputs, target, loader)
+            self.test_train_set(inputs, target, train_loader)
 
     def test_model(self, x=None, y=None, loader=None, classes=None, model_classes=None):
         # Computes the loss and accuracy of model on given dataset
@@ -1040,7 +1040,7 @@ def main(pfile):
                            num_workers=options['num_workers'], test_func=options['test_func'])
 
     # get missing options for train & test
-    options = missing_params(opt.train, options, replace={'loader': 'train_loader', 'train_loader': 'train_loader_na'})
+    options = missing_params(opt.train, options)
     options = missing_params(opt.test_test_set, options, replace={'loader': 'test_loader'})
     bs = options['batch_size']
 
