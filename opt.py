@@ -1049,9 +1049,9 @@ def main(pfile):
         if 'fname' in options and options['fname'] is not None:
             opt.model_load(options['fname'])
         opt.train(inputs=options['inputs'], target=options['target'], inputs_valid=options['inputs_valid'],
-                  target_valid=options['target_valid'], loader=assert_dl(options['train_loader'], bs),
+                  target_valid=options['target_valid'], train_loader=assert_dl(options['train_loader'], bs),
                   valid_loader=assert_dl(options['valid_loader'], bs),
-                  train_loader=assert_dl(options['train_loader_na'], bs))
+                  train_loader_na=assert_dl(options['train_loader_na'], bs))
     """
     try:
         opt.train(inputs=options['inputs'], target=options['target'], inputs_valid=options['inputs_valid'],
