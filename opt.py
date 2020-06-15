@@ -1000,7 +1000,7 @@ def missing_params(func, options, replace={}):
 
 # Assert DataLoader class
 def assert_dl(x, batch_size):
-    if isinstance(x, utils_data.DataLoader):
+    if isinstance(x, utils_data.DataLoader) or x is None:
         return x
     else:
         return utils_data.DataLoader(x, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=1)
