@@ -89,7 +89,7 @@ def options():
     opt['pow_iter'] = True
     opt['test_func'] = 'accauc sigmoid'
     opt['max_iter'] = 5
-    opt['max_pow_iter'] = 1000
+    opt['max_pow_iter'] = 100
     opt['pow_iter_eps'] = 0.1
     opt['verbose'] = True
     opt['train'] = True
