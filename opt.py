@@ -1072,6 +1072,7 @@ def main(pfile):
             opt.test_train_set(options['inputs'], options['target'], loader, fname=options['fname'])
             data = iter(loader).next()
             opt.comp_rho(data, p=True)
+            options['fname'] = None
         if type(options['test_loader']) is list:
             loader = options['test_loader'][0]
         else:
