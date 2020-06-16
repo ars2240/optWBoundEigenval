@@ -857,7 +857,7 @@ class OptWBoundEignVal(object):
         print('Max-weight:', max_weight)
 
     # comparison test (requires list of data loaders)
-    def comp_test(self, loaders):
+    def comp_test(self, loaders, fname=None):
         # test loader for model must be 0 index in list
         classes = [loader.classes.keys() for loader in loaders if not isinstance(loader, utils_data.DataLoader)]
         if len(classes) > 1:
@@ -888,9 +888,9 @@ class OptWBoundEignVal(object):
             # test model
             if len(classes) > 1:
                 c = [x for x in range(len(classes[i])) if list(classes[i])[x] in overlap]
-                self.test_test_set(loader=assert_dl(loader, self.batch_size), classes=c, model_classes=mc)
+                self.test_test_set(loader=assert_dl(loader, self.batch_size), classes=c, model_classes=mc, fname=fname)
             else:
-                self.test_test_set(loader=assert_dl(loader, self.batch_size))
+                self.test_test_set(loader=assert_dl(loader, self.batch_size), fname=fname)
             i += 1
 
     def parse(self):
