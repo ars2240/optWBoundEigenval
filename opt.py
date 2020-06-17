@@ -271,6 +271,7 @@ class OptWBoundEignVal(object):
         n = 0
         r_old = 0
         n_old = 0
+        lam_old = 0
 
         if self.verbose:
             old_stdout = sys.stdout  # save old output
@@ -290,11 +291,14 @@ class OptWBoundEignVal(object):
             if self.verbose:
                 print('%d\t %f\t %f\t %f' % (i, lam, n, rn))
 
-            if n < self.pow_iter_eps or rn/n_old < self.pow_iter_eps:
+            # stopping criteria
+            stop = [n, rn/n_old, (lam-lam_old)/lam_old]
+            if any(i < self.pow_iter_eps for i in stop):
                 break
 
             v = 1.0/torch.norm(vnew)*vnew  # update vector and normalize
             if i < (np.min([self.ndim, self.max_pow_iter])-1):
+                lam_old = lam
                 r_old = r
                 n_old = n
 
@@ -310,7 +314,7 @@ class OptWBoundEignVal(object):
         if torch.is_tensor(self.rho):
             self.rho = self.rho.item()
 
-        if n > self.pow_iter_eps and rn/n_old > self.pow_iter_eps:
+        if all(i > self.pow_iter_eps for i in stop):
             print('Warning: power iteration has not fully converged')
             if self.ignore_bad_vals:
                 print('Ignoring rho.')
