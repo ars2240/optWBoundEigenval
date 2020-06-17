@@ -590,9 +590,9 @@ class OptWBoundEignVal(object):
 
         # compute loss & accuracy on training set
         if train_loader_na is not None:
-            self.test_train_set(inputs, target, train_loader_na)
+            self.test_set(inputs, target, train_loader_na)
         else:
-            self.test_train_set(inputs, target, train_loader)
+            self.test_set(inputs, target, train_loader)
 
     def test_model(self, x=None, y=None, loader=None, classes=None, model_classes=None):
         # Computes the loss and accuracy of model on given dataset
@@ -721,30 +721,16 @@ class OptWBoundEignVal(object):
         self.model_load(fname)
         return self.test_model(x, y, loader, classes, model_classes)
 
-    def test_train_set(self, x=None, y=None, loader=None, classes=None, model_classes=None, fname=None):
+    def test_set(self, x=None, y=None, loader=None, classes=None, model_classes=None, fname=None, label="Train"):
         old_stdout = sys.stdout  # save old output
         log_file = open(self.log_file, "a")  # open log file
         sys.stdout = log_file  # write to log file
 
         loss, acc, f1 = self.test_model_best(x, y, loader, classes, model_classes, fname)  # test best model
 
-        print('Train Loss:', loss)
-        print('Train Accuracy:', acc)
-        print('Train F1:', f1)
-
-        log_file.close()  # close log file
-        sys.stdout = old_stdout  # reset output
-
-    def test_test_set(self, x=None, y=None, loader=None, classes=None, model_classes=None, fname=None):
-        old_stdout = sys.stdout  # save old output
-        log_file = open(self.log_file, "a")  # open log file
-        sys.stdout = log_file  # write to log file
-
-        loss, acc, f1 = self.test_model_best(x, y, loader, classes, model_classes, fname)  # test best model
-
-        print('Test Loss:', loss)
-        print('Test Accuracy:', acc)
-        print('Test F1:', f1)
+        print(label, 'Loss:', loss)
+        print(label, 'Accuracy:', acc)
+        print(label, 'F1:', f1)
 
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
@@ -888,9 +874,10 @@ class OptWBoundEignVal(object):
             # test model
             if len(classes) > 1:
                 c = [x for x in range(len(classes[i])) if list(classes[i])[x] in overlap]
-                self.test_test_set(loader=assert_dl(loader, self.batch_size), classes=c, model_classes=mc, fname=fname)
+                self.test_set(loader=assert_dl(loader, self.batch_size), classes=c, model_classes=mc, fname=fname,
+                              label="Test")
             else:
-                self.test_test_set(loader=assert_dl(loader, self.batch_size), fname=fname)
+                self.test_set(loader=assert_dl(loader, self.batch_size), fname=fname, label="Test")
             i += 1
 
     def parse(self):
@@ -1041,7 +1028,7 @@ def main(pfile):
 
     # get missing options for train & test
     options = missing_params(opt.train, options)
-    options = missing_params(opt.test_test_set, options, replace={'loader': 'test_loader'})
+    options = missing_params(opt.test_set, options, replace={'loader': 'test_loader'})
     bs = options['batch_size']
 
     # Train model
@@ -1069,7 +1056,8 @@ def main(pfile):
                 loader = options['train_loader']
             else:
                 loader = options['train_loader_na']
-            opt.test_train_set(options['inputs'], options['target'], loader, fname=options['fname'])
+            opt.test_set(options['inputs'], options['target'], loader, fname=options['fname'])
+            opt.test_set(loader=assert_dl(options['valid_loader'], bs), fname=options['fname'], label="Valid")
             data = iter(loader).next()
             opt.comp_rho(data, p=True)
             options['fname'] = None
@@ -1078,7 +1066,7 @@ def main(pfile):
         else:
             loader = options['test_loader']
         # test model on test set
-        opt.test_test_set(x=options['x'], y=options['y'], loader=assert_dl(loader, bs), fname=options['fname'])
+        opt.test_set(loader=assert_dl(loader, bs), fname=options['fname'], label="Test")
 
     # Parse log file
     if (('train' in options.keys() and options['train']) or 'train' not in options.keys()) and\
