@@ -285,6 +285,9 @@ class OptWBoundEignVal(object):
 
             # if converged, break
             lam = torch.dot(vnew, v)  # update eigenvalue
+            if lam < 0:
+                lam = -1*lam
+                v = -1*v
             r = vnew-lam*v  # residual
             n = torch.norm(r)  # norm of H*v-lambda*v
             rn = np.min([torch.norm(r-r_old), torch.norm(r+r_old)])
