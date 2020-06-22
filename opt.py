@@ -292,13 +292,13 @@ class OptWBoundEignVal(object):
                 print('%d\t %f\t %f\t %f' % (i, lam, n, rn))
 
             # stopping criteria
-            stop = [n, rn/n_old, (np.abs(lam)-lam_old)/lam_old]
+            stop = [n, rn/n_old, np.abs(lam-lam_old)/lam_old]
             if any(i < self.pow_iter_eps for i in stop):
                 break
 
             v = 1.0/torch.norm(vnew)*vnew  # update vector and normalize
             if i < (np.min([self.ndim, self.max_pow_iter])-1):
-                lam_old = np.abs(lam)
+                lam_old = lam
                 r_old = r
                 n_old = n
 
