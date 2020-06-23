@@ -312,12 +312,8 @@ class OptWBoundEignVal(object):
             sys.stdout = old_stdout  # reset output
 
         self.v = v  # update eigenvector
-        self.rho = torch.abs(lam)  # update spectral radius
+        self.rho = np.abs(lam)  # update spectral radius
         self.norm = n  # update norm
-
-        # check if rho is tensor
-        if torch.is_tensor(self.rho):
-            self.rho = self.rho.item()
 
         if all(i > self.pow_iter_eps for i in stop):
             print('Warning: power iteration has not fully converged')
