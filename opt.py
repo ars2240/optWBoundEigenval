@@ -285,6 +285,8 @@ class OptWBoundEignVal(object):
 
             # if converged, break
             lam = torch.dot(vnew, v)  # update eigenvalue
+            if torch.is_tensor(lam):
+                lam = lam.item()
             if lam < 0:
                 lam = -1*lam
                 v = -1*v
