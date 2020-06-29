@@ -188,6 +188,15 @@ def download(url):
     return fname
 
 
+# changes time in sec to hrs, mins, secs
+def timeHMS(time):
+    hrs = np.floor(time / 3600)
+    time = time - hrs * 3600
+    mins = np.floor(time / 60)
+    secs = time - mins * 60
+    return hrs, mins, secs
+
+
 class OptWBoundEignVal(object):
     def __init__(self, model, loss, optimizer, scheduler=None, mu=0, K=0, eps=-1, pow_iter_eps=1e-3,
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, pow_iter=True,
@@ -377,6 +386,7 @@ class OptWBoundEignVal(object):
     def iter(self):
         # performs one gradient descent iteration
 
+        istart = time.time()  # start iteration timer
         self.model.train()  # set model to training mode
 
         # if verbose, make header for file
@@ -399,6 +409,8 @@ class OptWBoundEignVal(object):
 
         # pick random batch for estimation of spectral radius at end of epoch
         rbatch = random.randint(0, len(self.dataloader)-1)
+        gTime = 0
+        ggTime = 0
 
         for j, data in enumerate(self.dataloader):
 
@@ -407,7 +419,9 @@ class OptWBoundEignVal(object):
                 rdata = data
 
             if self.pow_iter:
+                start = time.time()  # start timer
                 self.comp_g(data)  # compute g
+                gTime += time.time() - start
 
                 self.optimizer.zero_grad()  # zero gradient
 
@@ -418,11 +432,13 @@ class OptWBoundEignVal(object):
                     self.gradf = torch.zeros(self.ndim).double().to(self.device)  # set gradient to zero
 
                 # compute grad g
+                start = time.time()  # start timer
                 if self.g > 0:
                     self.comp_gradrho()  # compute gradient of rho
                     self.gradg = self.gradrho  # compute g
                 else:
                     self.gradg = torch.zeros(self.ndim).double().to(self.device)  # set gradient to zero
+                ggTime += time.time() - start
 
                 p = self.gradf + mu * self.gradg  # gradient step
 
@@ -472,6 +488,7 @@ class OptWBoundEignVal(object):
         # compute overall estimates
         f_list = []
         size = []
+        start = time.time()   # start timer
         # compute f on each batch (to avoid memory issues)
         for _, data in enumerate(self.dataloader):
             if type(data) == list:
@@ -486,6 +503,22 @@ class OptWBoundEignVal(object):
         self.f = np.average(f_list, weights=size)  # weighted mean of f values
         self.comp_g(rdata)  # compute g
         self.h = self.f + mu * self.g  # compute objective function
+        tTime = time.time() - start
+        iTime = time.time() - istart
+
+        if self.verbose:
+            log_file = open(self.verbose_log_file, "a")  # open log file
+            sys.stdout = log_file  # write to log file
+            hrs, mins, secs = timeHMS(gTime)
+            print('G Time elapsed: %2i hrs, %2i min, %4.2f sec ' % (hrs, mins, secs))
+            hrs, mins, secs = timeHMS(gTime)
+            print('Grad G Time elapsed: %2i hrs, %2i min, %4.2f sec ' % (hrs, mins, secs))
+            hrs, mins, secs = timeHMS(tTime)
+            print('Test Time elapsed: %2i hrs, %2i min, %4.2f sec ' % (hrs, mins, secs))
+            hrs, mins, secs = timeHMS(iTime)
+            print('Iteration Time elapsed: %2i hrs, %2i min, %4.2f sec ' % (hrs, mins, secs))
+            log_file.close()  # close log file
+            sys.stdout = old_stdout  # reset output
 
         # adjust learning rate
         if self.scheduler is not None:
@@ -579,10 +612,7 @@ class OptWBoundEignVal(object):
         # compute time elapsed
         end = time.time()
         tTime = end - start
-        hrs = np.floor(tTime / 3600)
-        tTime = tTime - hrs * 3600
-        mins = np.floor(tTime / 60)
-        secs = tTime - mins * 60
+        hrs, mins, secs = timeHMS(tTime)
         print('Time elapsed: %2i hrs, %2i min, %4.2f sec ' % (hrs, mins, secs))
 
         # best validation accuracy
