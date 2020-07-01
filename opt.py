@@ -511,7 +511,7 @@ class OptWBoundEignVal(object):
             sys.stdout = log_file  # write to log file
             hrs, mins, secs = timeHMS(gTime)
             print('G Time elapsed: %2i hrs, %2i min, %4.2f sec ' % (hrs, mins, secs))
-            hrs, mins, secs = timeHMS(gTime)
+            hrs, mins, secs = timeHMS(ggTime)
             print('Grad G Time elapsed: %2i hrs, %2i min, %4.2f sec ' % (hrs, mins, secs))
             hrs, mins, secs = timeHMS(tTime)
             print('Test Time elapsed: %2i hrs, %2i min, %4.2f sec ' % (hrs, mins, secs))
