@@ -189,12 +189,12 @@ def download(url):
 
 
 # changes time in sec to hrs, mins, secs
-def timeHMS(time):
+def timeHMS(time, head=''):
     hrs = np.floor(time / 3600)
     time = time - hrs * 3600
     mins = np.floor(time / 60)
     secs = time - mins * 60
-    return hrs, mins, secs
+    print(head + 'Time elapsed: %2i hrs, %2i min, %4.2f sec' % (hrs, mins, secs))
 
 
 class OptWBoundEignVal(object):
@@ -281,6 +281,8 @@ class OptWBoundEignVal(object):
         r_old = 0
         n_old = 0
         lam_old = 0
+        hvTime = 0
+        pTime = 0
 
         if self.verbose:
             old_stdout = sys.stdout  # save old output
@@ -289,8 +291,11 @@ class OptWBoundEignVal(object):
             print('iter\t lam\t norm\t delRes')
 
         # power iteration
+        pstart = time.time()  # start timer
         for i in range(0, np.min([self.ndim, self.max_pow_iter])):
+            start = time.time()  # start timer
             vnew = self.hvp_op.Hv(v, storedGrad=True)  # compute H*v
+            hvTime += time.time() - start
 
             # if converged, break
             lam = torch.dot(vnew, v)  # update eigenvalue
@@ -315,8 +320,11 @@ class OptWBoundEignVal(object):
                 lam_old = lam
                 r_old = r
                 n_old = n
+        pTime += time.time() - pstart
 
         if self.verbose:
+            timeHMS(hvTime, 'HV ')
+            timeHMS(pTime, 'Power Iter ')
             log_file.close()  # close log file
             sys.stdout = old_stdout  # reset output
 
@@ -509,14 +517,10 @@ class OptWBoundEignVal(object):
         if self.verbose:
             log_file = open(self.verbose_log_file, "a")  # open log file
             sys.stdout = log_file  # write to log file
-            hrs, mins, secs = timeHMS(gTime)
-            print('G Time elapsed: %2i hrs, %2i min, %4.2f sec ' % (hrs, mins, secs))
-            hrs, mins, secs = timeHMS(ggTime)
-            print('Grad G Time elapsed: %2i hrs, %2i min, %4.2f sec ' % (hrs, mins, secs))
-            hrs, mins, secs = timeHMS(tTime)
-            print('Test Time elapsed: %2i hrs, %2i min, %4.2f sec ' % (hrs, mins, secs))
-            hrs, mins, secs = timeHMS(iTime)
-            print('Iteration Time elapsed: %2i hrs, %2i min, %4.2f sec ' % (hrs, mins, secs))
+            timeHMS(gTime, 'G ')
+            timeHMS(ggTime, 'Grad G ')
+            timeHMS(tTime, 'Test ')
+            timeHMS(iTime, 'Iteration ')
             log_file.close()  # close log file
             sys.stdout = old_stdout  # reset output
 
@@ -612,8 +616,7 @@ class OptWBoundEignVal(object):
         # compute time elapsed
         end = time.time()
         tTime = end - start
-        hrs, mins, secs = timeHMS(tTime)
-        print('Time elapsed: %2i hrs, %2i min, %4.2f sec ' % (hrs, mins, secs))
+        timeHMS(tTime)
 
         # best validation accuracy
         print('Best Validation Iterate:', self.best_val_iter)
