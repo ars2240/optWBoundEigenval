@@ -697,7 +697,7 @@ class OptWBoundEignVal(object):
                 predicted = predicted.to('cpu')
                 ops = ops.to('cpu')
                 if 'auc' in self.test_func:
-                    outputs.append(ops)
+                    outputs.append(ops.data)
                     labels.append(target)
                 else:
                     f1 = f1_score(target, predicted, average='micro')
