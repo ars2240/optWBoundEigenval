@@ -76,7 +76,7 @@ class HVPOperator(object):
         self.zero_grad()
         # compute gradient of vector product
         start = time.time()
-        grad_grad = torch.autograd.grad(grad_vec, self.model.parameters(), grad_outputs=vec)
+        grad_grad = torch.autograd.grad(grad_vec, self.model.parameters(), grad_outputs=vec, retain_graph=True)
         self.aTime1 += time.time() - start
         # concatenate the results over the different components of the network
         hessian_vec_prod = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad]))
