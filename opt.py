@@ -46,6 +46,9 @@ class HVPOperator(object):
         self.mem_track = mem_track  # whether or not maximum memory usage is tracked
         self.mem_max = 0  # running maximum memory usage
 
+        # autograd timers
+        self.aTime0 = self.aTime1 = self.aTime2 = 0
+
     def mem_check(self):
         # checks max memory used
         if self.mem_track and self.use_gpu:
@@ -57,8 +60,7 @@ class HVPOperator(object):
         # convert numpy array to torch tensor
         if type(vec) is np.ndarray:
             vec = torch.from_numpy(vec)
-        vec = vec.to(self.device)
-        vec = vec.double()  # convert to double
+        vec = vec.to(self.device).double()
 
         # compute original gradient, tracking computation graph
         if storedGrad and (self.stored_grad is not None):
@@ -73,7 +75,9 @@ class HVPOperator(object):
 
         self.zero_grad()
         # compute gradient of vector product
-        grad_grad = torch.autograd.grad(grad_vec, self.model.parameters(), grad_outputs=vec, retain_graph=True)
+        start = time.time()
+        grad_grad = torch.autograd.grad(grad_vec, self.model.parameters(), grad_outputs=vec)
+        self.aTime1 += time.time() - start
         # concatenate the results over the different components of the network
         hessian_vec_prod = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad]))
 
@@ -89,8 +93,7 @@ class HVPOperator(object):
         # convert numpy array to torch tensor
         if type(vec) is np.ndarray:
             vec = torch.from_numpy(vec)
-        vec = vec.to(self.device)
-        vec = vec.double()  # convert to double
+        vec = vec.to(self.device).double()
 
         # compute original gradient, tracking computation graph
         if storedGrad and (self.stored_grad is not None):
@@ -105,7 +108,9 @@ class HVPOperator(object):
 
         self.zero_grad()
         # compute gradient of vector product
+        start = time.time()
         grad_grad = torch.autograd.grad(grad_vec, self.model.parameters(), grad_outputs=vec, create_graph=True)
+        self.aTime1 += time.time() - start
         # concatenate the results over the different components of the network
         hessian_vec_prod = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad]))
 
@@ -114,7 +119,9 @@ class HVPOperator(object):
 
         self.zero_grad()
         # compute second gradient of vector product
+        start = time.time()
         grad_grad = torch.autograd.grad(hessian_vec_prod.double(), self.model.parameters(), grad_outputs=vec)
+        self.aTime2 += time.time() - start
         # concatenate the results over the different components of the network
         vec_grad_hessian_vec = torch.cat(tuple([g.contiguous().view(-1) for g in grad_grad]))
 
@@ -149,7 +156,9 @@ class HVPOperator(object):
             loss = self.criterion(output.float(), target_onehot.float())
         else:
             loss = self.criterion(output, target)
+        start = time.time()
         grad_dict = torch.autograd.grad(loss, self.model.parameters(), create_graph=True)
+        self.aTime0 += time.time() - start
         grad_vec = torch.cat(tuple([g.contiguous().view(-1) for g in grad_dict]))
         return grad_vec.double()
 
@@ -276,13 +285,7 @@ class OptWBoundEignVal(object):
         v = self.v  # initial guess for eigenvector (prior eigenvector)
 
         # initialize lambda and the norm
-        lam = 0
-        n = 0
-        r_old = 0
-        n_old = 0
-        lam_old = 0
-        hvTime = 0
-        pTime = 0
+        lam = n = r_old = n_old = lam_old = hvTime = pTime = 0
 
         if self.verbose:
             old_stdout = sys.stdout  # save old output
@@ -318,8 +321,7 @@ class OptWBoundEignVal(object):
             v = 1.0/torch.norm(vnew)*vnew  # update vector and normalize
             if i < (np.min([self.ndim, self.max_pow_iter])-1):
                 lam_old = lam
-                r_old = r
-                n_old = n
+                r_old, n_old = r, n
         pTime += time.time() - pstart
 
         if self.verbose:
@@ -417,8 +419,7 @@ class OptWBoundEignVal(object):
 
         # pick random batch for estimation of spectral radius at end of epoch
         rbatch = random.randint(0, len(self.dataloader)-1)
-        gTime = 0
-        ggTime = 0
+        gTime = ggTime = aTime0 = aTime1 = aTime2 = 0
 
         for j, data in enumerate(self.dataloader):
 
@@ -449,6 +450,10 @@ class OptWBoundEignVal(object):
                 ggTime += time.time() - start
 
                 p = self.gradf + mu * self.gradg  # gradient step
+
+                aTime0 += self.hvp_op.aTime0
+                aTime1 += self.hvp_op.aTime1
+                aTime2 += self.hvp_op.aTime2
 
                 i = 0
                 for param in self.model.parameters():
@@ -521,6 +526,9 @@ class OptWBoundEignVal(object):
             timeHMS(ggTime, 'Grad G ')
             timeHMS(tTime, 'Test ')
             timeHMS(iTime, 'Iteration ')
+            timeHMS(aTime0, 'Autograd 0 ')
+            timeHMS(aTime1, 'Autograd 1 ')
+            timeHMS(aTime2, 'Autograd 2 ')
             log_file.close()  # close log file
             sys.stdout = old_stdout  # reset output
 
