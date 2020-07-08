@@ -20,7 +20,7 @@ from dcnn import *
 
 def options():
     # create options dictionary and some parameters
-    opt = {'seed': 1226, 'tol': 0.001, 'mu': 0.001, 'K': 0}
+    opt = {'seed': 1226, 'tol': 0.001, 'mu': 0, 'K': 0}
     enc = 'dens121'  # model type
 
     # batch size
@@ -86,7 +86,7 @@ def options():
     opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-5)
     opt['header'] = 'chestxray_' + enc
     opt['use_gpu'] = True
-    opt['pow_iter'] = True
+    opt['pow_iter'] = False
     opt['test_func'] = 'accauc sigmoid'
     opt['max_iter'] = 1
     opt['max_pow_iter'] = 100
