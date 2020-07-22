@@ -13,6 +13,7 @@ from PIL import Image
 import time
 from sklearn.metrics import roc_auc_score
 import shutil
+from dnet import densenet121
 
 # modified by Adam Sandler, originally from Chengsheng Mao's code
 
@@ -296,7 +297,7 @@ class MyDensNet201(nn.Module):
 class MyDensNet121(nn.Module):
     def __init__(self, outnum=14):
         super(MyDensNet121, self).__init__()
-        original_model = models.densenet121(pretrained=True)
+        original_model = densenet121(pretrained=True)
         self.features = original_model.features
         self.features.add_module('transit', nn.Sequential(nn.Conv2d(1024, 1024, 3, padding=1), nn.BatchNorm2d(1024),
                                                           nn.ReLU(inplace=True), nn.MaxPool2d(2, padding=1)))
