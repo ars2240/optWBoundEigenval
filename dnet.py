@@ -60,12 +60,12 @@ class _DenseLayer(nn.Module):
         super(_DenseLayer, self).__init__()
         relu = MyReLU.apply
         self.add_module('norm1', nn.BatchNorm2d(num_input_features)),
-        self.add_module('relu1', relu),
+        self.add_module('relu1', relu()),
         self.add_module('conv1', nn.Conv2d(num_input_features, bn_size *
                                            growth_rate, kernel_size=1, stride=1,
                                            bias=False)),
         self.add_module('norm2', nn.BatchNorm2d(bn_size * growth_rate)),
-        self.add_module('relu2', relu),
+        self.add_module('relu2', relu()),
         self.add_module('conv2', nn.Conv2d(bn_size * growth_rate, growth_rate,
                                            kernel_size=3, stride=1, padding=1,
                                            bias=False)),
@@ -155,7 +155,7 @@ class _Transition(nn.Sequential):
         super(_Transition, self).__init__()
         relu = MyReLU.apply
         self.add_module('norm', nn.BatchNorm2d(num_input_features))
-        self.add_module('relu', relu)
+        self.add_module('relu', relu())
         self.add_module('conv', nn.Conv2d(num_input_features, num_output_features,
                                           kernel_size=1, stride=1, bias=False))
         self.add_module('pool', nn.AvgPool2d(kernel_size=2, stride=2))
@@ -188,7 +188,7 @@ class DenseNet(nn.Module):
             ('conv0', nn.Conv2d(3, num_init_features, kernel_size=7, stride=2,
                                 padding=3, bias=False)),
             ('norm0', nn.BatchNorm2d(num_init_features)),
-            ('relu0', relu),
+            ('relu0', relu()),
             ('pool0', nn.MaxPool2d(kernel_size=3, stride=2, padding=1)),
         ]))
 
