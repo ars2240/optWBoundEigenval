@@ -37,6 +37,7 @@ class MyReLU(torch.autograd.Function):
         to stash information for backward computation. You can cache arbitrary
         objects for use in the backward pass using the ctx.save_for_backward method.
         """
+        print('forward')
         ctx.save_for_backward(input)
         return input.clamp(min=0)
 
@@ -47,6 +48,7 @@ class MyReLU(torch.autograd.Function):
         with respect to the output, and we need to compute the gradient of the loss
         with respect to the input.
         """
+        print('backward')
         input, = ctx.saved_tensors
         grad_input = grad_output.clone()
         grad_input[input < 0] = 0
