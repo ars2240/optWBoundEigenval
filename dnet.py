@@ -29,8 +29,7 @@ class MyReLU(nn.Module):
     From: https://pytorch.org/tutorials/beginner/examples_autograd/two_layer_net_custom_function.html
     """
 
-    @staticmethod
-    def forward(ctx, input):
+    def forward(self, input):
         """
         In the forward pass we receive a Tensor containing the input and return
         a Tensor containing the output. ctx is a context object that can be used
@@ -38,18 +37,17 @@ class MyReLU(nn.Module):
         objects for use in the backward pass using the ctx.save_for_backward method.
         """
         print('forward')
-        ctx.save_for_backward(input)
+        self.save_for_backward(input)
         return input.clamp(min=0)
 
-    @staticmethod
-    def backward(ctx, grad_output):
+    def backward(self, grad_output):
         """
         In the backward pass we receive a Tensor containing the gradient of the loss
         with respect to the output, and we need to compute the gradient of the loss
         with respect to the input.
         """
         print('backward')
-        input, = ctx.saved_tensors
+        input, = self.saved_tensors
         grad_input = grad_output.clone()
         grad_input[input < 0] = 0
         return grad_input
