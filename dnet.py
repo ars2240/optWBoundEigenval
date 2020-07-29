@@ -20,7 +20,7 @@ model_urls = {
 }
 
 
-class MyReLU(torch.autograd.Function):
+class MyReLU(nn.Module):
     """
     We can implement our own custom autograd Functions by subclassing
     torch.autograd.Function and implementing the forward and backward passes
