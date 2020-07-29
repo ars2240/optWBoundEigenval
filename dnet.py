@@ -20,7 +20,7 @@ model_urls = {
 }
 
 
-class MyReLU(nn.Module):
+class MyReLU(torch.autograd.Function):
     """
     We can implement our own custom autograd Functions by subclassing
     torch.autograd.Function and implementing the forward and backward passes
@@ -29,7 +29,8 @@ class MyReLU(nn.Module):
     From: https://pytorch.org/tutorials/beginner/examples_autograd/two_layer_net_custom_function.html
     """
 
-    def forward(self, input):
+    @staticmethod
+    def forward(ctx, input):
         """
         In the forward pass we receive a Tensor containing the input and return
         a Tensor containing the output. ctx is a context object that can be used
@@ -37,32 +38,43 @@ class MyReLU(nn.Module):
         objects for use in the backward pass using the ctx.save_for_backward method.
         """
         print('forward')
-        self.save_for_backward(input)
+        ctx.save_for_backward(input)
         return input.clamp(min=0)
 
-    def backward(self, grad_output):
+    @staticmethod
+    def backward(ctx, grad_output):
         """
         In the backward pass we receive a Tensor containing the gradient of the loss
         with respect to the output, and we need to compute the gradient of the loss
         with respect to the input.
         """
         print('backward')
-        input, = self.saved_tensors
+        input, = ctx.saved_tensors
         grad_input = grad_output.clone()
         grad_input[input < 0] = 0
         return grad_input
+
+
+class _relu(nn.Module):
+    def __init__(self):
+        super(_relu, self).__init__()
+        self.relu = MyReLU.apply
+
+    def forward(self, x):
+        y = self.relu(x)
+        return y
 
 
 class _DenseLayer(nn.Module):
     def __init__(self, num_input_features, growth_rate, bn_size, drop_rate, memory_efficient=False):
         super(_DenseLayer, self).__init__()
         self.add_module('norm1', nn.BatchNorm2d(num_input_features)),
-        self.add_module('relu1', MyReLU()),
+        self.add_module('relu1', _relu()),
         self.add_module('conv1', nn.Conv2d(num_input_features, bn_size *
                                            growth_rate, kernel_size=1, stride=1,
                                            bias=False)),
         self.add_module('norm2', nn.BatchNorm2d(bn_size * growth_rate)),
-        self.add_module('relu2', MyReLU()),
+        self.add_module('relu2', _relu()),
         self.add_module('conv2', nn.Conv2d(bn_size * growth_rate, growth_rate,
                                            kernel_size=3, stride=1, padding=1,
                                            bias=False)),
@@ -151,7 +163,7 @@ class _Transition(nn.Sequential):
     def __init__(self, num_input_features, num_output_features):
         super(_Transition, self).__init__()
         self.add_module('norm', nn.BatchNorm2d(num_input_features))
-        self.add_module('relu', MyReLU())
+        self.add_module('relu', _relu())
         self.add_module('conv', nn.Conv2d(num_input_features, num_output_features,
                                           kernel_size=1, stride=1, bias=False))
         self.add_module('pool', nn.AvgPool2d(kernel_size=2, stride=2))
@@ -182,7 +194,7 @@ class DenseNet(nn.Module):
             ('conv0', nn.Conv2d(3, num_init_features, kernel_size=7, stride=2,
                                 padding=3, bias=False)),
             ('norm0', nn.BatchNorm2d(num_init_features)),
-            ('relu0', MyReLU()),
+            ('relu0', _relu()),
             ('pool0', nn.MaxPool2d(kernel_size=3, stride=2, padding=1)),
         ]))
 
