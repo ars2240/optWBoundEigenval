@@ -198,11 +198,11 @@ def download(url):
 
 
 # changes time in sec to hrs, mins, secs
-def timeHMS(time, head=''):
-    hrs = np.floor(time / 3600)
-    time = time - hrs * 3600
-    mins = np.floor(time / 60)
-    secs = time - mins * 60
+def timeHMS(t, head=''):
+    hrs = np.floor(t / 3600)
+    t = t - hrs * 3600
+    mins = np.floor(t / 60)
+    secs = t - mins * 60
     print(head + 'Time elapsed: %2i hrs, %2i min, %4.2f sec' % (hrs, mins, secs))
 
 

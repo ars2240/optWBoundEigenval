@@ -20,7 +20,7 @@ from dcnn import *
 
 def options():
     # create options dictionary and some parameters
-    opt = {'seed': 1226, 'tol': 0.001, 'mu': 0, 'K': 0}
+    opt = {'seed': 1226, 'tol': 0.001, 'mu': 1e-5, 'K': 0}
     enc = 'dens121'  # model type
 
     # batch size
@@ -52,6 +52,7 @@ def options():
     test_set = ChestXray_Dataset(use='test', transform=transform)
     opt['test_loader'].append(test_set)
 
+    """
     transform = transforms.Compose([transforms.Resize((256, 256)), transforms.CenterCrop((224, 224)),
                                     transforms.ToTensor(),
                                     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
@@ -63,6 +64,7 @@ def options():
     opt['test_loader'].append(test_set)
     test_set = MIMICCXR_Dataset(use='train', transform=transform)
     opt['test_loader'].append(test_set)
+    """
 
     # Create neural network
     if enc == 'alex':
@@ -86,9 +88,9 @@ def options():
     opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-5)
     opt['header'] = 'chestxray_' + enc
     opt['use_gpu'] = True
-    opt['pow_iter'] = False
+    opt['pow_iter'] = True
     opt['test_func'] = 'accauc sigmoid'
-    opt['max_iter'] = 1
+    opt['max_iter'] = 5
     opt['max_pow_iter'] = 100
     opt['ignore_bad_vals'] = True
     opt['pow_iter_eps'] = 0.1
