@@ -325,13 +325,15 @@ def _load_state_dict(model, model_url, progress):
     # They are also in the checkpoints in model_urls. This pattern is used
     # to find such keys.
     pattern = re.compile(
-        r'^(.*denselayer\d+\.(?:norm|relu|conv)|classifier)\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
+        r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
+    pattern2 = re.compile(r'^(classifier)\.0(\.(?:weight|bias|running_mean|running_var))$')
 
     state_dict = load_state_dict_from_url(model_url, progress=progress)
     for key in list(state_dict.keys()):
         res = pattern.match(key)
-        if res:
-            new_key = res.group(1) + res.group(2)
+        res2 = pattern2.match(key)
+        if res or res2:
+            new_key = res.group(1) + res.group(2) if res else res2.group(1) + res2.group(2)
             state_dict[new_key] = state_dict[key]
             del state_dict[key]
     model.load_state_dict(state_dict)
