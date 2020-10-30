@@ -145,6 +145,7 @@ class _linear(nn.Module):
 class _DenseLayer(nn.Module):
     def __init__(self, num_input_features, growth_rate, bn_size, drop_rate, memory_efficient=False):
         super(_DenseLayer, self).__init__()
+        print(num_input_features)
         self.add_module('norm1', nn.BatchNorm2d(num_input_features)),
         self.add_module('relu1', _relu()),
         self.add_module('conv1', nn.Conv2d(num_input_features, bn_size *
