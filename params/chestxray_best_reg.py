@@ -52,7 +52,6 @@ def options():
     test_set = ChestXray_Dataset(use='test', transform=transform)
     opt['test_loader'].append(test_set)
 
-    """
     transform = transforms.Compose([transforms.Resize((256, 256)), transforms.CenterCrop((224, 224)),
                                     transforms.ToTensor(),
                                     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
@@ -64,7 +63,6 @@ def options():
     opt['test_loader'].append(test_set)
     test_set = MIMICCXR_Dataset(use='train', transform=transform)
     opt['test_loader'].append(test_set)
-    """
 
     # Create neural network
     if enc == 'alex':
@@ -95,9 +93,9 @@ def options():
     opt['ignore_bad_vals'] = True
     opt['pow_iter_eps'] = 0.1
     opt['verbose'] = True
-    opt['train'] = True
+    opt['train'] = False
     opt['test'] = True
     opt['comp_test'] = True
-    opt['fname'] = './models/m-25012018-123527.pth.tar'
+    opt['fname'] = './models/chestxray_dens121_Adam_mu1e-05_K0_trained_model_best.pt'
 
     return opt
