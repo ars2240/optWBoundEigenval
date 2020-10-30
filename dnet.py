@@ -145,7 +145,6 @@ class _linear(nn.Module):
 class _DenseLayer(nn.Module):
     def __init__(self, num_input_features, growth_rate, bn_size, drop_rate, memory_efficient=False):
         super(_DenseLayer, self).__init__()
-        print(num_input_features)
         self.add_module('norm1', nn.BatchNorm2d(num_input_features)),
         self.add_module('relu1', _relu()),
         self.add_module('conv1', nn.Conv2d(num_input_features, bn_size *
@@ -326,7 +325,7 @@ def _load_state_dict(model, model_url, progress):
     # They are also in the checkpoints in model_urls. This pattern is used
     # to find such keys.
     pattern = re.compile(
-        r'^(.*denselayer\d+\.(?:norm|relu|conv))\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
+        r'^(.*denselayer\d+\.(?:norm|relu|conv)|classifier)\.((?:[12])\.(?:weight|bias|running_mean|running_var))$')
 
     state_dict = load_state_dict_from_url(model_url, progress=progress)
     for key in list(state_dict.keys()):
