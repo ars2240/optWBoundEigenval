@@ -251,7 +251,7 @@ class DenseNet121(nn.Module):
     def __init__(self, classCount, isTrained=True):
         super(DenseNet121, self).__init__()
 
-        self.densenet121 = densenet121(pretrained=isTrained)
+        self.densenet121 = densenet121(pretrained=isTrained, num_classes=classCount)
 
     def forward(self, x):
         x = self.densenet121(x)
