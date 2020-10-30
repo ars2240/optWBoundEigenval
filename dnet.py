@@ -106,7 +106,7 @@ class _relu(nn.Module):
 class _linear(nn.Module):
     # https://pytorch.org/docs/stable/notes/extending.html#extending-torch-autograd
     def __init__(self, input_features, output_features, bias=True):
-        super(Linear, self).__init__()
+        super(LinearFunction, self).__init__()
         self.input_features = input_features
         self.output_features = output_features
 
