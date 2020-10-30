@@ -334,10 +334,6 @@ def _load_state_dict(model, model_url, progress):
             new_key = res.group(1) + res.group(2)
             state_dict[new_key] = state_dict[key]
             del state_dict[key]
-        if 'classifier' in key and 'classifier.0' not in key:
-            new_key = key.replace('classifier', 'classifier.0')
-            state_dict[new_key] = state_dict[key]
-            del state_dict[key]
     model.load_state_dict(state_dict)
 
 
