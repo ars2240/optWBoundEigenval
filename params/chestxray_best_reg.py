@@ -20,7 +20,7 @@ from dcnn import *
 
 def options():
     # create options dictionary and some parameters
-    opt = {'seed': 1226, 'tol': 0.001, 'mu': 1e-5, 'K': 0}
+    opt = {'seed': 1226, 'tol': 0.001, 'mu': 1e-6, 'K': 0}
     enc = 'dens121'  # model type
 
     # batch size
@@ -72,7 +72,7 @@ def options():
     elif enc == 'vgg16bn':
         model = MyVggNet16_bn(14)
     elif enc == 'dens121':
-        model = DenseNet121(14)
+        model = MyDenseNet121(14)
     elif enc == 'dens161':
         model = MyDensNet161(14)
     elif enc == 'dens201':
@@ -93,9 +93,9 @@ def options():
     opt['ignore_bad_vals'] = True
     opt['pow_iter_eps'] = 0.1
     opt['verbose'] = True
-    opt['train'] = False
+    opt['train'] = True
     opt['test'] = True
     opt['comp_test'] = True
-    opt['fname'] = './models/chestxray_dens121_Adam_mu1e-05_K0_trained_model_best.pt'
+    opt['fname'] = './models/m-25012018-123527.pth.tar'
 
     return opt
