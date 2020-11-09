@@ -262,7 +262,7 @@ class DenseNet121(nn.Module):
 
 class MyDenseNet121(nn.Module):
     def __init__(self, classCount, isTrained=True):
-        super(DenseNet121, self).__init__()
+        super(MyDenseNet121, self).__init__()
 
         self.densenet121 = models.densenet121(pretrained=isTrained)
         kernelCount = self.densenet121.classifier.in_features
