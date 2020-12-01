@@ -20,7 +20,7 @@ from dcnn import *
 
 def options():
     # create options dictionary and some parameters
-    opt = {'seed': 1226, 'tol': 0.001, 'mu': 1e-6, 'K': 0}
+    opt = {'seed': 1226, 'tol': 0.001, 'mu': 1e-4, 'K': 0}
     enc = 'dens121'  # model type
 
     # batch size
@@ -88,7 +88,7 @@ def options():
     opt['use_gpu'] = True
     opt['pow_iter'] = True
     opt['test_func'] = 'accauc sigmoid'
-    opt['max_iter'] = 5
+    opt['max_iter'] = 1
     opt['max_pow_iter'] = 100
     opt['ignore_bad_vals'] = True
     opt['pow_iter_eps'] = 0.1
