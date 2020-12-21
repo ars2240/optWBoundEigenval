@@ -97,6 +97,7 @@ def options():
     opt['test'] = True
     opt['comp_test'] = True
     #opt['fname'] = './models/m-25012018-123527.pth.tar'
-    opt['fname'] = 'chestxray_dens121_Adam_mu' + str(opt['mu']) + '_K' + str(opt['K']) + '_trained_model_best.pt'
+    opt['fname'] = './models/chestxray_dens121_Adam_mu' + str(opt['mu']) + '_K' + str(opt['K']) +\
+                   '_trained_model_best.pt'
 
     return opt
