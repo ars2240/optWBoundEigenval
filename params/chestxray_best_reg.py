@@ -93,9 +93,10 @@ def options():
     opt['ignore_bad_vals'] = True
     opt['pow_iter_eps'] = 0.1
     opt['verbose'] = True
-    opt['train'] = True
+    opt['train'] = False
     opt['test'] = True
     opt['comp_test'] = True
-    opt['fname'] = './models/m-25012018-123527.pth.tar'
+    #opt['fname'] = './models/m-25012018-123527.pth.tar'
+    opt['fname'] = 'chestxray_dens121_Adam_mu' + str(mu) + '_K' + str(K) + '_trained_model_best.pt'
 
     return opt
