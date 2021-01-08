@@ -115,7 +115,7 @@ def get_train_valid_loader(data_dir='./data', batch_size=1, augment=False, rando
         return train_loader, valid_loader
 
 
-def get_test_loader(data_dir='./data', batch_size=1, augment=False, shuffle=False, num_workers=1, pin_memory=True):
+def get_test_loader(data_dir='./data', batch_size=1, augment=False, shuffle=False, num_workers=0, pin_memory=True):
     """
     Utility function for loading and returning a multi-process
     test iterator over the USPS dataset.

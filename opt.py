@@ -920,10 +920,10 @@ class OptWBoundEignVal(object):
             # test model
             if len(classes) > 1:
                 c = [x for x in range(len(classes[i])) if list(classes[i])[x] in overlap]
-                self.test_set(loader=assert_dl(loader, self.batch_size), classes=c, model_classes=mc, fname=fname,
-                              label="Test")
+                self.test_set(loader=assert_dl(loader, self.batch_size, self.num_workers), classes=c, model_classes=mc,
+                              fname=fname, label="Test")
             else:
-                self.test_set(loader=assert_dl(loader, self.batch_size), fname=fname, label="Test")
+                self.test_set(loader=assert_dl(loader, self.batch_size, self.num_workers), fname=fname, label="Test")
             i += 1
 
     def parse(self):
@@ -1032,11 +1032,11 @@ def missing_params(func, options, replace={}):
 
 
 # Assert DataLoader class
-def assert_dl(x, batch_size):
+def assert_dl(x, batch_size, num_workers):
     if isinstance(x, utils_data.DataLoader) or x is None:
         return x
     else:
-        return utils_data.DataLoader(x, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=1)
+        return utils_data.DataLoader(x, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=num_workers)
 
 
 # Prints CPU%, # of cores, and Memory %
@@ -1076,6 +1076,7 @@ def main(pfile):
     options = missing_params(opt.train, options)
     options = missing_params(opt.test_set, options, replace={'loader': 'test_loader'})
     bs = options['batch_size']
+    nw = options['num_workers']
 
     # Train model
     if ('train' in options.keys() and options['train']) or 'train' not in options.keys():
@@ -1083,9 +1084,9 @@ def main(pfile):
             opt.model_load(options['fname'])
             options['fname'] = None
         opt.train(inputs=options['inputs'], target=options['target'], inputs_valid=options['inputs_valid'],
-                  target_valid=options['target_valid'], train_loader=assert_dl(options['train_loader'], bs),
-                  valid_loader=assert_dl(options['valid_loader'], bs),
-                  train_loader_na=assert_dl(options['train_loader_na'], bs))
+                  target_valid=options['target_valid'], train_loader=assert_dl(options['train_loader'], bs, nw),
+                  valid_loader=assert_dl(options['valid_loader'], bs, nw),
+                  train_loader_na=assert_dl(options['train_loader_na'], bs, nw))
     """
     try:
         opt.train(inputs=options['inputs'], target=options['target'], inputs_valid=options['inputs_valid'],
@@ -1104,7 +1105,7 @@ def main(pfile):
             else:
                 loader = options['train_loader_na']
             opt.test_set(options['inputs'], options['target'], loader, fname=options['fname'])
-            opt.test_set(loader=assert_dl(options['valid_loader'], bs), fname=options['fname'], label="Valid")
+            opt.test_set(loader=assert_dl(options['valid_loader'], bs, nw), fname=options['fname'], label="Valid")
             data = iter(loader).next()
             opt.comp_rho(data, p=True)
             options['fname'] = None
@@ -1113,7 +1114,7 @@ def main(pfile):
         else:
             loader = options['test_loader']
         # test model on test set
-        opt.test_set(loader=assert_dl(loader, bs), fname=options['fname'], label="Test")
+        opt.test_set(loader=assert_dl(loader, bs, nw), fname=options['fname'], label="Test")
 
     # Parse log file
     if (('train' in options.keys() and options['train']) or 'train' not in options.keys()) and\
