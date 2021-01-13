@@ -23,3 +23,9 @@ Date: 1/12/21
 - opt.py- methods & classes for optimizing NNs with spectral radius regulation
 - rop.py- method of R-Op and R^2-Op for test example
 - usps_data.py- data loaders for USPS data
+
+## Train/Validation/Test Splits
+
+- USPS splits the training data into training and validation (where validation is 1/7 of the original training set), with seed 1226.
+- Forest cover type splits the training data into training and validation (where validation is 1/5 of the original training set), with seed 1226.
+- Chest X-ray uses the given splits.
