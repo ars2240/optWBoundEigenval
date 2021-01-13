@@ -2,8 +2,7 @@
 Optimization with Bounded Eigenvalues
 
 Author: Adam Sandler
-
-Date: 3/17/20
+Date: 1/12/21
 
 ## Instructions
 
@@ -21,7 +20,6 @@ Date: 3/17/20
 - hessTest.m- computes gradient, hessian-vector product, and vector-grad hessian-vector product for example directly
 - hessTest.py- computes gradient, R-Op, and R^2-Op for example and compares to MATLAB results
 - main.py- main executable, takes paramater file as argument
-- nvsmi.py- used for GPU tracking (from https://github.com/petronny/nvsmi)
 - opt.py- methods & classes for optimizing NNs with spectral radius regulation
 - rop.py- method of R-Op and R^2-Op for test example
 - usps_data.py- data loaders for USPS data
