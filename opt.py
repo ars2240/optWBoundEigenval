@@ -484,7 +484,7 @@ class OptWBoundEignVal(object):
                         err = 100.-prec1[0]
                         return loss.data[0], err
                     return feval
-                self.optimizer.step(helper(), model, self.loss)
+                self.optimizer.step(helper(), self.model, self.loss)
             else:
                 self.optimizer.step()
 
