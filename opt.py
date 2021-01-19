@@ -478,6 +478,7 @@ class OptWBoundEignVal(object):
 
             # optimizer step
             if self.optimizer.__class__.__name__ == "EntropySGD":
+                from optim import accuracy
                 def helper():
                     def feval():
                         prec1, = accuracy(output.data, target.data, topk=(1,))
