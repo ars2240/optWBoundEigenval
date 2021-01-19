@@ -477,7 +477,16 @@ class OptWBoundEignVal(object):
                 loss.backward()  # back prop
 
             # optimizer step
-            self.optimizer.step()
+            if self.optimizer.__class__.__name__ == "EntropySGD":
+                def helper():
+                    def feval():
+                        prec1, = accuracy(output.data, target.data, topk=(1,))
+                        err = 100.-prec1[0]
+                        return loss.data[0], err
+                    return feval
+                self.optimizer.step(helper(), model, self.loss)
+            else:
+                self.optimizer.step()
 
             # if verbose, add values to file
             if self.verbose:
