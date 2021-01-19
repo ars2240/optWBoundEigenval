@@ -102,6 +102,7 @@ def options():
     # opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(options['optimizer'], lr_lambda=alpha)
     opt['header'] = 'USPS'
     opt['train'] = True
+    opt['pow_iter'] = False
 
     opt['aug_test'] = True
 
