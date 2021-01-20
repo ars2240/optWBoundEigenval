@@ -844,9 +844,9 @@ class OptWBoundEignVal(object):
             # compute accuracy
             _, predicted = torch.max(ops.data, 1)
 
-            w = np.exp(self.get_prob(inputs[:, modes], [test_mean[i] for i in modes], [test_sd[i] for i in modes],
+            w = np.exp(get_prob(inputs[:, modes], [test_mean[i] for i in modes], [test_sd[i] for i in modes],
                                      [test_skew[i] for i in modes]) -
-                       self.get_prob(inputs[:, modes], [train_mean[i] for i in modes], [train_sd[i] for i in modes],
+                       get_prob(inputs[:, modes], [train_mean[i] for i in modes], [train_sd[i] for i in modes],
                                      [train_skew[i] for i in modes]))
             weights = torch.from_numpy(w)
             wm = torch.mean(weights).item()
@@ -980,7 +980,7 @@ def get_prob(inputs,  m=[0], sd=[1], skew=[0]):
 
 def cov_shift_tester(models, x, y, iters=1000, bad_modes=[], header='', mult=.1, prob=0.5, mean_diff=0, sd_diff=0,
                      skew_diff=0, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
-                     train_skew=[0]):
+                     train_skew=[0], indices=None):
     # make sure logs folder exists
     check_folder('./logs')
 
@@ -999,11 +999,15 @@ def cov_shift_tester(models, x, y, iters=1000, bad_modes=[], header='', mult=.1,
 
     acc = np.zeros((nmod, iters))
     f1 = np.zeros((nmod, iters))
-    indices = np.zeros((feats, iters))
-    indices[good_modes, :] = mult*np.random.normal(size=(good_feats, iters))
+    if indices is None:
+        indices = np.zeros((feats, iters))
+        indices[good_modes, :] = mult*np.random.normal(size=(good_feats, iters))
+    else:
+        indices = np.genfromtxt(indices, delimiter=',')
 
     for i in range(0, iters):
 
+        #print(i)
         mean = test_mean + indices[:, i] * mean_diff
         sd = test_sd + indices[:, i] * sd_diff
         skew = test_skew + indices[:, i] * skew_diff
@@ -1116,11 +1120,15 @@ def main(pfile):
             else:
                 loader = options['train_loader_na']
             opt.test_set(options['inputs'], options['target'], loader, fname=options['fname'])
-            opt.test_set(loader=assert_dl(options['valid_loader'], bs, nw), fname=options['fname'], label="Valid")
-            data = iter(loader).next()
-            opt.comp_rho(data, p=True)
+            if options['valid_loader'] is not None:
+                opt.test_set(loader=assert_dl(options['valid_loader'], bs, nw), fname=options['fname'], label="Valid")
+            elif 'inputs_valid' in options.keys() and 'target_valid' in options.keys():
+                opt.test_set(x=options['inputs_valid'], y=options['target_valid'], fname=options['fname'], label="Test")
+            if loader is not None:
+                data = iter(loader).next()
+                opt.comp_rho(data, p=True)
             options['fname'] = None
-        if 'test_loader' in options.keys():
+        if 'test_loader' in options.keys() and options['test_loader'] is not None:
             if type(options['test_loader']) is list:
                 loader = options['test_loader'][0]
             else:
