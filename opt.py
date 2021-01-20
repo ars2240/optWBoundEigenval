@@ -482,8 +482,8 @@ class OptWBoundEignVal(object):
                 def helper():
                     def feval():
                         prec1, = accuracy(output.data, target.data, topk=(1,))
-                        err = 100.-prec1[0]
-                        return loss.data[0], err
+                        err = 100.-prec1.item()
+                        return loss.data.item(), err
                     return feval
                 self.optimizer.step(helper(), self.model, self.loss)
             else:
@@ -1119,12 +1119,15 @@ def main(pfile):
             data = iter(loader).next()
             opt.comp_rho(data, p=True)
             options['fname'] = None
-        if type(options['test_loader']) is list:
-            loader = options['test_loader'][0]
-        else:
-            loader = options['test_loader']
-        # test model on test set
-        opt.test_set(loader=assert_dl(loader, bs, nw), fname=options['fname'], label="Test")
+        if 'test_loader' in options.keys():
+            if type(options['test_loader']) is list:
+                loader = options['test_loader'][0]
+            else:
+                loader = options['test_loader']
+            # test model on test set
+            opt.test_set(loader=assert_dl(loader, bs, nw), fname=options['fname'], label="Test")
+        elif 'inputs_test' in options.keys() and 'target_test' in options.keys():
+            opt.test_set(x=options['inputs_test'], y=options['target_test'], fname=options['fname'], label="Test")
 
     # Parse log file
     if (('train' in options.keys() and options['train']) or 'train' not in options.keys()) and\
