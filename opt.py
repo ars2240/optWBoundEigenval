@@ -314,7 +314,8 @@ class OptWBoundEignVal(object):
                 print('%d\t %f\t %f\t %f' % (i, lam, n, rn))
 
             # stopping criteria
-            stop = [n, rn/n_old, np.abs(lam-lam_old)/lam_old]
+            inf = float('inf')
+            stop = [n, rn / n_old if n_old !=0 else inf, np.abs(lam - lam_old) / lam_old if lam_old !=0 else inf]
             if any(i < self.pow_iter_eps for i in stop):
                 break
 

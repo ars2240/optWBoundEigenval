@@ -34,16 +34,16 @@ def get_data(u = 'https://archive.ics.uci.edu/ml/machine-learning-databases/covt
     # import dataset
     data = pd.read_csv(filename2, header=None)
 
-    print(set(data.values[:, -1]))
+    #print(set(data.values[:, -1]))
 
     X = data.values[:, :-1]
     y = data.values[:, -1] - 1
 
     # class balance
-    cts = []
-    for i in set(y):
-        cts.append(list(y).count(i))
-    print(cts)
+    #cts = []
+    #for i in set(y):
+    #    cts.append(list(y).count(i))
+    #print(cts)
 
     X, X_test, y, y_test = train_test_split(np.array(X), np.array(y), test_size=1/5, random_state=1226)
 
@@ -67,7 +67,8 @@ def get_data(u = 'https://archive.ics.uci.edu/ml/machine-learning-databases/covt
     X_valid = torch.from_numpy(X_valid).float()
     y_valid = torch.from_numpy(y_valid).long()
 
-    return X, y, X_valid, y_valid, X_test, y_test
+    return {'inputs': X, 'target': y, 'inputs_valid': X_valid, 'target_valid': y_valid, 'inputs_test': X_test,
+            'target_test': y_test}
 
 # Neural Network Architecture
 class Net(nn.Module):
