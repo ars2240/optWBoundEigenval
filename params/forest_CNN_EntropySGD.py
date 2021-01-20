@@ -31,8 +31,7 @@ def options():
     #    return np.max([0.0, (i-50)/1000])
 
     # Load the dataset
-    options['inputs'], options['target'], options['inputs_valid'], options['target_valid'], options['inputs_test'], \
-    options['target_test'] = get_data()
+    opt.update(get_data())
 
     # Training Setup
     opt['model'] = Net()
