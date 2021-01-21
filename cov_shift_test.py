@@ -87,6 +87,7 @@ opt7 = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, m
                         max_pow_iter=10000, verbose=False, header='Forest')
 
 models = [opt7]
+#models = [opt1, opt2, opt3, opt4, opt5, opt6, opt7]
 
 cov_shift_tester(models, x=dic['inputs_test'], y=dic['target_test'], iters=1000, bad_modes=[28],
                  header=header, mult=.05, mean_diff=1, indices=indices)

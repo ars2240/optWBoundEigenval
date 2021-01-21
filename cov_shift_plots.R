@@ -1,5 +1,5 @@
 header="Cov_norm_5"
-tail = ""
+tail = "_zoom"
 
 home = "~/Documents/Northwestern/optWBoundEigenval/"
 indices = read.csv(paste0(home, "logs/", header, "_cov_shift_indices.csv"), header=FALSE)
@@ -8,10 +8,11 @@ f1 = read.csv(paste0(home, "logs/", header, "_cov_shift_f1.csv"), header=FALSE)
 
 perterbs = colSums(abs(indices))
 
-models = c(expression(paste(mu, "=0.01, K=1, ", rho, "=1.358", sep='')), expression(paste(mu, "=0.01, K=0, ", rho, "=1.288", sep='')), expression(paste(mu, "=0.001, K=5, ", rho, "=10.207", sep='')), expression(paste(mu, "=0.001, K=0, ", rho, "=10.520", sep='')), expression(paste(mu, "=0.005, K=1, ", rho, "=2.114", sep='')), expression(paste("Unregularized, rho, "=40.949", sep='')), expression(paste("Entropy-SGD, rho, "=7.362", sep='')))
+models = c(expression(paste(mu, "=0.01, K=1, ", rho, "=1.358", sep='')), expression(paste(mu, "=0.01, K=0, ", rho, "=1.288", sep='')), expression(paste(mu, "=0.001, K=5, ", rho, "=10.207", sep='')), expression(paste(mu, "=0.001, K=0, ", rho, "=10.520", sep='')), expression(paste(mu, "=0.005, K=1, ", rho, "=2.114", sep='')), expression(paste("Unregularized, ", rho, "=40.949", sep='')), expression(paste("Entropy-SGD, ", rho, "=7.362", sep='')))
 baseline_acc = c(69.70990422, 70.38544616, 70.67201363, 70.8656403, 70.96632617, 71.74169341, 69.68580846)
 baseline_f1 = c(0.6970990422, 0.7038544616, 0.7067201363, 0.708656403, 0.7096632617, 0.7174169342, 0.6968580846)
 
+base=6
 nmods = length(models)
 pch = 20
 cex = 0.5
@@ -31,7 +32,7 @@ plot(NULL, xlim=c(xmin, xmax), ylim=c(ymin, ymax), xlab=expression('L'[1]*'-Norm
 for (j in 1:nmods){
   abline(h=baseline_acc[j], col=j+1, lty="dashed")
   abline(lm(as.numeric(acc[j, ])~perterbs), col=j+1, lty="dotted")
-  print(summary(lm(as.numeric(acc[j, ])~perterbs))$coefficients[,4])
+  print(summary(lm(as.numeric(acc[j, ])~perterbs)))
   points(perterbs, acc[j, ], pch=pch, col=j+1, cex=cex)
 }
 legend("bottomright", legend=c(models, "Baseline", "Trendline"), col=c(2:(nmods+1),1,1), lty=c(rep(NA,nmods),"dashed", "dotted"), pch=c(rep(pch,nmods),NA,NA), cex=cex_leg)
@@ -56,9 +57,9 @@ for (j in 1:nmods){
 legend("bottomright", legend=c(models, "Trendline"), col=c(2:(nmods+1),1), lty=c(rep(NA,nmods),"dotted"), pch=c(rep(pch,nmods),NA), cex=cex_leg)
 dev.off()
 
-acc_ben = acc[1:(nmods-1),]
+acc_ben = acc[c(1:(base-1),(base+1):nmods),]
 for (j in 1:nmods){
-  acc_ben[j,] = acc[j,]-acc[nmods,]
+  acc_ben[j,] = acc[j,]-acc[base,]
 }
 if (tail=="_zoom"){
   ymax = 10
@@ -71,11 +72,13 @@ xmin = min(perterbs)
 xmax = max(perterbs)
 png(filename=paste0(home, "plots/", header, "_cov_shift_acc_ben", tail, ".png"), width = 4, height = 4, units = 'in', res = 300)
 plot(NULL, xlim=c(xmin, xmax), ylim=c(ymin, ymax), xlab=expression('L'[1]*'-Norm of Shifts'), ylab=expression(paste(Delta,' Accuracy')))#, main=expression(paste("Affect of ", rho, " on accuracy of covariate shifts")))
-for (j in 1:(nmods-1)){
-  abline(h=(baseline_acc[j]-baseline_acc[nmods]), col=j+1, lty="dashed")
-  abline(lm(as.numeric(acc_ben[j, ])~perterbs), col=j+1, lty="dotted")
-  print(summary(lm(as.numeric(acc_ben[j, ])~perterbs))$coefficients[,4])
-  points(perterbs, acc_ben[j, ], pch=pch, col=j+1, cex=cex)
+for (j in 1:nmods){
+  if (j != base){
+    abline(h=(baseline_acc[j]-baseline_acc[base]), col=j+1, lty="dashed")
+    abline(lm(as.numeric(acc_ben[j, ])~perterbs), col=j+1, lty="dotted")
+    print(summary(lm(as.numeric(acc_ben[j, ])~perterbs))$coefficients[,4])
+    points(perterbs, acc_ben[j, ], pch=pch, col=j+1, cex=cex)
+  }
 }
 legend("topright", legend=c(models[1:(nmods-1)], "Baseline", "Trendline"), col=c(2:nmods,1,1), lty=c(rep(NA,nmods-1),"dashed","dotted"), pch=c(rep(pch,nmods-1),NA,NA), cex=cex_leg)
 dev.off()
@@ -83,11 +86,13 @@ dev.off()
 png(filename=paste0(home, "plots/", header, "_cov_shift_acc_ben", tail, "_panel.png"), width = 4, height = 4, units = 'in', res = 300)
 #layout(matrix(c(1,1,2,2,3,3,4,4,0,5,5,0), 3, 4, byrow = TRUE))
 par(cex=.5, mfrow=c(3,2), mar=c(3, 3, 1, 1), mgp=c(2,1,0))
-for (j in 1:(nmods-1)){
-  plot(NULL, xlim=c(xmin, xmax), ylim=c(ymin, ymax), xlab=expression('L'[1]*'-Norm of Shifts'), ylab=expression(paste(Delta,' Accuracy')), main=models[j])
-  abline(h=(baseline_acc[j]-baseline_acc[nmods]), lty="dashed")
-  abline(lm(as.numeric(acc_ben[j, ])~perterbs), lty="dotted")
-  points(perterbs, acc_ben[j, ], pch=pch, cex=cex)
+for (j in 1:nmods){
+  if (j != base){
+    plot(NULL, xlim=c(xmin, xmax), ylim=c(ymin, ymax), xlab=expression('L'[1]*'-Norm of Shifts'), ylab=expression(paste(Delta,' Accuracy')), main=models[j])
+    abline(h=(baseline_acc[j]-baseline_acc[base]), lty="dashed")
+    abline(lm(as.numeric(acc_ben[j, ])~perterbs), lty="dotted")
+    points(perterbs, acc_ben[j, ], pch=pch, cex=cex)
+  }
 }
 dev.off()
 
@@ -105,7 +110,7 @@ plot(NULL, xlim=c(xmin, xmax), ylim=c(ymin, ymax), xlab=expression('L'[1]*'-Norm
 for (j in 1:nmods){
   abline(h=baseline_f1[j], col=j+1, lty="dashed")
   abline(lm(as.numeric(f1[j, ])~perterbs), col=j+1, lty="dotted")
-  print(summary(lm(as.numeric(f1[j, ])~perterbs)))
+  print(summary(lm(as.numeric(f1[j, ])~perterbs))$coefficients[,4])
   points(perterbs, f1[j, ], pch=pch, col=j+1, cex=cex)
 }
 legend("bottomright", legend=c(models, "Baseline", "Trendline"), col=c(2:(nmods+1),1,1), lty=c(rep(NA,nmods),"dashed", "dotted"), pch=c(rep(pch,nmods),NA, NA), cex=cex_leg)
@@ -124,7 +129,7 @@ png(filename=paste0(home, "plots/", header, "_cov_shift_f1_diff", tail, ".png"),
 plot(NULL, xlim=c(xmin, xmax), ylim=c(ymin, ymax), xlab=expression('L'[1]*'-Norm of Shifts'), ylab=expression(paste(Delta,' F1 Score')))#, main=expression(paste("Affect of ", rho, " on F1 score of covariate shifts")))
 for (j in 1:nmods){
   abline(lm(as.numeric(f1[j, ]-baseline_f1[j])~perterbs), col=j+1, lty="dotted")
-  print(summary(lm(as.numeric(f1[j, ]-baseline_f1[j])~perterbs)))
+  print(summary(lm(as.numeric(f1[j, ]-baseline_f1[j])~perterbs))$coefficients[,4])
   points(perterbs, f1[j, ]-baseline_f1[j], pch=pch, col=j+1, cex=cex)
 }
 legend("bottomright", legend=c(models, "Trendline"), col=c(2:(nmods+1),1), lty=c(rep(NA,nmods),"dotted"), pch=c(rep(pch,nmods),NA), cex=cex_leg)
@@ -149,7 +154,7 @@ plot(NULL, xlim=c(xmin, xmax), ylim=c(ymin, ymax), xlab=expression('L'[1]*'-Norm
 for (j in 1:(nmods-1)){
   abline(h=(baseline_f1[j]-baseline_f1[nmods]), col=j+1, lty="dashed")
   abline(lm(as.numeric(f1_ben[j, ])~perterbs), col=j+1, lty="dotted")
-  print(summary(lm(as.numeric(f1_ben[j, ])~perterbs)))
+  print(summary(lm(as.numeric(f1_ben[j, ])~perterbs))$coefficients[,4])
   points(perterbs, f1_ben[j, ], pch=pch, col=j+1, cex=cex)
 }
 legend("topright", legend=c(models[1:(nmods-1)], "Baseline", "Trendline"), col=c(2:nmods,1,1), lty=c(rep(NA,nmods-1),"dashed","dotted"), pch=c(rep(pch,nmods-1),NA,NA), cex=cex_leg)
