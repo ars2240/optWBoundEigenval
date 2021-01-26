@@ -481,11 +481,15 @@ class OptWBoundEignVal(object):
             if self.optimizer.__class__.__name__ == "EntropySGD":
                 from optim import accuracy
 
-                tk = output.shape[1] if self.loss.__class__.__name__ == 'W_BCEWithLogitsLoss' else 1
+                b = self.loss.__class__.__name__ == 'W_BCEWithLogitsLoss'
 
                 def helper():
                     def feval():
-                        prec1, = accuracy(output.data, target.data, topk=(tk,))
+                        if b:
+                            predicted = (output.data > 0.5).float()
+                            prec1 = torch.mean((predicted == target).float()) * 100
+                        else:
+                            prec1, = accuracy(output.data, target.data, topk=(tk,))
                         err = 100.-prec1.item()
                         return loss.data.item(), err
                     return feval
