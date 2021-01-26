@@ -483,6 +483,7 @@ class OptWBoundEignVal(object):
 
                 def helper():
                     def feval():
+                        print(loss.__class__.__name__)
                         tk = output.shape[1] if loss.__class__.__name__ == 'W_BCEWithLogitsLoss' else 1
                         prec1, = accuracy(output.data, target.data, topk=(tk,))
                         err = 100.-prec1.item()
