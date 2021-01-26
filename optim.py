@@ -6,12 +6,11 @@ from copy import deepcopy
 import numpy as np
 import torch as th
 
-class EntropySGD(Optimizer):
-    def __init__(self, params, config = {}):
 
-        defaults = dict(lr=0.1, momentum=0.9, damp=0,
-                 weight_decay=0, nesterov=True,
-                 L=0, eps=1e-4, g0=1e-4, g1=1e-3)
+class EntropySGD(Optimizer):
+    def __init__(self, params, config={}):
+
+        defaults = dict(lr=0.1, momentum=0.9, damp=0, weight_decay=0, nesterov=True, L=0, eps=1e-4, g0=1e-4, g1=1e-3)
         for k in defaults:
             if config.get(k, None) is None:
                 config[k] = defaults[k]
@@ -22,7 +21,7 @@ class EntropySGD(Optimizer):
     def step(self, closure=None, model=None, criterion=None):
         assert (closure is not None) and (model is not None) and (criterion is not None), \
                 'attach closure for Entropy-SGD, model and criterion'
-        mf,merr = closure()
+        mf, merr = closure()
 
         c = self.config
         lr = c['lr']
@@ -46,14 +45,11 @@ class EntropySGD(Optimizer):
                 state['wc'].append(deepcopy(w.data))
                 state['mdw'].append(deepcopy(w.grad.data))
 
-            state['langevin'] = dict(mw=deepcopy(state['wc']),
-                                    mdw=deepcopy(state['mdw']),
-                                    eta=deepcopy(state['mdw']),
-                                    lr = 0.1,
-                                    beta1 = 0.75)
+            state['langevin'] = dict(mw=deepcopy(state['wc']), mdw=deepcopy(state['mdw']), eta=deepcopy(state['mdw']),
+                                     lr=0.1, beta1=0.75)
 
         lp = state['langevin']
-        for i,w in enumerate(params):
+        for i, w in enumerate(params):
             state['wc'][i].copy_(w.data)
             lp['mw'][i].copy_(w.data)
             lp['mdw'][i].zero_()
@@ -64,9 +60,8 @@ class EntropySGD(Optimizer):
         g = g0*(1+g1)**state['t']
 
         for i in range(L):
-            f,_ = closure()
-            for wc,w,mw,mdw,eta in zip(state['wc'], params, \
-                                    lp['mw'], lp['mdw'], lp['eta']):
+            f, _ = closure()
+            for wc, w, mw, mdw, eta in zip(state['wc'], params, lp['mw'], lp['mdw'], lp['eta']):
                 dw = w.grad.data
 
                 if wd > 0:
@@ -88,11 +83,11 @@ class EntropySGD(Optimizer):
 
         if L > 0:
             # copy model back
-            for i,w in enumerate(params):
+            for i, w in enumerate(params):
                 w.data.copy_(state['wc'][i])
                 w.grad.data.copy_(w.data-lp['mw'][i])
 
-        for w,mdw,mw in zip(params, state['mdw'], lp['mw']):
+        for w, mdw, mw in zip(params, state['mdw'], lp['mw']):
             dw = w.grad.data
 
             if wd > 0:
@@ -106,7 +101,7 @@ class EntropySGD(Optimizer):
 
             w.data.add_(-lr, dw)
 
-        return mf,merr
+        return mf, merr
 
 
 def accuracy(output, target, topk=(1,)):

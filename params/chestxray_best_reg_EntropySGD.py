@@ -84,7 +84,7 @@ def options():
     # Training Setup
     opt['model'] = model
     opt['loss'] = W_BCEWithLogitsLoss()
-    opt['optimizer'] = EntropySGD(opt['model'].parameters())
+    opt['optimizer'] = EntropySGD(opt['model'].parameters(), config=dict(lr=0.01))
     opt['header'] = 'chestxray_' + enc
     opt['use_gpu'] = True
     opt['pow_iter'] = False

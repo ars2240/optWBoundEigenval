@@ -489,7 +489,7 @@ class OptWBoundEignVal(object):
                             predicted = (output.data > 0.5).float()
                             prec1 = torch.mean((predicted == target).float()) * 100
                         else:
-                            prec1, = accuracy(output.data, target.data, topk=(tk,))
+                            prec1, = accuracy(output.data, target.data, topk=(1,))
                         err = 100.-prec1.item()
                         return loss.data.item(), err
                     return feval
