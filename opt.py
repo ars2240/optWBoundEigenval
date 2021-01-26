@@ -484,6 +484,7 @@ class OptWBoundEignVal(object):
                 def helper():
                     def feval():
                         tk = output.shape[1] if loss.__class__.__name__ == 'KLDivLoss' else 1
+                        print(tk)
                         prec1, = accuracy(output.data, target.data, topk=(tk,))
                         err = 100.-prec1.item()
                         return loss.data.item(), err
