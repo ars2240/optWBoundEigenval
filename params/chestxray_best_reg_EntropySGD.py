@@ -87,7 +87,7 @@ def options():
     opt['optimizer'] = EntropySGD(opt['model'].parameters())
     opt['header'] = 'chestxray_' + enc
     opt['use_gpu'] = True
-    opt['pow_iter'] = True
+    opt['pow_iter'] = False
     opt['test_func'] = 'accauc sigmoid'
     opt['max_iter'] = 1
     opt['max_pow_iter'] = 100
