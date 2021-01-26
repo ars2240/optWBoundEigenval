@@ -481,10 +481,10 @@ class OptWBoundEignVal(object):
             if self.optimizer.__class__.__name__ == "EntropySGD":
                 from optim import accuracy
 
+                tk = output.shape[1] if self.loss.__class__.__name__ == 'W_BCEWithLogitsLoss' else 1
+
                 def helper():
                     def feval():
-                        print(loss.__class__.__name__)
-                        tk = output.shape[1] if loss.__class__.__name__ == 'W_BCEWithLogitsLoss' else 1
                         prec1, = accuracy(output.data, target.data, topk=(tk,))
                         err = 100.-prec1.item()
                         return loss.data.item(), err
