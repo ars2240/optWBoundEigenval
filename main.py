@@ -16,4 +16,4 @@ from opt import main
 if len(sys.argv) == 2:
     main(sys.argv[1])
 else:
-    main('usps_CNN_KFAC')
+    main('forest_CNN_KFAC')
