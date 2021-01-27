@@ -475,6 +475,16 @@ class OptWBoundEignVal(object):
                     raise Exception('Data type not supported')
                 output = self.model(inputs)
                 loss = self.loss(output, target)  # loss function
+                if self.optimizer.__class__.__name__ == "KFACOptimizer" and \
+                        self.optimizer.steps % self.optimizer.TCov == 0:
+                    # compute true fisher
+                    self.optimizer.acc_stats = True
+                    with torch.no_grad():
+                        sampled_y = torch.multinomial(F.softmax(output.cpu().data, dim=1), 1).squeeze().to(self.device)
+                    loss_sample = self.loss(output, sampled_y)
+                    loss_sample.backward(retain_graph=True)
+                    self.optimizer.acc_stats = False
+                    self.optimizer.zero_grad()
                 loss.backward()  # back prop
 
             # optimizer step

@@ -9,17 +9,8 @@ import torch.nn.functional as F
 
 
 class KFACOptimizer(optim.Optimizer):
-    def __init__(self,
-                 model,
-                 lr=0.001,
-                 momentum=0.9,
-                 stat_decay=0.95,
-                 damping=0.001,
-                 kl_clip=0.001,
-                 weight_decay=0,
-                 TCov=10,
-                 TInv=100,
-                 batch_averaged=True):
+    def __init__(self, model, lr=0.001, momentum=0.9, stat_decay=0.95, damping=0.001, kl_clip=0.001, weight_decay=0,
+                 TCov=10, TInv=100, batch_averaged=True):
         if lr < 0.0:
             raise ValueError("Invalid learning rate: {}".format(lr))
         if momentum < 0.0:
@@ -52,6 +43,8 @@ class KFACOptimizer(optim.Optimizer):
         self.kl_clip = kl_clip
         self.TCov = TCov
         self.TInv = TInv
+
+        self.acc_stats = False
 
     def _save_input(self, module, input):
         if torch.is_grad_enabled() and self.steps % self.TCov == 0:
@@ -143,7 +136,7 @@ class KFACOptimizer(optim.Optimizer):
             vg_sum += (v[0] * m.weight.grad.data * lr ** 2).sum().item()
             if m.bias is not None:
                 vg_sum += (v[1] * m.bias.grad.data * lr ** 2).sum().item()
-        nu = min(1.0, math.sqrt(self.kl_clip / vg_sum))
+        nu = min(1.0, math.sqrt(self.kl_clip / vg_sum)) if vg_sum != 0 else 1.0
 
         for m in self.modules:
             v = updates[m]
@@ -371,7 +364,6 @@ class ComputeCovG:
         else:
             cov_g = g.t() @ (g / batch_size)
         return cov_g
-
 
 
 if __name__ == '__main__':
