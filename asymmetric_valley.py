@@ -112,7 +112,7 @@ class AsymmetricValley(OptWBoundEignVal):
         vec_inter = vec_inter / self.division_part
 
         dis_counter = 0
-        result_shape = self.distances * 2 + division_part + 1
+        result_shape = self.distances * 2 + self.division_part + 1
 
         train_loss_results_bnupdate = np.zeros(result_shape)
         test_loss_results_bnupdate = np.zeros(result_shape)
@@ -132,24 +132,24 @@ class AsymmetricValley(OptWBoundEignVal):
             test_loss_results_bnupdate[dis_counter] = test_temp['loss']
             test_acc_results_bnupdate[dis_counter] = test_temp['accuracy']
 
-            np.savetxt(os.path.join('/.logs/', "asymmetric_valley_train_loss_results.txt"), train_loss_results_bnupdate)
-            np.savetxt(os.path.join('/.logs/', "asymmetric_valley_test_loss_results.txt"), test_loss_results_bnupdate)
-            np.savetxt(os.path.join('/.logs/', "asymmetric_valley_train_acc_results.txt"), train_acc_results_bnupdate)
-            np.savetxt(os.path.join('/.logs/', "asymmetric_valley_test_acc_results.txt"), test_acc_results_bnupdate)
+            np.savetxt(os.path.join('./logs/', "asymmetric_valley_train_loss_results.txt"), train_loss_results_bnupdate)
+            np.savetxt(os.path.join('./logs/', "asymmetric_valley_test_loss_results.txt"), test_loss_results_bnupdate)
+            np.savetxt(os.path.join('./logs/', "asymmetric_valley_train_acc_results.txt"), train_acc_results_bnupdate)
+            np.savetxt(os.path.join('./logs/', "asymmetric_valley_test_acc_results.txt"), test_acc_results_bnupdate)
             dis_counter += 1
 
         plt.cla()
         plt.plot(train_loss_results_bnupdate)
-        plt.savefig(os.path.join('/.plots/', 'asymmetric_valley_train_loss_results.png'))
+        plt.savefig(os.path.join('./plots/', 'asymmetric_valley_train_loss_results.png'))
         plt.cla()
         plt.plot(test_loss_results_bnupdate)
-        plt.savefig(os.path.join('/.plots/', 'asymmetric_valley_test_loss_results.png'))
+        plt.savefig(os.path.join('./plots/', 'asymmetric_valley_test_loss_results.png'))
         plt.cla()
         plt.plot(train_acc_results_bnupdate)
-        plt.savefig(os.path.join('/.plots/', 'asymmetric_valley_train_acc_results.png'))
+        plt.savefig(os.path.join('./plots/', 'asymmetric_valley_train_acc_results.png'))
         plt.cla()
         plt.plot(test_acc_results_bnupdate)
-        plt.savefig(os.path.join('/.plots/', 'asymmetric_valley_test_acc_results.png'))
+        plt.savefig(os.path.join('./plots/', 'asymmetric_valley_test_acc_results.png'))
 
     def train(self, inputs=None, target=None, inputs_valid=None, target_valid=None, train_loader=None,
               valid_loader=None, train_loader_na=None):
