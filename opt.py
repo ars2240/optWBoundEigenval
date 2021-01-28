@@ -785,15 +785,11 @@ class OptWBoundEignVal(object):
 
         return test_loss, test_acc, test_f1
 
-    def model_load(self, fname=None):
-        # load model from file
-
-        if fname is None:
-            fname = './models/' + self.header2 + '_trained_model_best.pt'
+    def load_state(self, fname, dic='state_dict'):
 
         state = torch.load(fname)
-        if 'state_dict' in state.keys():
-            state2 = state['state_dict']
+        if dic in state.keys():
+            state2 = state[dic]
 
             from collections import OrderedDict
             state = OrderedDict()
@@ -804,9 +800,16 @@ class OptWBoundEignVal(object):
                 p = re.compile("(norm|conv)\.([0-9+])")
                 k = p.sub(r'\1\2', k)
                 state[k] = v
+        return state
 
+    def model_load(self, fname=None):
+        # load model from file
+
+        if fname is None:
+            fname = './models/' + self.header2 + '_trained_model_best.pt'
+
+        state = self.load_state(fname)
         self.model.load_state_dict(state)
-
         self.model.to(self.device)
 
     def test_model_best(self, x=None, y=None, loader=None, classes=None, model_classes=None, fname=None):
@@ -1083,6 +1086,12 @@ def missing_params(func, options, replace={}):
     return options
 
 
+# returns dictionary of arguments for function
+def arg_dic(func, options):
+    parameters = inspect.getfullargspec(func)
+    return {key: options[key] for key in parameters.args if key in options.keys()}
+
+
 # Assert DataLoader class
 def assert_dl(x, batch_size, num_workers):
     if isinstance(x, utils_data.DataLoader) or x is None:
@@ -1111,18 +1120,16 @@ def main(pfile):
     params = __import__(pfile)
     options = params.options()
 
-    # get missing options
-    options = missing_params(OptWBoundEignVal, options)
-
-    # init class
-    opt = OptWBoundEignVal(model=options['model'], loss=options['loss'], optimizer=options['optimizer'],
-                           scheduler=options['scheduler'], mu=options['mu'], K=options['K'], eps=options['eps'],
-                           pow_iter_eps=options['pow_iter_eps'], use_gpu=options['use_gpu'],
-                           batch_size=options['batch_size'], min_iter=options['min_iter'], max_iter=options['max_iter'],
-                           max_pow_iter=options['max_pow_iter'], pow_iter=options['pow_iter'],
-                           max_samples=options['max_samples'], ignore_bad_vals=options['ignore_bad_vals'],
-                           verbose=options['verbose'], mem_track=options['mem_track'], header=options['header'],
-                           num_workers=options['num_workers'], test_func=options['test_func'])
+    # get missing options and initialize class
+    if 'asymmetric_valley' in options.keys() and options['asymmetric_valley']:
+        from asymmetric_valley import AsymmetricValley
+        options = missing_params(AsymmetricValley, options)
+        o2 = arg_dic(AsymmetricValley, options)
+        opt = AsymmetricValley(**o2)
+    else:
+        options = missing_params(OptWBoundEignVal, options)
+        o2 = arg_dic(OptWBoundEignVal, options)
+        opt = OptWBoundEignVal(**o2)
 
     # get missing options for train & test
     options = missing_params(opt.train, options)
