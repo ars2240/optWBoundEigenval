@@ -505,7 +505,16 @@ class OptWBoundEignVal(object):
                     return feval
                 self.optimizer.step(helper(), self.model, self.loss)
             else:
-                self.optimizer.step()
+                try:
+                    self.optimizer.step()
+                except RuntimeError:
+                    self.model_load('./models/' + self.header2 + '_trained_model.pt')
+
+            if self.optimizer.__class__.__name__ == "KFACOptimizer":
+                inputs, _ = data
+                output = self.model(inputs)
+                if torch.isnan(output).any():
+                    self.model_load('./models/' + self.header2 + '_trained_model.pt')
 
             # if verbose, add values to file
             if self.verbose:
@@ -564,6 +573,12 @@ class OptWBoundEignVal(object):
         if self.scheduler is not None:
             self.scheduler.step()
 
+    def save(self, tail='_trained_model.pt'):
+        # Save model weights
+        self.model.to('cpu')
+        torch.save(self.model.state_dict(), './models/' + self.header2 + tail)
+        self.model.to(self.device)
+
     def train(self, inputs=None, target=None, inputs_valid=None, target_valid=None, train_loader=None,
               valid_loader=None, train_loader_na=None):
 
@@ -611,6 +626,8 @@ class OptWBoundEignVal(object):
             log_file = open(self.log_file, "a")  # open log file
             sys.stdout = log_file  # write to log file
 
+            self.save()
+
             # add values to log file
             if (inputs_valid is None or target_valid is None) and (valid_loader is None):
                 print('%d\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm))
@@ -621,9 +638,7 @@ class OptWBoundEignVal(object):
                     self.best_val_acc = self.val_acc
                     self.best_rho = self.rho
                     self.best_val_iter = self.i
-                    self.model.to('cpu')
-                    torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model_best.pt')
-                    self.model.to(self.device)
+                    self.save('_trained_model_best.pt')
                 print('%d\t %f\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm,
                                                             self.val_acc, val_f1))
 
@@ -632,11 +647,6 @@ class OptWBoundEignVal(object):
             if torch.is_tensor(self.h):
                 self.h = self.h.item()
             f_hist.append(self.h)
-
-            # Save model weights
-            self.model.to('cpu')
-            torch.save(self.model.state_dict(), './models/' + self.header2 + '_trained_model.pt')
-            self.model.to(self.device)
 
             # check if convergence criteria met
             if self.i >= (self.min_iter - 1):
