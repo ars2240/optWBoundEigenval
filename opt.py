@@ -480,7 +480,11 @@ class OptWBoundEignVal(object):
                     # compute true fisher
                     self.optimizer.acc_stats = True
                     with torch.no_grad():
-                        sampled_y = torch.multinomial(F.softmax(output.cpu().data, dim=1), 1).squeeze().to(self.device)
+                        if self.loss.__class__.__name__ == 'W_BCEWithLogitsLoss':
+                            sampled_y = torch.bernoulli(output.cpu().data).squeeze().to(self.device)
+                        else:
+                            sampled_y = torch.multinomial(F.softmax(output.cpu().data, dim=1), 1).squeeze()\
+                                .to(self.device)
                     loss_sample = self.loss(output, sampled_y)
                     loss_sample.backward(retain_graph=True)
                     self.optimizer.acc_stats = False
