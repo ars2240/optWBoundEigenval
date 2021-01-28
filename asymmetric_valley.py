@@ -2,12 +2,14 @@
 # Modified from https://github.com/962086838/code-for-Asymmetric-Valley
 
 import os
+import sys
+import time
 import torch
 import torch.utils.data as utils_data
 from copy import deepcopy
-from opt import OptWBoundEignVal
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+from opt import *
 
 
 class AsymmetricValley(OptWBoundEignVal):
@@ -52,11 +54,12 @@ class AsymmetricValley(OptWBoundEignVal):
     def iter(self):
         lr = self.schedule()
         adjust_learning_rate(self.optimizer, lr)
+        _ = self.train_epoch(self.dataloader, self.model)
 
         if self.swa and (self.i + 1) >= self.swa_start and (self.i + 1 - self.swa_start) % self.swa_c_epochs == 0:
             moving_average(self.swa_model, self.model, 1.0 / (self.swa_n + 1))
             self.swa_n += 1
-            if self.i == 0 or self.i % self.eval_freq == self.eval_freq - 1 or self.i == self.max_itere - 1:
+            if self.i == 0 or self.i % self.eval_freq == self.eval_freq - 1 or self.i == self.max_iter - 1:
                 bn_update(self.dataloader, self.swa_model)
 
         if (self.i + 1) % self.save_freq == 0:
@@ -68,8 +71,8 @@ class AsymmetricValley(OptWBoundEignVal):
     def iter2(self, valid_loader):
 
         if self.train_res_swa is None or self.test_res_swa is None:
-            self.train_res_swa = eval(self.dataloader, self.model, self.loss)
-            self.test_res_swa = eval(valid_loader, self.model, self.loss)
+            self.train_res_swa = self.eval(self.dataloader, self.model)
+            self.test_res_swa = self.eval(valid_loader, self.model)
 
             # load model
             state = self.load_state(self.swa_path)
@@ -77,9 +80,9 @@ class AsymmetricValley(OptWBoundEignVal):
             self.model.to(self.device)
             bn_update(self.dataloader, self.model)
 
-        sdjust_learning_rate(self.optimizer, self.lr_init)
-        train_res = train_epoch(self.dataloader, self.model, self.loss, self.optimizer)
-        test_res = eval(valid_loader, self.model, self.loss)
+        adjust_learning_rate(self.optimizer, self.lr_init)
+        train_res = self.train_epoch(self.dataloader, self.model)
+        test_res = self.eval(valid_loader, self.model)
 
         if train_res['loss'] < self.train_res_swa['loss'] and test_res['loss'] > self.test_res_swa['loss']:
             self.sgd_path = save_checkpoint(self.dir, self.i + 1, state_dict=self.model.state_dict(),
@@ -119,8 +122,8 @@ class AsymmetricValley(OptWBoundEignVal):
             vector_to_parameters(vec_temp, model_temp.parameters())
             bn_update(self.dataloader, model_temp)
 
-            train_temp = eval(self.dataloader, model_temp, self.loss)
-            test_temp = eval(valid_loader, model_temp, self.loss)
+            train_temp = self.eval(self.dataloader, model_temp)
+            test_temp = self.eval(valid_loader, model_temp)
 
             train_loss_results_bnupdate[dis_counter] = train_temp['loss']
             train_acc_results_bnupdate[dis_counter] = train_temp['accuracy']
@@ -170,6 +173,7 @@ class AsymmetricValley(OptWBoundEignVal):
         # make sure logs & models folders exist
         check_folder('./logs')
         check_folder('./models')
+        check_folder('./plots')
 
         old_stdout = sys.stdout  # save old output
 
@@ -190,7 +194,7 @@ class AsymmetricValley(OptWBoundEignVal):
         for self.i in range(0, self.max_iter):
             # take step
             if (self.i + 1) >= self.sgd_start:
-                self.iter2(vaild_loader)
+                self.iter2(valid_loader)
             else:
                 self.iter()
 
@@ -250,6 +254,63 @@ class AsymmetricValley(OptWBoundEignVal):
             self.test_set(inputs, target, train_loader_na)
         else:
             self.test_set(inputs, target, train_loader)
+
+    def train_epoch(self, loader, model):
+        loss_sum = 0.0
+        correct = 0.0
+
+        model.train()
+
+        for i, (input, target) in enumerate(loader):
+            input = input.to(self.device)
+            target = target.to(self.device)
+            input_var = torch.autograd.Variable(input)
+            target_var = torch.autograd.Variable(target)
+
+            output = model(input_var)
+            loss = self.loss(output, target_var)
+
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+            # print(list(model.parameters())[0].grad[0][0])
+            # print('i',i)
+
+            loss_sum += loss.item() * input.size(0)
+            pred = output.data.max(1, keepdim=True)[1]
+            correct += pred.eq(target_var.data.view_as(pred)).sum().item()
+            # print('len(loader.dataset)', len(loader.sampler))
+
+        return {
+            'loss': loss_sum / len(loader.dataset),
+            'accuracy': correct / len(loader.dataset) * 100.0,
+        }
+
+    def eval(self, loader, model):
+        loss_sum = 0.0
+        correct = 0.0
+
+        model.eval()
+
+        for i, (input, target) in enumerate(loader):
+            input = input.to(self.device)
+            target = target.to(self.device)
+            input_var = torch.autograd.Variable(input)
+            target_var = torch.autograd.Variable(target)
+
+            output = model(input_var)
+            loss = self.loss(output, target_var)
+
+            loss_sum += loss.item() * input.size(0)
+            pred = output.data.max(1, keepdim=True)[1]
+            correct += pred.eq(target_var.data.view_as(pred)).sum().item()
+
+        # print(len(loader.dataset))
+        return {
+            'loss': loss_sum / len(loader.dataset),
+            # 'loss': loss_sum,
+            'accuracy': correct / len(loader.dataset) * 100.0,
+        }
 
 
 def get_lr(optimizer):
@@ -348,65 +409,6 @@ def save_checkpoint(dir, epoch, **kwargs):
     filepath = os.path.join(dir, 'checkpoint-%d.pt' % epoch)
     torch.save(state, filepath)
     return filepath
-
-
-def train_epoch(loader, model, criterion, optimizer):
-    loss_sum = 0.0
-    correct = 0.0
-
-    model.train()
-
-    for i, (input, target) in enumerate(loader):
-        input = input.cuda()
-        target = target.cuda()
-        input_var = torch.autograd.Variable(input)
-        target_var = torch.autograd.Variable(target)
-
-        output = model(input_var)
-        loss = criterion(output, target_var)
-
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-        # print(list(model.parameters())[0].grad[0][0])
-        # print('i',i)
-
-        loss_sum += loss.item() * input.size(0)
-        pred = output.data.max(1, keepdim=True)[1]
-        correct += pred.eq(target_var.data.view_as(pred)).sum().item()
-        # print('len(loader.dataset)', len(loader.sampler))
-
-    return {
-        'loss': loss_sum / len(loader.dataset),
-        'accuracy': correct / len(loader.dataset) * 100.0,
-    }
-
-
-def eval(loader, model, criterion):
-    loss_sum = 0.0
-    correct = 0.0
-
-    model.eval()
-
-    for i, (input, target) in enumerate(loader):
-        input = input.cuda()
-        target = target.cuda()
-        input_var = torch.autograd.Variable(input)
-        target_var = torch.autograd.Variable(target)
-
-        output = model(input_var)
-        loss = criterion(output, target_var)
-
-        loss_sum += loss.item() * input.size(0)
-        pred = output.data.max(1, keepdim=True)[1]
-        correct += pred.eq(target_var.data.view_as(pred)).sum().item()
-
-    #print(len(loader.dataset))
-    return {
-        'loss': loss_sum / len(loader.dataset),
-        #'loss': loss_sum,
-        'accuracy': correct / len(loader.dataset) * 100.0,
-    }
 
 
 def moving_average(net1, net2, alpha=1.0):

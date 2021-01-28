@@ -78,7 +78,7 @@ def options():
     opt['optimizer'] = torch.optim.SGD(opt['model'].parameters(), lr=0.1)
     # opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(options['optimizer'], lr_lambda=alpha)
     opt['header'] = 'USPS'
-    opt['train'] = False
+    opt['train'] = True
     opt['pow_iter'] = False
     opt['asymmetric_valley'] = True
 
