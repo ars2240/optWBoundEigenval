@@ -101,10 +101,12 @@ class AsymmetricValley(OptWBoundEignVal):
         self.swa_model.load_state_dict(state)
         self.swa_model.to(self.device)
         bn_update(self.dataloader, self.swa_model)
+        vec_2 = parameters_to_vector(self.swa_model.parameters())
+
         state = self.load_state(self.swa_path)
+        model_temp = deepcopy(self.model)
         model_temp.load_state_dict(state)
         model_temp.to(self.device)
-        vec_2 = parameters_to_vector(self.swa_model.parameters())
 
         vec_inter = vec_1 - vec_2
         vec_inter = vec_inter / self.division_part
