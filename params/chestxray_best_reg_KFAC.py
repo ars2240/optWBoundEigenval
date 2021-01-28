@@ -84,7 +84,7 @@ def options():
     # Training Setup
     opt['model'] = model
     opt['loss'] = W_BCEWithLogitsLoss()
-    opt['optimizer'] = KFACOptimizer(opt['model'], lr=1e-5)
+    opt['optimizer'] = KFACOptimizer(opt['model'], lr=1e-6)
     opt['header'] = 'chestxray_' + enc
     opt['use_gpu'] = True
     opt['pow_iter'] = False
