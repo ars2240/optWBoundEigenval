@@ -515,7 +515,13 @@ class OptWBoundEignVal(object):
                     self.model_load('./models/' + self.header2 + '_trained_model.pt')
 
             if self.optimizer.__class__.__name__ == "KFACOptimizer":
-                inputs, _ = data
+                if type(data) == list:
+                    inputs, _ = data
+                    inputs = inputs.to(self.device)
+                elif type(data) == dict:
+                    inputs = Variable(data['image'].to(self.device))
+                else:
+                    raise Exception('Data type not supported')
                 output = self.model(inputs)
                 if torch.isnan(output).any():
                     self.model_load('./models/' + self.header2 + '_trained_model.pt')
