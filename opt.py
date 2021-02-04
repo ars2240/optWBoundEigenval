@@ -1018,9 +1018,16 @@ def get_prob(inputs,  m=[0], sd=[1], skew=[0]):
     return w
 
 
+# appends to csv
+def append_file(fn, x):
+    with open(fn, "ab") as f:
+        f.write(b"\n")
+        np.savetxt(f, x, delimiter=",")
+
+
 def cov_shift_tester(models, x, y, iters=1000, bad_modes=[], header='', mult=.1, prob=0.5, mean_diff=0, sd_diff=0,
                      skew_diff=0, test_mean=[0], test_sd=[1], test_skew=[0], train_mean=[0], train_sd=[1],
-                     train_skew=[0], indices=None):
+                     train_skew=[0], indices=None, append=False):
     # make sure logs folder exists
     check_folder('./logs')
 
@@ -1058,9 +1065,14 @@ def cov_shift_tester(models, x, y, iters=1000, bad_modes=[], header='', mult=.1,
                                                                      train_mean=train_mean, train_sd=train_sd,
                                                                      train_skew=train_skew)
 
-    np.savetxt("./logs/" + header + "_cov_shift_acc.csv", acc, delimiter=",")
-    np.savetxt("./logs/" + header + "_cov_shift_f1.csv", f1, delimiter=",")
-    np.savetxt("./logs/" + header + "_cov_shift_indices.csv", indices, delimiter=",")
+    if append:
+        append_file("./logs/" + header + "_cov_shift_acc.csv", acc)
+        append_file("./logs/" + header + "_cov_shift_f1.csv", f1)
+        append_file("./logs/" + header + "_cov_shift_indices.csv", indices)
+    else:
+        np.savetxt("./logs/" + header + "_cov_shift_acc.csv", acc, delimiter=",")
+        np.savetxt("./logs/" + header + "_cov_shift_f1.csv", f1, delimiter=",")
+        np.savetxt("./logs/" + header + "_cov_shift_indices.csv", indices, delimiter=",")
 
 
 # fill in missing parameters (with their defaults) for function in options dictionary

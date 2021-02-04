@@ -15,9 +15,9 @@ from opt import *
 class AsymmetricValley(OptWBoundEignVal):
 
     def __init__(self, model, loss, optimizer, scheduler=None, mu=0, K=0, eps=-1, pow_iter_eps=1e-3,
-                 use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, pow_iter=True,
+                 use_gpu=False, batch_size=128, min_iter=10, max_iter=250, max_pow_iter=1000, pow_iter=True,
                  max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header='', num_workers=0,
-                 test_func='maxacc', swa=True, swa_start=61, sgd_start=81, swa_c_epochs=1, swa_lr=0.05, eval_freq=5,
+                 test_func='maxacc', swa=True, swa_start=161, sgd_start=201, swa_c_epochs=1, swa_lr=0.05, eval_freq=5,
                  save_freq=5, division_part=40, distances=20):
         super().__init__(model, loss, optimizer, scheduler, mu, K, eps, pow_iter_eps, use_gpu, batch_size, min_iter,
                          max_iter, max_pow_iter, pow_iter, max_samples, ignore_bad_vals, verbose, mem_track, header,
@@ -59,7 +59,7 @@ class AsymmetricValley(OptWBoundEignVal):
         if self.swa and (self.i + 1) >= self.swa_start and (self.i + 1 - self.swa_start) % self.swa_c_epochs == 0:
             moving_average(self.swa_model, self.model, 1.0 / (self.swa_n + 1))
             self.swa_n += 1
-            if self.i == 0 or self.i % self.eval_freq == self.eval_freq - 1 or self.i == self.max_iter - 1:
+            if self.i == 0 or self.i % self.eval_freq == self.eval_freq - 1 or self.i == self.sgd_start - 2:
                 bn_update(self.dataloader, self.swa_model)
 
         if (self.i + 1) % self.save_freq == 0:

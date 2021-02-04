@@ -98,10 +98,10 @@ def options():
     # Training Setup
     opt['model'] = CNN()
     opt['loss'] = nn.CrossEntropyLoss()
-    opt['optimizer'] = KFACOptimizer(opt['model'])
+    opt['optimizer'] = KFACOptimizer(opt['model'], lr=1e-4)
     # opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(options['optimizer'], lr_lambda=alpha)
     opt['header'] = 'USPS'
-    opt['train'] = False
+    opt['train'] = True
     opt['pow_iter'] = False
 
     opt['aug_test'] = True

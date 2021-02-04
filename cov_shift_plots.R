@@ -1,18 +1,21 @@
 header="Cov_norm_5"
 tail = "_zoom"
 
-home = "~/Documents/Northwestern/optWBoundEigenval/"
+home = "~/Documents/Northwestern/Research/Optimization with Bounded Eigenvalues/"
 indices = read.csv(paste0(home, "logs/", header, "_cov_shift_indices.csv"), header=FALSE)
 acc = read.csv(paste0(home, "logs/", header, "_cov_shift_acc.csv"), header=FALSE)
 f1 = read.csv(paste0(home, "logs/", header, "_cov_shift_f1.csv"), header=FALSE)
 
 perterbs = colSums(abs(indices))
 
-models = c(expression(paste(mu, "=0.01, K=1, ", rho, "=1.358", sep='')), expression(paste(mu, "=0.01, K=0, ", rho, "=1.288", sep='')), expression(paste(mu, "=0.001, K=5, ", rho, "=10.207", sep='')), expression(paste(mu, "=0.001, K=0, ", rho, "=10.520", sep='')), expression(paste(mu, "=0.005, K=1, ", rho, "=2.114", sep='')), expression(paste("Unregularized, ", rho, "=40.949", sep='')), expression(paste("Entropy-SGD, ", rho, "=7.362", sep='')))
-baseline_acc = c(69.70990422, 70.38544616, 70.67201363, 70.8656403, 70.96632617, 71.74169341, 69.68580846)
-baseline_f1 = c(0.6970990422, 0.7038544616, 0.7067201363, 0.708656403, 0.7096632617, 0.7174169342, 0.6968580846)
+models = c(expression(paste(mu, "=0.01, K=1, ", rho, "=1.358", sep='')), expression(paste(mu, "=0.01, K=0, ", rho, "=1.288", sep='')),
+           expression(paste(mu, "=0.001, K=5, ", rho, "=10.207", sep='')), expression(paste(mu, "=0.001, K=0, ", rho, "=10.520", sep='')),
+           expression(paste(mu, "=0.005, K=1, ", rho, "=2.114", sep='')), expression(paste("Unregularized, ", rho, "=40.949", sep='')),
+           expression(paste("Entropy-SGD, ", rho, "=7.362", sep='')), expression(paste("K-FAC, ", rho, "=5.819", sep='')))
+baseline_acc = c(69.70990422, 70.38544616, 70.67201363, 70.8656403, 70.96632617, 71.74169341, 69.68580846, 70.82519384)
+baseline_f1 = baseline_acc/100
 
-base=6
+base=6 #comparison modes
 nmods = length(models)
 pch = 20
 cex = 0.5
@@ -84,8 +87,8 @@ legend("topright", legend=c(models[1:(nmods-1)], "Baseline", "Trendline"), col=c
 dev.off()
 
 png(filename=paste0(home, "plots/", header, "_cov_shift_acc_ben", tail, "_panel.png"), width = 4, height = 4, units = 'in', res = 300)
-#layout(matrix(c(1,1,2,2,3,3,4,4,0,5,5,0), 3, 4, byrow = TRUE))
-par(cex=.5, mfrow=c(3,2), mar=c(3, 3, 1, 1), mgp=c(2,1,0))
+layout(matrix(c(1,1,2,2,3,3,4,4,5,5,6,6,0,7,7,0), 4, 4, byrow = TRUE))
+par(cex=.5, mar=c(3, 3, 1, 1), mgp=c(2,1,0))#, mfrow=c(3,2))
 for (j in 1:nmods){
   if (j != base){
     plot(NULL, xlim=c(xmin, xmax), ylim=c(ymin, ymax), xlab=expression('L'[1]*'-Norm of Shifts'), ylab=expression(paste(Delta,' Accuracy')), main=models[j])
