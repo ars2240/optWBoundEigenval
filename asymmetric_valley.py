@@ -90,66 +90,70 @@ class AsymmetricValley(OptWBoundEignVal):
 
     def interpolation(self, valid_loader):
 
-        # load models
-        state = self.load_state(self.sgd_path)
-        self.model.load_state_dict(state)
-        self.model.to(self.device)
-        bn_update(self.dataloader, self.model)
-        vec_1 = parameters_to_vector(self.model.parameters())
+        if self.sgd_path is not None and self.swa_path is not None:
+            # load models
+            state = self.load_state(self.sgd_path)
+            self.model.load_state_dict(state)
+            self.model.to(self.device)
+            bn_update(self.dataloader, self.model)
+            vec_1 = parameters_to_vector(self.model.parameters())
 
-        state = self.load_state(self.swa_path, 'swa_state_dict')
-        self.swa_model.load_state_dict(state)
-        self.swa_model.to(self.device)
-        bn_update(self.dataloader, self.swa_model)
-        vec_2 = parameters_to_vector(self.swa_model.parameters())
+            state = self.load_state(self.swa_path, 'swa_state_dict')
+            self.swa_model.load_state_dict(state)
+            self.swa_model.to(self.device)
+            bn_update(self.dataloader, self.swa_model)
+            vec_2 = parameters_to_vector(self.swa_model.parameters())
 
-        state = self.load_state(self.swa_path)
-        model_temp = deepcopy(self.model)
-        model_temp.load_state_dict(state)
-        model_temp.to(self.device)
+            state = self.load_state(self.swa_path)
+            model_temp = deepcopy(self.model)
+            model_temp.load_state_dict(state)
+            model_temp.to(self.device)
 
-        vec_inter = vec_1 - vec_2
-        vec_inter = vec_inter / self.division_part
+            vec_inter = vec_1 - vec_2
+            vec_inter = vec_inter / self.division_part
 
-        dis_counter = 0
-        result_shape = self.distances * 2 + self.division_part + 1
+            dis_counter = 0
+            result_shape = self.distances * 2 + self.division_part + 1
 
-        train_loss_results_bnupdate = np.zeros(result_shape)
-        test_loss_results_bnupdate = np.zeros(result_shape)
-        train_acc_results_bnupdate = np.zeros(result_shape)
-        test_acc_results_bnupdate = np.zeros(result_shape)
+            train_loss_results_bnupdate = np.zeros(result_shape)
+            test_loss_results_bnupdate = np.zeros(result_shape)
+            train_acc_results_bnupdate = np.zeros(result_shape)
+            test_acc_results_bnupdate = np.zeros(result_shape)
 
-        for i in range(0, int(result_shape), 1):
-            vec_temp = vec_2 + (i - self.distances) * vec_inter
-            vector_to_parameters(vec_temp, model_temp.parameters())
-            bn_update(self.dataloader, model_temp)
+            for i in range(0, int(result_shape), 1):
+                vec_temp = vec_2 + (i - self.distances) * vec_inter
+                vector_to_parameters(vec_temp, model_temp.parameters())
+                bn_update(self.dataloader, model_temp)
 
-            train_temp = self.eval(self.dataloader, model_temp)
-            test_temp = self.eval(valid_loader, model_temp)
+                train_temp = self.eval(self.dataloader, model_temp)
+                test_temp = self.eval(valid_loader, model_temp)
 
-            train_loss_results_bnupdate[dis_counter] = train_temp['loss']
-            train_acc_results_bnupdate[dis_counter] = train_temp['accuracy']
-            test_loss_results_bnupdate[dis_counter] = test_temp['loss']
-            test_acc_results_bnupdate[dis_counter] = test_temp['accuracy']
+                train_loss_results_bnupdate[dis_counter] = train_temp['loss']
+                train_acc_results_bnupdate[dis_counter] = train_temp['accuracy']
+                test_loss_results_bnupdate[dis_counter] = test_temp['loss']
+                test_acc_results_bnupdate[dis_counter] = test_temp['accuracy']
 
-            np.savetxt(os.path.join('./logs/', "asymmetric_valley_train_loss_results.txt"), train_loss_results_bnupdate)
-            np.savetxt(os.path.join('./logs/', "asymmetric_valley_test_loss_results.txt"), test_loss_results_bnupdate)
-            np.savetxt(os.path.join('./logs/', "asymmetric_valley_train_acc_results.txt"), train_acc_results_bnupdate)
-            np.savetxt(os.path.join('./logs/', "asymmetric_valley_test_acc_results.txt"), test_acc_results_bnupdate)
-            dis_counter += 1
+                np.savetxt(os.path.join('./logs/', "asymmetric_valley_train_loss_results.txt"),
+                           train_loss_results_bnupdate)
+                np.savetxt(os.path.join('./logs/', "asymmetric_valley_test_loss_results.txt"),
+                           test_loss_results_bnupdate)
+                np.savetxt(os.path.join('./logs/', "asymmetric_valley_train_acc_results.txt"),
+                           train_acc_results_bnupdate)
+                np.savetxt(os.path.join('./logs/', "asymmetric_valley_test_acc_results.txt"), test_acc_results_bnupdate)
+                dis_counter += 1
 
-        plt.cla()
-        plt.plot(train_loss_results_bnupdate)
-        plt.savefig(os.path.join('./plots/', 'asymmetric_valley_train_loss_results.png'))
-        plt.cla()
-        plt.plot(test_loss_results_bnupdate)
-        plt.savefig(os.path.join('./plots/', 'asymmetric_valley_test_loss_results.png'))
-        plt.cla()
-        plt.plot(train_acc_results_bnupdate)
-        plt.savefig(os.path.join('./plots/', 'asymmetric_valley_train_acc_results.png'))
-        plt.cla()
-        plt.plot(test_acc_results_bnupdate)
-        plt.savefig(os.path.join('./plots/', 'asymmetric_valley_test_acc_results.png'))
+            plt.cla()
+            plt.plot(train_loss_results_bnupdate)
+            plt.savefig(os.path.join('./plots/', 'asymmetric_valley_train_loss_results.png'))
+            plt.cla()
+            plt.plot(test_loss_results_bnupdate)
+            plt.savefig(os.path.join('./plots/', 'asymmetric_valley_test_loss_results.png'))
+            plt.cla()
+            plt.plot(train_acc_results_bnupdate)
+            plt.savefig(os.path.join('./plots/', 'asymmetric_valley_train_acc_results.png'))
+            plt.cla()
+            plt.plot(test_acc_results_bnupdate)
+            plt.savefig(os.path.join('./plots/', 'asymmetric_valley_test_acc_results.png'))
 
     def train(self, inputs=None, target=None, inputs_valid=None, target_valid=None, train_loader=None,
               valid_loader=None, train_loader_na=None):
@@ -163,14 +167,15 @@ class AsymmetricValley(OptWBoundEignVal):
             self.y = target  # output data
 
             # create dataloader
-            train_data = utils_data.TensorDataset(self.x, self.y)
-            if self.use_gpu:
-                self.dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size,
-                                                        num_workers=self.num_workers, pin_memory=True)
-            else:
-                self.dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size)
+            self.dataloader = self.to_loader(self.x, self.y)
         else:
             raise Exception('No input data')
+
+        if valid_loader is None and inputs_valid is not None and target_valid is not None:
+            # create dataloader
+            valid_loader = self.to_loader(inputs_valid, target_valid)
+        else:
+            raise Exception('No test data')
 
         # make sure logs & models folders exist
         check_folder('./logs')

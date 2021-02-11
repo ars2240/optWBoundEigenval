@@ -601,12 +601,7 @@ class OptWBoundEignVal(object):
             self.y = target  # output data
 
             # create dataloader
-            train_data = utils_data.TensorDataset(self.x, self.y)
-            if self.use_gpu:
-                self.dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size,
-                                                        num_workers=self.num_workers, pin_memory=True)
-            else:
-                self.dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size)
+            self.dataloader = self.to_loader(self.x, self.y)
         else:
             raise Exception('No input data')
 
@@ -687,6 +682,15 @@ class OptWBoundEignVal(object):
             self.test_set(inputs, target, train_loader_na)
         else:
             self.test_set(inputs, target, train_loader)
+
+    def to_loader(self, inputs, target):
+        data = utils_data.TensorDataset(inputs, target)
+        if self.use_gpu:
+            loader = utils_data.DataLoader(data, batch_size=self.batch_size,
+                                                 num_workers=self.num_workers, pin_memory=True)
+        else:
+            loader = utils_data.DataLoader(data, batch_size=self.batch_size)
+        return loader
 
     def test_model(self, x=None, y=None, loader=None, classes=None, model_classes=None):
         # Computes the loss and accuracy of model on given dataset
@@ -1068,7 +1072,6 @@ def cov_shift_tester(models, x, y, iters=1000, bad_modes=[], header='', mult=.1,
     if append:
         append_file("./logs/" + header + "_cov_shift_acc.csv", acc)
         append_file("./logs/" + header + "_cov_shift_f1.csv", f1)
-        append_file("./logs/" + header + "_cov_shift_indices.csv", indices)
     else:
         np.savetxt("./logs/" + header + "_cov_shift_acc.csv", acc, delimiter=",")
         np.savetxt("./logs/" + header + "_cov_shift_f1.csv", f1, delimiter=",")
@@ -1180,9 +1183,10 @@ def main(pfile):
                 opt.test_set(loader=assert_dl(options['valid_loader'], bs, nw), fname=options['fname'], label="Valid")
             elif 'inputs_valid' in options.keys() and 'target_valid' in options.keys():
                 opt.test_set(x=options['inputs_valid'], y=options['target_valid'], fname=options['fname'], label="Test")
-            if loader is not None:
-                data = iter(loader).next()
-                opt.comp_rho(data, p=True)
+            if loader is None:
+                loader = opt.to_loader(options['inputs'], options['target'])
+            data = iter(loader).next()
+            opt.comp_rho(data, p=True)
             options['fname'] = None
         if 'test_loader' in options.keys() and options['test_loader'] is not None:
             if type(options['test_loader']) is list:

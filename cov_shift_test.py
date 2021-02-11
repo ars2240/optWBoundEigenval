@@ -26,6 +26,7 @@ import pandas as pd
 from forest_data import get_data, Net
 from optim import EntropySGD
 from kfac import KFACOptimizer
+from asymmetric_valley import AsymmetricValley
 
 # set seed
 np.random.seed(1226)
@@ -85,16 +86,23 @@ mu = 0
 K = 0
 opt7 = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
                         max_pow_iter=10000, verbose=False, header='Forest')
-"""
+
 
 optimizer = KFACOptimizer(model)
 mu = 0
 K = 0
 opt8 = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
                         max_pow_iter=10000, verbose=False, header='Forest')
+"""
 
-models = [opt8]
-#models = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8]
+optimizer = torch.optim.SGD(model.parameters(), lr=.5)
+mu = 0
+K = 0
+opt9 = AsymmetricValley(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
+                        max_pow_iter=10000, verbose=False, header='Forest')
+
+models = [opt9]
+#models = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9]
 
 cov_shift_tester(models, x=dic['inputs_test'], y=dic['target_test'], iters=1000, bad_modes=[28],
                  header=header, mult=.05, mean_diff=1, indices=indices, append=True)
