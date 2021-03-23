@@ -271,9 +271,9 @@ class AsymmetricValley(OptWBoundEignVal):
         for i, data in enumerate(loader):
 
             if type(data) == list:
-                inputs, target = data
+                input, target = data
             elif type(data) == dict:
-                inputs, target = Variable(data['image']), Variable(data['label'])
+                input, target = Variable(data['image']), Variable(data['label'])
             else:
                 raise Exception('Data type not supported')
 
