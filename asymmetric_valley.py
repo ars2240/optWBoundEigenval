@@ -269,7 +269,14 @@ class AsymmetricValley(OptWBoundEignVal):
         model.train()
 
         for i, data in enumerate(loader):
-            input, target = data
+
+            if type(data) == list:
+                inputs, target = data
+            elif type(data) == dict:
+                inputs, target = Variable(data['image']), Variable(data['label'])
+            else:
+                raise Exception('Data type not supported')
+
             input = input.to(self.device)
             target = target.to(self.device)
             input_var = torch.autograd.Variable(input)
