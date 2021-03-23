@@ -98,7 +98,7 @@ def options():
     opt['comp_test'] = True
     opt['fname'] = './models/m-25012018-123527.pth.tar'
     opt['asymmetric_valley'] = True
-    opt['swa_start'] = 0
+    opt['swa_start'] = 1
     opt['sgd_start'] = 40
     opt['max_iter'] = 90
 
