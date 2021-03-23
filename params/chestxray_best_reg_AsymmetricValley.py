@@ -84,7 +84,7 @@ def options():
     # Training Setup
     opt['model'] = model
     opt['loss'] = W_BCEWithLogitsLoss()
-    opt['optimizer'] = torch.optim.SGD(opt['model'], lr=1e-7)
+    opt['optimizer'] = torch.optim.SGD(opt['model'], lr=1e-5)
     opt['header'] = 'chestxray_' + enc
     opt['use_gpu'] = True
     opt['pow_iter'] = False
