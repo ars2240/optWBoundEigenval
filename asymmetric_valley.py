@@ -268,7 +268,8 @@ class AsymmetricValley(OptWBoundEignVal):
 
         model.train()
 
-        for i, (input, target) in enumerate(loader):
+        for i, data in enumerate(loader):
+            input, target = data
             input = input.to(self.device)
             target = target.to(self.device)
             input_var = torch.autograd.Variable(input)
