@@ -174,7 +174,7 @@ class AsymmetricValley(OptWBoundEignVal):
         if valid_loader is None and inputs_valid is not None and target_valid is not None:
             # create dataloader
             valid_loader = self.to_loader(inputs_valid, target_valid)
-        else:
+        elif valid_loader is None:
             raise Exception('No test data')
 
         # make sure logs & models folders exist
@@ -190,7 +190,7 @@ class AsymmetricValley(OptWBoundEignVal):
         sys.stdout = log_file  # write to log file
 
         # header of log file
-        if (inputs_valid is None or target_valid is None) and (valid_loader is None):
+        if valid_loader is None:
             print('epoch\t f\t rho\t h\t norm')
         else:
             print('epoch\t f\t rho\t h\t norm\t val_acc\t val_f1')
@@ -211,7 +211,7 @@ class AsymmetricValley(OptWBoundEignVal):
             self.save()
 
             # add values to log file
-            if (inputs_valid is None or target_valid is None) and (valid_loader is None):
+            if valid_loader is None:
                 print('%d\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm))
             else:
                 with torch.no_grad():
