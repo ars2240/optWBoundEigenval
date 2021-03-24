@@ -311,7 +311,14 @@ class AsymmetricValley(OptWBoundEignVal):
 
         model.eval()
 
-        for i, (input, target) in enumerate(loader):
+        for i, data in enumerate(loader):
+            if type(data) == list:
+                input, target = data
+            elif type(data) == dict:
+                input, target = Variable(data['image']), Variable(data['label'])
+            else:
+                raise Exception('Data type not supported')
+
             input = input.to(self.device)
             target = target.to(self.device)
             input_var = torch.autograd.Variable(input)
@@ -488,7 +495,14 @@ def bn_update(loader, model):
     model.apply(reset_bn)
     model.apply(lambda module: _get_momenta(module, momenta))
     n = 0
-    for input, _ in loader:
+    for data in loader:
+        if type(data) == list:
+            input, target = data
+        elif type(data) == dict:
+            input, target = Variable(data['image']), Variable(data['label'])
+        else:
+            raise Exception('Data type not supported')
+
         input = input.cuda()
         input_var = torch.autograd.Variable(input)
         b = input_var.data.size(0)
