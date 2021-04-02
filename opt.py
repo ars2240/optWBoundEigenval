@@ -24,6 +24,7 @@ import torch
 from torch.autograd import Variable
 import torch.utils.data as utils_data
 import torch.nn.functional as F
+from kfac import KFACOptimizer
 
 
 class HVPOperator(object):
@@ -210,7 +211,7 @@ class OptWBoundEignVal(object):
     def __init__(self, model, loss, optimizer, scheduler=None, mu=0, K=0, eps=-1, pow_iter_eps=1e-3,
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, pow_iter=True,
                  max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header='', num_workers=0,
-                 test_func='maxacc'):
+                 test_func='maxacc', lobpcg=False, pow_iter_alpha=1):
 
         # set default device
         if use_gpu and torch.cuda.is_available():
@@ -267,6 +268,8 @@ class OptWBoundEignVal(object):
         self.mem_max = 0  # running maximum memory usage
         self.num_workers = num_workers  # number of GPUs
         self.test_func = test_func  # test function
+        self.pow_iter_alpha = pow_iter_alpha  # power iteration step size
+        self.lobpcg = lobpcg  # whether or not to use LOBPCG method
 
     def mem_check(self):
         # checks & prints max memory used
@@ -281,6 +284,11 @@ class OptWBoundEignVal(object):
 
         # initialize hessian vector operation class
         self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
+
+        if self.lobpcg:
+            kfac_opt = KFACOptimizer(self.model)
+            for m in kfac_opt.modules:
+                kfac_opt._update_inv(m)
 
         v = self.v  # initial guess for eigenvector (prior eigenvector)
 
@@ -318,6 +326,29 @@ class OptWBoundEignVal(object):
             stop = [n, rn / n_old if n_old !=0 else inf, np.abs(lam - lam_old) / lam_old if lam_old !=0 else inf]
             if any(i < self.pow_iter_eps for i in stop):
                 break
+
+            alpha = self.pow_iter_alpha(i) if callable(self.pow_iter_alpha) else self.pow_iter_alpha
+            
+            if self.lobpcg:
+                Tr, i = r, 0
+                for param in self.model.parameters():
+                    param.grad = p[i:(i + n)].view(s).float()  # adjust gradient
+                for m in kfac_opt.modules:
+                    s = m.data.size()  # number of input & output nodes
+                    n = torch.prod(torch.tensor(s))  # total number of parameters
+                    classname = m.__class__.__name__
+                    if classname == 'Conv2d':
+                        p_grad_mat = r.view(r.size(0),-1)  # n_filters * (in_c * kw * kh)
+                    else:
+                        p_grad_mat = r
+                    if m.bias is not None:
+                        p_grad_mat = torch.cat([p_grad_mat, r.view(-1, 1)], 1)
+                    Tr[i:(i + n)] = kfac_opt._get_natural_grad(m, p_grad_mat, 0)
+                    i += n  # increment
+            else:
+                Tr = r
+
+            vnew = v + alpha*Tr
 
             v = 1.0/torch.norm(vnew)*vnew  # update vector and normalize
             if i < (np.min([self.ndim, self.max_pow_iter])-1):
