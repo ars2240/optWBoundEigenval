@@ -13,7 +13,6 @@
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 # import scipy.io as sio
 from usps_data import get_train_valid_loader, get_test_loader, CNN
 

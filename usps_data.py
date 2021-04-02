@@ -4,6 +4,8 @@ Based on https://gist.github.com/kevinzakka/d33bf8d6c7f06a9d8c76d97a7879f5cb
 """
 
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 import numpy as np
 
 from torchvision import datasets
