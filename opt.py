@@ -222,7 +222,7 @@ class OptWBoundEignVal(object):
         self.f = 0  # loss function value
         self.gradf = torch.zeros(self.ndim).to(self.device)  # gradient of f
         self.rho = 0  # spectral radius (maximal absolute value eignevalue)
-        self.v = torch.from_numpy(1.0/np.sqrt(self.ndim)*np.ones(self.ndim)).to(self.device)  # eigenvector
+        self.v = self.random_v()  # eigenvector
         self.gradrho = torch.zeros(self.ndim).to(self.device)  # gradient of rho
         self.g = 0  # regularizer function
         self.gradg = torch.zeros(self.ndim).to(self.device)  # gradient of g
@@ -270,12 +270,51 @@ class OptWBoundEignVal(object):
         self.test_func = test_func  # test function
         self.pow_iter_alpha = pow_iter_alpha  # power iteration step size
         self.lobpcg = lobpcg  # whether or not to use LOBPCG method
+        self.kfac_opt = None  # KFAC optimizer for LOBPCG
 
     def mem_check(self):
         # checks & prints max memory used
         if self.mem_track and self.use_gpu:
             self.mem_max = np.max([self.mem_max, torch.cuda.memory_allocated()])
             print('Running Max GPU Memory used (in bytes): %d' % self.mem_max)
+
+    def random_v(self):
+        return torch.from_numpy(1.0/np.sqrt(self.ndim)*np.ones(self.ndim)).to(self.device)
+
+    def init_lobpcg(self):
+        old_stdout = sys.stdout  # save old output
+        log_file = open(os.devnull, 'w')  # open log file
+        sys.stdout = log_file  # write to log file
+
+        self.kfac_opt = KFACOptimizer(self.model)
+
+        log_file.close()  # close log file
+        sys.stdout = old_stdout  # reset output
+
+        data = iter(self.dataloader).next()
+        # for testing purposes
+        self.kfac_opt.zero_grad()  # zero gradient
+        if type(data) == list:
+            inputs, _ = data
+            inputs = inputs.to(self.device)
+        elif type(data) == dict:
+            inputs = Variable(data['image'].to(self.device))
+        else:
+            raise Exception('Data type not supported')
+        output = self.model(inputs)
+
+        # compute true fisher
+        self.kfac_opt.acc_stats = True
+        with torch.no_grad():
+            if self.loss.__class__.__name__ == 'W_BCEWithLogitsLoss':
+                sampled_y = torch.bernoulli(output.cpu().data).squeeze().to(self.device)
+            else:
+                sampled_y = torch.multinomial(F.softmax(output.cpu().data, dim=1), 1).squeeze() \
+                    .to(self.device)
+        loss_sample = self.loss(output, sampled_y)
+        loss_sample.backward(retain_graph=True)
+        self.kfac_opt.acc_stats = False
+        self.kfac_opt.zero_grad()
 
     def comp_rho(self, data, p=False):
         # computes rho, v
@@ -286,9 +325,8 @@ class OptWBoundEignVal(object):
         self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
 
         if self.lobpcg:
-            kfac_opt = KFACOptimizer(self.model)
-            for m in kfac_opt.modules:
-                kfac_opt._update_inv(m)
+            for m in self.kfac_opt.modules:
+                self.kfac_opt._update_inv(m)
 
         v = self.v  # initial guess for eigenvector (prior eigenvector)
 
@@ -323,30 +361,36 @@ class OptWBoundEignVal(object):
 
             # stopping criteria
             inf = float('inf')
-            stop = [n, rn / n_old if n_old !=0 else inf, np.abs(lam - lam_old) / lam_old if lam_old !=0 else inf]
+            stop = [n, rn / n_old if n_old != 0 else inf, np.abs(lam - lam_old) / lam_old if lam_old != 0 else inf]
             if any(i < self.pow_iter_eps for i in stop):
                 break
 
             alpha = self.pow_iter_alpha(i) if callable(self.pow_iter_alpha) else self.pow_iter_alpha
-            
+
+            Tr = r
             if self.lobpcg:
-                Tr, i = r, 0
-                for param in self.model.parameters():
-                    param.grad = p[i:(i + n)].view(s).float()  # adjust gradient
-                for m in kfac_opt.modules:
-                    s = m.data.size()  # number of input & output nodes
-                    n = torch.prod(torch.tensor(s))  # total number of parameters
-                    classname = m.__class__.__name__
-                    if classname == 'Conv2d':
-                        p_grad_mat = r.view(r.size(0),-1)  # n_filters * (in_c * kw * kh)
-                    else:
-                        p_grad_mat = r
-                    if m.bias is not None:
-                        p_grad_mat = torch.cat([p_grad_mat, r.view(-1, 1)], 1)
-                    Tr[i:(i + n)] = kfac_opt._get_natural_grad(m, p_grad_mat, 0)
-                    i += n  # increment
-            else:
-                Tr = r
+                j = 0
+                for m in self.model.modules():
+                    s = sum(1 for _ in m.parameters())
+                    if (s == 2 and m.bias is not None) or (s == 1 and m.bias is None):
+                        ps = [p.data.size() for p in m.parameters()]
+                        npar = [torch.prod(torch.tensor(s)) for s in ps]  # total number of parameters
+                        sn = sum(npar)
+                        if m in self.kfac_opt.modules:
+                            r1 = r[j:(j + npar[0])].view(ps[0]).float()
+                            classname = m.__class__.__name__
+                            if classname == 'Conv2d':
+                                p_grad_mat = r1.view(r1.size(0), -1)  # n_filters * (in_c * kw * kh)
+                            else:
+                                p_grad_mat = r1
+                            if m.bias is not None:
+                                r2 = r[(j + npar[0]):(j + sn)].view(ps[1]).float()
+                                p_grad_mat = torch.cat([p_grad_mat, r2.view(-1, 1)], 1)
+                            o = self.kfac_opt._get_natural_grad(m, p_grad_mat, 0)
+                            trt = [t.flatten().tolist() for t in o]
+                            t = trt[0] + trt[1] if m.bias is not None else trt[0]
+                            Tr[j:(j + sn)] = torch.tensor(t)
+                        j += sn  # increment
 
             vnew = v + alpha*Tr
 
@@ -367,11 +411,13 @@ class OptWBoundEignVal(object):
         self.norm = n  # update norm
 
         if all(i > self.pow_iter_eps for i in stop):
-            print('Warning: power iteration has not fully converged')
+            pr = 'Warning: power iteration has not fully converged.'
             if self.ignore_bad_vals:
-                print('Ignoring rho.')
+                pr += ' Ignoring rho.'
                 self.rho = -1  # if value is discarded due to poor convergence, set to -1
                 # as negative values of rho work in the other algorithms and are nonsensical
+                self.v = self.random_v()  # reset vector
+            print(pr)
 
         if lam == 0:
             print('Warning: rho = 0')
@@ -635,6 +681,9 @@ class OptWBoundEignVal(object):
             self.dataloader = self.to_loader(self.x, self.y)
         else:
             raise Exception('No input data')
+
+        if self.lobpcg:
+            self.init_lobpcg()
 
         # make sure logs & models folders exist
         check_folder('./logs')

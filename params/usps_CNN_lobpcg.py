@@ -43,8 +43,9 @@ def options():
     opt['optimizer'] = torch.optim.Adam(opt['model'].parameters())
     # opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(options['optimizer'], lr_lambda=alpha)
     opt['header'] = 'USPS_LOBPCG'
-    opt['train'] = False
+    opt['train'] = True
     opt['lobpcg'] = True
+    opt['verbose'] = True
 
     opt['aug_test'] = True
 
