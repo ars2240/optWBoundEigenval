@@ -22,8 +22,8 @@ trans = transforms.Compose([
             normalize])
 
 aug_trans = transforms.Compose([
-            transforms.RandomCrop(16, padding=1),
-            transforms.RandomRotation(15),
+            transforms.RandomCrop(16, padding=2),
+            transforms.RandomRotation(30),
             transforms.ToTensor(),
             normalize])
 

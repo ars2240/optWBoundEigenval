@@ -102,6 +102,7 @@ def options():
     opt['header'] = 'USPS'
     opt['train'] = False
 
-    opt['aug_test'] = True
+    opt['aug_test'] = False
+    opt['rho_test'] = True
 
     return opt

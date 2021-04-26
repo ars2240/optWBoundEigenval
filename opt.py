@@ -25,6 +25,9 @@ from torch.autograd import Variable
 import torch.utils.data as utils_data
 import torch.nn.functional as F
 from kfac import KFACOptimizer
+import warnings
+
+warnings.simplefilter(action='ignore', category=UserWarning)
 
 
 class HVPOperator(object):
@@ -281,7 +284,9 @@ class OptWBoundEignVal(object):
     def random_v(self):
         return torch.from_numpy(1.0/np.sqrt(self.ndim)*np.ones(self.ndim)).to(self.device)
 
-    def init_lobpcg(self):
+    def init_kfac(self, data=None):
+        # initializes KFAC on batch
+
         old_stdout = sys.stdout  # save old output
         log_file = open(os.devnull, 'w')  # open log file
         sys.stdout = log_file  # write to log file
@@ -291,30 +296,55 @@ class OptWBoundEignVal(object):
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
 
-        data = iter(self.dataloader).next()
+        if data is None:
+            data = iter(self.dataloader).next()
         # for testing purposes
         self.kfac_opt.zero_grad()  # zero gradient
         if type(data) == list:
-            inputs, _ = data
+            inputs, target = data
             inputs = inputs.to(self.device)
         elif type(data) == dict:
-            inputs = Variable(data['image'].to(self.device))
+            inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
         else:
             raise Exception('Data type not supported')
         output = self.model(inputs)
 
         # compute true fisher
         self.kfac_opt.acc_stats = True
-        with torch.no_grad():
-            if self.loss.__class__.__name__ == 'W_BCEWithLogitsLoss':
-                sampled_y = torch.bernoulli(output.cpu().data).squeeze().to(self.device)
-            else:
-                sampled_y = torch.multinomial(F.softmax(output.cpu().data, dim=1), 1).squeeze() \
-                    .to(self.device)
-        loss_sample = self.loss(output, sampled_y)
+        loss_sample = self.loss(output, target)
         loss_sample.backward(retain_graph=True)
         self.kfac_opt.acc_stats = False
         self.kfac_opt.zero_grad()
+
+        for m in self.kfac_opt.modules:
+            self.kfac_opt._update_inv(m)
+
+    def kfac(self, r):
+        # computes K-FAC on batch, given residual vector
+        Tr = r
+        j = 0
+        for m in self.model.modules():
+            s = sum(1 for _ in m.parameters())
+            if (s == 2 and m.bias is not None) or (s == 1 and m.bias is None):
+                ps = [p.data.size() for p in m.parameters()]
+                npar = [torch.prod(torch.tensor(s)) for s in ps]  # total number of parameters
+                sn = sum(npar)
+                if m in self.kfac_opt.modules:
+                    r1 = r[j:(j + npar[0])].view(ps[0]).float()
+                    classname = m.__class__.__name__
+                    if classname == 'Conv2d':
+                        p_grad_mat = r1.view(r1.size(0), -1)  # n_filters * (in_c * kw * kh)
+                    else:
+                        p_grad_mat = r1
+                    if m.bias is not None:
+                        r2 = r[(j + npar[0]):(j + sn)].view(ps[1]).float()
+                        p_grad_mat = torch.cat([p_grad_mat, r2.view(-1, 1)], 1)
+                    o = self.kfac_opt._get_natural_grad(m, p_grad_mat, 0)
+                    trt = [t.flatten().tolist() for t in o]
+                    t = trt[0] + trt[1] if m.bias is not None else trt[0]
+                    Tr[j:(j + sn)] = torch.tensor(t)
+                j += sn  # increment
+        return Tr
 
     def comp_rho(self, data, p=False):
         # computes rho, v
@@ -325,8 +355,7 @@ class OptWBoundEignVal(object):
         self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
 
         if self.lobpcg:
-            for m in self.kfac_opt.modules:
-                self.kfac_opt._update_inv(m)
+            self.init_kfac(data)
 
         v = self.v  # initial guess for eigenvector (prior eigenvector)
 
@@ -344,6 +373,7 @@ class OptWBoundEignVal(object):
         for i in range(0, np.min([self.ndim, self.max_pow_iter])):
             start = time.time()  # start timer
             vnew = self.hvp_op.Hv(v, storedGrad=True)  # compute H*v
+            # vnew = self.kfac(v)
             hvTime += time.time() - start
 
             # if converged, break
@@ -369,28 +399,7 @@ class OptWBoundEignVal(object):
 
             Tr = r
             if self.lobpcg:
-                j = 0
-                for m in self.model.modules():
-                    s = sum(1 for _ in m.parameters())
-                    if (s == 2 and m.bias is not None) or (s == 1 and m.bias is None):
-                        ps = [p.data.size() for p in m.parameters()]
-                        npar = [torch.prod(torch.tensor(s)) for s in ps]  # total number of parameters
-                        sn = sum(npar)
-                        if m in self.kfac_opt.modules:
-                            r1 = r[j:(j + npar[0])].view(ps[0]).float()
-                            classname = m.__class__.__name__
-                            if classname == 'Conv2d':
-                                p_grad_mat = r1.view(r1.size(0), -1)  # n_filters * (in_c * kw * kh)
-                            else:
-                                p_grad_mat = r1
-                            if m.bias is not None:
-                                r2 = r[(j + npar[0]):(j + sn)].view(ps[1]).float()
-                                p_grad_mat = torch.cat([p_grad_mat, r2.view(-1, 1)], 1)
-                            o = self.kfac_opt._get_natural_grad(m, p_grad_mat, 0)
-                            trt = [t.flatten().tolist() for t in o]
-                            t = trt[0] + trt[1] if m.bias is not None else trt[0]
-                            Tr[j:(j + sn)] = torch.tensor(t)
-                        j += sn  # increment
+                Tr = self.kfac(r)
 
             vnew = v + alpha*Tr
 
@@ -429,6 +438,8 @@ class OptWBoundEignVal(object):
             print('Rho:', self.rho)
             log_file.close()  # close log file
             sys.stdout = old_stdout  # reset output
+
+        return i, rn
 
     def comp_gradrho(self):
         # computes grad rho
@@ -682,9 +693,6 @@ class OptWBoundEignVal(object):
         else:
             raise Exception('No input data')
 
-        if self.lobpcg:
-            self.init_lobpcg()
-
         # make sure logs & models folders exist
         check_folder('./logs')
         check_folder('./models')
@@ -771,6 +779,38 @@ class OptWBoundEignVal(object):
         else:
             loader = utils_data.DataLoader(data, batch_size=self.batch_size)
         return loader
+
+    def rho_test(self, x=None, y=None, loader=None, fname=None):
+        # computes rho on each batch, collecting metrics
+
+        if fname is not None:
+            self.model_load(fname)
+
+        if loader is not None:
+            dataloader = loader
+        elif x is not None and y is not None:
+            # create dataloader
+            train_data = utils_data.TensorDataset(x, y)
+            if self.use_gpu:
+                dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size,
+                                                   num_workers=self.num_workers, pin_memory=True)
+            else:
+                dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size)
+        else:
+            raise Exception('No test data')
+
+        stats = []
+        for j, data in enumerate(dataloader):
+            start = time.time()  # start timer
+            i, rn = self.comp_rho(data)  # compute g
+            t = time.time() - start
+
+            stats.append([j, self.rho, self.norm, i, rn, t])
+
+            self.optimizer.zero_grad()  # zero gradient
+
+        print(np.array(stats).mean(axis=0))
+        np.savetxt("./logs/" + self.header2 + "_rho_test.csv", stats, delimiter=",")
 
     def test_model(self, x=None, y=None, loader=None, classes=None, model_classes=None):
         # Computes the loss and accuracy of model on given dataset
@@ -1292,3 +1332,6 @@ def main(pfile):
     # Comparison Test (requires data loader)
     if 'comp_test' in options.keys() and options['comp_test'] and type(options['test_loader']) is list:
         opt.comp_test(options['test_loader'], fname=options['fname'])
+
+    if 'rho_test' in options.keys() and options['rho_test']:
+        opt.rho_test(options['inputs'], options['target'], options['train_loader'], fname=options['fname'])
