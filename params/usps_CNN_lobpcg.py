@@ -35,7 +35,7 @@ def options():
 
     # learning rate
     def alpha(k):
-        return .9 / (2 ** (np.floor(k/100)))
+        return np.exp(-8*k)
 
     # Training Setup
     opt['model'] = CNN()
@@ -50,5 +50,6 @@ def options():
 
     opt['aug_test'] = False
     opt['rho_test'] = True
+    opt['kfac_rand'] = False
 
     return opt

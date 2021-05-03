@@ -214,7 +214,7 @@ class OptWBoundEignVal(object):
     def __init__(self, model, loss, optimizer, scheduler=None, mu=0, K=0, eps=-1, pow_iter_eps=1e-3,
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, pow_iter=True,
                  max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header='', num_workers=0,
-                 test_func='maxacc', lobpcg=False, pow_iter_alpha=1):
+                 test_func='maxacc', lobpcg=False, pow_iter_alpha=1, kfac_rand=True):
 
         # set default device
         if use_gpu and torch.cuda.is_available():
@@ -274,6 +274,7 @@ class OptWBoundEignVal(object):
         self.pow_iter_alpha = pow_iter_alpha  # power iteration step size
         self.lobpcg = lobpcg  # whether or not to use LOBPCG method
         self.kfac_opt = None  # KFAC optimizer for LOBPCG
+        self.kfac_rand = kfac_rand  # if randomizer used for kfac
 
     def mem_check(self):
         # checks & prints max memory used
@@ -311,6 +312,12 @@ class OptWBoundEignVal(object):
 
         # compute true fisher
         self.kfac_opt.acc_stats = True
+        if self.kfac_rand:
+            with torch.no_grad():
+                if self.loss.__class__.__name__ == 'W_BCEWithLogitsLoss':
+                    target = torch.bernoulli(output.cpu().data).squeeze().to(self.device)
+                else:
+                    target = torch.multinomial(F.softmax(output.cpu().data, dim=1), 1).squeeze().to(self.device)
         loss_sample = self.loss(output, target)
         loss_sample.backward(retain_graph=True)
         self.kfac_opt.acc_stats = False
@@ -567,12 +574,15 @@ class OptWBoundEignVal(object):
                         self.optimizer.steps % self.optimizer.TCov == 0:
                     # compute true fisher
                     self.optimizer.acc_stats = True
-                    with torch.no_grad():
-                        if self.loss.__class__.__name__ == 'W_BCEWithLogitsLoss':
-                            sampled_y = torch.bernoulli(output.cpu().data).squeeze().to(self.device)
-                        else:
-                            sampled_y = torch.multinomial(F.softmax(output.cpu().data, dim=1), 1).squeeze()\
-                                .to(self.device)
+                    if self.kfac_rand:
+                        with torch.no_grad():
+                            if self.loss.__class__.__name__ == 'W_BCEWithLogitsLoss':
+                                sampled_y = torch.bernoulli(output.cpu().data).squeeze().to(self.device)
+                            else:
+                                sampled_y = torch.multinomial(F.softmax(output.cpu().data, dim=1), 1).squeeze() \
+                                    .to(self.device)
+                    else:
+                        sampled_y = target
                     loss_sample = self.loss(output, sampled_y)
                     loss_sample.backward(retain_graph=True)
                     self.optimizer.acc_stats = False
@@ -809,7 +819,7 @@ class OptWBoundEignVal(object):
 
             self.optimizer.zero_grad()  # zero gradient
 
-        print(np.array(stats).mean(axis=0))
+        print(*np.array(stats).mean(axis=0)[1:], sep='\t')
         np.savetxt("./logs/" + self.header2 + "_rho_test.csv", stats, delimiter=",")
 
     def test_model(self, x=None, y=None, loader=None, classes=None, model_classes=None):
