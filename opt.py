@@ -214,7 +214,7 @@ class OptWBoundEignVal(object):
     def __init__(self, model, loss, optimizer, scheduler=None, mu=0, K=0, eps=-1, pow_iter_eps=1e-3,
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, pow_iter=True,
                  max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header='', num_workers=0,
-                 test_func='maxacc', lobpcg=False, pow_iter_alpha=1, kfac_rand=True):
+                 test_func='maxacc', lobpcg=False, pow_iter_alpha=1, kfac_batch=1, kfac_rand=True):
 
         # set default device
         if use_gpu and torch.cuda.is_available():
@@ -274,6 +274,8 @@ class OptWBoundEignVal(object):
         self.pow_iter_alpha = pow_iter_alpha  # power iteration step size
         self.lobpcg = lobpcg  # whether or not to use LOBPCG method
         self.kfac_opt = None  # KFAC optimizer for LOBPCG
+        self.kfac_batch = kfac_batch  # how frequently the KFAC matrix is updated
+        self.kfac_iter = kfac_batch  # counter on KFAC batches
         self.kfac_rand = kfac_rand  # if randomizer used for kfac
 
     def mem_check(self):
@@ -361,8 +363,11 @@ class OptWBoundEignVal(object):
         # initialize hessian vector operation class
         self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
 
-        if self.lobpcg:
+        if self.lobpcg and self.kfac_iter >= self.kfac_batch:
             self.init_kfac(data)
+            self.kfac_iter = 1
+        elif self.lobpcg:
+            self.kfac_iter += 1
 
         v = self.v  # initial guess for eigenvector (prior eigenvector)
 

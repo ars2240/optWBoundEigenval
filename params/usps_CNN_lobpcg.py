@@ -35,21 +35,22 @@ def options():
 
     # learning rate
     def alpha(k):
-        return np.exp(-8*k)
+        return np.exp(-4*k)
 
     # Training Setup
     opt['model'] = CNN()
     opt['loss'] = nn.CrossEntropyLoss()
     opt['optimizer'] = torch.optim.Adam(opt['model'].parameters())
     # opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(options['optimizer'], lr_lambda=alpha)
-    opt['header'] = 'USPS'
-    opt['train'] = False
+    opt['header'] = 'USPS_LOBPCG4'
+    opt['train'] = True
     opt['lobpcg'] = True
     opt['verbose'] = True
     opt['pow_iter_alpha'] = alpha
 
-    opt['aug_test'] = False
-    opt['rho_test'] = True
+    opt['aug_test'] = True
+    opt['rho_test'] = False
     opt['kfac_rand'] = False
+    opt['kfac_batch'] = 4
 
     return opt
