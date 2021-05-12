@@ -21,11 +21,15 @@ trans = transforms.Compose([
             transforms.ToTensor(),
             normalize])
 
-aug_trans = transforms.Compose([
+aug_trans = [transforms.Compose([
+            transforms.RandomCrop(16, padding=1),
+            transforms.RandomRotation(15),
+            transforms.ToTensor(),
+            normalize]),transforms.Compose([
             transforms.RandomCrop(16, padding=2),
             transforms.RandomRotation(30),
             transforms.ToTensor(),
-            normalize])
+            normalize])]
 
 
 def get_train_valid_loader(data_dir='./data', batch_size=1, augment=False, random_seed=1226, valid_size=1/7,
@@ -63,6 +67,8 @@ def get_train_valid_loader(data_dir='./data', batch_size=1, augment=False, rando
         train_transform = aug_trans
     else:
         train_transform = trans
+
+    torch.manual_seed(random_seed)
 
     # load the dataset
     train_dataset = datasets.USPS(
@@ -117,7 +123,8 @@ def get_train_valid_loader(data_dir='./data', batch_size=1, augment=False, rando
         return train_loader, valid_loader
 
 
-def get_test_loader(data_dir='./data', batch_size=1, augment=False, shuffle=False, num_workers=0, pin_memory=True):
+def get_test_loader(data_dir='./data', batch_size=1, augment=False, random_seed=1226, shuffle=False, num_workers=0,
+                    pin_memory=True):
     """
     Utility function for loading and returning a multi-process
     test iterator over the USPS dataset.
@@ -141,13 +148,26 @@ def get_test_loader(data_dir='./data', batch_size=1, augment=False, shuffle=Fals
     else:
         transform = trans
 
-    dataset = datasets.USPS(
-        root=data_dir, train=False,
-        download=True, transform=transform)
+    torch.manual_seed(random_seed)
 
-    data_loader = torch.utils.data.DataLoader(
-        dataset, batch_size=batch_size, shuffle=shuffle,
-        num_workers=num_workers, pin_memory=pin_memory)
+    if type(transform) is list:
+        data_loader = []
+        for t in transform:
+            dataset = datasets.USPS(
+                root=data_dir, train=False,
+                download=True, transform=t)
+
+            data_loader.append(torch.utils.data.DataLoader(
+                dataset, batch_size=batch_size, shuffle=shuffle,
+                num_workers=num_workers, pin_memory=pin_memory))
+    else:
+        dataset = datasets.USPS(
+            root=data_dir, train=False,
+            download=True, transform=transform)
+
+        data_loader = torch.utils.data.DataLoader(
+            dataset, batch_size=batch_size, shuffle=shuffle,
+            num_workers=num_workers, pin_memory=pin_memory)
 
     return data_loader
 

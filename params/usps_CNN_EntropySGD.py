@@ -101,9 +101,11 @@ def options():
     opt['optimizer'] = EntropySGD(opt['model'].parameters())
     # opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(options['optimizer'], lr_lambda=alpha)
     opt['header'] = 'USPS'
-    opt['train'] = True
+    opt['train'] = False
     opt['pow_iter'] = False
 
     opt['aug_test'] = True
+    opt['rho_test'] = False
+    opt['ignore_bad_vals'] = False
 
     return opt

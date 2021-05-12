@@ -49,6 +49,7 @@ class HVPOperator(object):
         self.stored_grad = None  # stored gradient (on CPU)
         self.mem_track = mem_track  # whether or not maximum memory usage is tracked
         self.mem_max = 0  # running maximum memory usage
+        self.size = 0  # number of samples
 
         # autograd timers
         self.aTime0 = self.aTime1 = self.aTime2 = 0
@@ -150,6 +151,7 @@ class HVPOperator(object):
         else:
             raise Exception('Data type not supported')
 
+        self.size = len(target)
         inputs = inputs.to(self.device)
         target = target.to(self.device)
 
@@ -451,7 +453,7 @@ class OptWBoundEignVal(object):
             log_file.close()  # close log file
             sys.stdout = old_stdout  # reset output
 
-        return i, rn
+        return i, rn, self.hvp_op.size
 
     def comp_gradrho(self):
         # computes grad rho
@@ -814,17 +816,20 @@ class OptWBoundEignVal(object):
         else:
             raise Exception('No test data')
 
-        stats = []
+        stats, size = [], []
         for j, data in enumerate(dataloader):
             start = time.time()  # start timer
-            i, rn = self.comp_rho(data)  # compute g
+
+            i, rn, s = self.comp_rho(data)  # compute g
             t = time.time() - start
+
+            size.append(s)
 
             stats.append([j, self.rho, self.norm, i, rn, t])
 
             self.optimizer.zero_grad()  # zero gradient
 
-        print(*np.array(stats).mean(axis=0)[1:], sep='\t')
+        print(*np.average(np.array(stats), axis=0, weights=size)[1:], sep='\t')
         np.savetxt("./logs/" + self.header2 + "_rho_test.csv", stats, delimiter=",")
 
     def test_model(self, x=None, y=None, loader=None, classes=None, model_classes=None):
@@ -1340,9 +1345,15 @@ def main(pfile):
 
     # Augmented Testing
     if 'aug_test' in options.keys() and options['aug_test']:
-        _, acc, f1 = opt.test_model_best(loader=options['test_loader_aug'], fname=options['fname'])
-        print('Aug_Test_Acc\tAug_Test_F1')
-        print(str(acc) + '\t' + str(f1))
+        if type(options['test_loader_aug']) is list:
+            for i in range(len(options['test_loader_aug'])):
+                _, acc, f1 = opt.test_model_best(loader=options['test_loader_aug'][i], fname=options['fname'])
+                print('Aug_Test_{0}\tAug_Test_F1'.format(i))
+                print(str(acc) + '\t' + str(f1))
+        else:
+            _, acc, f1 = opt.test_model_best(loader=options['test_loader_aug'], fname=options['fname'])
+            print('Aug_Test_Acc\tAug_Test_F1')
+            print(str(acc) + '\t' + str(f1))
 
     # Comparison Test (requires data loader)
     if 'comp_test' in options.keys() and options['comp_test'] and type(options['test_loader']) is list:
