@@ -40,15 +40,15 @@ def options():
     opt['model'] = Net()
     opt['loss'] = nn.CrossEntropyLoss()
     opt['optimizer'] = torch.optim.SGD(opt['model'].parameters(), lr=0.5)
-    opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=beta)
+    opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(opt['optimizer'], lr_lambda=beta)
     opt['header'] = 'Forest_LOBPCG'
     opt['train'] = True
-    opt['pow_iter'] = False
     opt['lobpcg'] = True
     opt['verbose'] = True
     opt['pow_iter_alpha'] = alpha
 
     opt['kfac_rand'] = False
     opt['kfac_batch'] = 4
+    opt['rho_test'] = True
 
     return opt
