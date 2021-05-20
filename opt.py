@@ -336,6 +336,7 @@ class OptWBoundEignVal(object):
         j = 0
         for m in self.model.modules():
             s = sum(1 for _ in m.parameters())
+            print(m.keys())
             if (s == 2 and m.bias is not None) or (s == 1 and m.bias is None):
                 ps = [p.data.size() for p in m.parameters()]
                 npar = [torch.prod(torch.tensor(s)) for s in ps]  # total number of parameters
