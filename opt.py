@@ -336,27 +336,26 @@ class OptWBoundEignVal(object):
         j = 0
         for m in self.model.modules():
             s = sum(1 for _ in m.parameters())
-            print(type(m).__name__)
-            print(s)
-            if (s == 2 and m.bias is not None) or (s == 1 and m.bias is None):
-                ps = [p.data.size() for p in m.parameters()]
-                npar = [torch.prod(torch.tensor(s)) for s in ps]  # total number of parameters
-                sn = sum(npar)
-                if m in self.kfac_opt.modules:
-                    r1 = r[j:(j + npar[0])].view(ps[0]).float()
-                    classname = m.__class__.__name__
-                    if classname == 'Conv2d':
-                        p_grad_mat = r1.view(r1.size(0), -1)  # n_filters * (in_c * kw * kh)
-                    else:
-                        p_grad_mat = r1
-                    if m.bias is not None:
-                        r2 = r[(j + npar[0]):(j + sn)].view(ps[1]).float()
-                        p_grad_mat = torch.cat([p_grad_mat, r2.view(-1, 1)], 1)
-                    o = self.kfac_opt._get_natural_grad(m, p_grad_mat, 0)
-                    trt = [t.flatten().tolist() for t in o]
-                    t = trt[0] + trt[1] if m.bias is not None else trt[0]
-                    Tr[j:(j + sn)] = torch.tensor(t)
-                j += sn  # increment
+            if 1 <= s <= 2:
+                if (s == 2 and m.bias is not None) or (s == 1 and m.bias is None):
+                    ps = [p.data.size() for p in m.parameters()]
+                    npar = [torch.prod(torch.tensor(s)) for s in ps]  # total number of parameters
+                    sn = sum(npar)
+                    if m in self.kfac_opt.modules:
+                        r1 = r[j:(j + npar[0])].view(ps[0]).float()
+                        classname = m.__class__.__name__
+                        if classname == 'Conv2d':
+                            p_grad_mat = r1.view(r1.size(0), -1)  # n_filters * (in_c * kw * kh)
+                        else:
+                            p_grad_mat = r1
+                        if m.bias is not None:
+                            r2 = r[(j + npar[0]):(j + sn)].view(ps[1]).float()
+                            p_grad_mat = torch.cat([p_grad_mat, r2.view(-1, 1)], 1)
+                        o = self.kfac_opt._get_natural_grad(m, p_grad_mat, 0)
+                        trt = [t.flatten().tolist() for t in o]
+                        t = trt[0] + trt[1] if m.bias is not None else trt[0]
+                        Tr[j:(j + sn)] = torch.tensor(t)
+                    j += sn  # increment
         return Tr
 
     def comp_rho(self, data, p=False):
