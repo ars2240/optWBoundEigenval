@@ -335,7 +335,7 @@ class OptWBoundEignVal(object):
         Tr = r
         j = 0
         for m in self.model.modules():
-            print(m.__name__)
+            print(type(m).__name__)
             print(m)
         for m in self.model.modules():
             s = sum(1 for _ in m.parameters())
