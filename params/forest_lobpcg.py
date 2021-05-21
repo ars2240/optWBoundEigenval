@@ -31,7 +31,7 @@ def options():
 
     # learning rate
     def alpha(k):
-        return np.exp(-8 * k)
+        return np.exp(-4 * k)
 
     def beta(k):
         return 1/(1+k)
@@ -41,14 +41,14 @@ def options():
     opt['loss'] = nn.CrossEntropyLoss()
     opt['optimizer'] = torch.optim.SGD(opt['model'].parameters(), lr=0.5)
     opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(opt['optimizer'], lr_lambda=beta)
-    opt['header'] = 'Forest_LOBPCG8'
+    opt['header'] = 'Forest_LOBPCG4'
     opt['train'] = True
     opt['lobpcg'] = True
     opt['verbose'] = True
     opt['pow_iter_alpha'] = alpha
 
     opt['kfac_rand'] = False
-    opt['kfac_batch'] = 8
+    opt['kfac_batch'] = 4
     opt['rho_test'] = True
 
     return opt
