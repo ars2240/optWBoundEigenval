@@ -378,6 +378,7 @@ class OptWBoundEignVal(object):
 
         # initialize lambda and the norm
         lam = n = r_old = n_old = lam_old = hvTime = pTime = 0
+        reset = False
 
         if self.verbose:
             old_stdout = sys.stdout  # save old output
@@ -406,8 +407,9 @@ class OptWBoundEignVal(object):
             if self.verbose:
                 print('%d\t %f\t %f\t %f' % (i, lam, n, rn))
 
-            if v_old is not None and n_old != 0 and n > n_old:
+            if v_old is not None and n_old != 0 and n > n_old and callable(self.pow_iter_alpha):
                 v_new, v = v, v_old
+                reset = True
             else:
                 v_old = v
 
@@ -426,9 +428,11 @@ class OptWBoundEignVal(object):
             vnew = v + alpha*Tr
 
             v = 1.0/torch.norm(vnew)*vnew  # update vector and normalize
-            if i < (np.min([self.ndim, self.max_pow_iter])-1):
+            if i < (np.min([self.ndim, self.max_pow_iter])-1) and not reset:
                 lam_old = lam
                 r_old, n_old = r, n
+            else:
+                reset = False
         pTime += time.time() - pstart
 
         if self.verbose:

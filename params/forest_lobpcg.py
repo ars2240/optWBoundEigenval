@@ -31,7 +31,7 @@ def options():
 
     # learning rate
     def alpha(k):
-        return np.exp(-4 * k)
+        return np.exp(-4 * k - 2)
 
     def beta(k):
         return 1/(1+k)
