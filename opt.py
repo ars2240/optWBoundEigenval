@@ -374,6 +374,7 @@ class OptWBoundEignVal(object):
             self.kfac_iter += 1
 
         v = self.v  # initial guess for eigenvector (prior eigenvector)
+        v_old = None
 
         # initialize lambda and the norm
         lam = n = r_old = n_old = lam_old = hvTime = pTime = 0
@@ -404,6 +405,11 @@ class OptWBoundEignVal(object):
             rn = np.min([torch.norm(r-r_old), torch.norm(r+r_old)])
             if self.verbose:
                 print('%d\t %f\t %f\t %f' % (i, lam, n, rn))
+
+            if v_old is not None and n_old != 0 and n > n_old:
+                v_new, v = v, v_old
+            else:
+                v_old = v
 
             # stopping criteria
             inf = float('inf')
