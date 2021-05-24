@@ -44,13 +44,13 @@ def options():
     # opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(options['optimizer'], lr_lambda=alpha)
     opt['header'] = 'USPS_LOBPCG4'
     opt['use_gpu'] = True
-    opt['train'] = False
+    opt['train'] = True
     opt['lobpcg'] = True
     opt['verbose'] = True
     opt['pow_iter_alpha'] = alpha
 
     opt['aug_test'] = True
-    opt['rho_test'] = False
+    opt['rho_test'] = True
     opt['kfac_rand'] = False
     opt['kfac_batch'] = 4
 
