@@ -42,6 +42,7 @@ def options():
     opt['optimizer'] = torch.optim.SGD(opt['model'].parameters(), lr=0.5)
     opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(opt['optimizer'], lr_lambda=beta)
     opt['header'] = 'Forest_LOBPCG4'
+    opt['use_gpu'] = True
     opt['train'] = True
     opt['lobpcg'] = True
     opt['verbose'] = True
