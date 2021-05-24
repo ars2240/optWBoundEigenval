@@ -842,7 +842,7 @@ class OptWBoundEignVal(object):
 
             self.optimizer.zero_grad()  # zero gradient
 
-        print(*np.average(np.array(stats), axis=0, weights=size)[1:], sep='\t')
+        print(*np.average(np.array(stats), axis=0, weights=size, dtype='float')[1:], sep='\t')
         np.savetxt("./logs/" + self.header2 + "_rho_test.csv", stats, delimiter=",")
 
     def test_model(self, x=None, y=None, loader=None, classes=None, model_classes=None):

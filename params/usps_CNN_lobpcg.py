@@ -42,7 +42,7 @@ def options():
     opt['loss'] = nn.CrossEntropyLoss()
     opt['optimizer'] = torch.optim.Adam(opt['model'].parameters())
     # opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(options['optimizer'], lr_lambda=alpha)
-    opt['header'] = 'USPS_LOBPCG4'
+    opt['header'] = 'USPS_LOBPCG4_8'
     opt['use_gpu'] = True
     opt['train'] = True
     opt['lobpcg'] = True
@@ -52,6 +52,6 @@ def options():
     opt['aug_test'] = True
     opt['rho_test'] = True
     opt['kfac_rand'] = False
-    opt['kfac_batch'] = 4
+    opt['kfac_batch'] = 8
 
     return opt
