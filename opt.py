@@ -308,6 +308,7 @@ class OptWBoundEignVal(object):
         if type(data) == list:
             inputs, target = data
             inputs = inputs.to(self.device)
+            target = target.to(self.device)
         elif type(data) == dict:
             inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
         else:
