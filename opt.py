@@ -433,14 +433,12 @@ class OptWBoundEignVal(object):
             alpha = self.pow_iter_alpha(i) if callable(self.pow_iter_alpha) else self.pow_iter_alpha
 
             if self.lobpcg:
-                print('LOBPCG KFAC')
-                self.mem_check()
                 r = self.kfac(r)
-                self.mem_check()
 
             # update vector and normalize
             v_new = v + alpha*r
             v = 1.0/torch.norm(v_new)*v_new
+            print(v.requires_grad)
 
         pTime += time.time() - pstart
 
