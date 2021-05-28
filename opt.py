@@ -356,7 +356,7 @@ class OptWBoundEignVal(object):
                     if hasattr(m, 'bias') and m.bias is not None:
                         r2 = r[(j + npar[0]):(j + sn)].view(ps[1]).float()
                         p_grad_mat = torch.cat([p_grad_mat, r2.view(-1, 1)], 1)
-                    o = self.kfac_opt._get_natural_grad(m, p_grad_mat, 0).detach()
+                    o = self.kfac_opt._get_natural_grad(m, p_grad_mat, 0)
                     trt = [t.flatten().tolist() for t in o]
                     t = trt[0] + trt[1] if m.bias is not None else trt[0]
                     Tr[j:(j + sn)] = torch.tensor(t)
