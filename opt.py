@@ -306,6 +306,8 @@ class OptWBoundEignVal(object):
     def init_kfac(self, data=None):
         # initializes KFAC on batch
 
+        print('Init KFAC')
+
         self.mem_check()
 
         old_stdout = sys.stdout  # save old output
@@ -348,6 +350,8 @@ class OptWBoundEignVal(object):
             torch.cuda.empty_cache()
             # check max memory usage
             self.mem_check()
+
+        print('Finish Init')
 
     def kfac(self, r):
         # computes K-FAC on batch, given residual vector
