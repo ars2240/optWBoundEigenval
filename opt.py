@@ -438,7 +438,7 @@ class OptWBoundEignVal(object):
             # update vector and normalize
             v_new = v + alpha*r
             v = 1.0/torch.norm(v_new)*v_new
-            print(v.requires_grad)
+            print(r.requires_grad)
 
         pTime += time.time() - pstart
 
