@@ -391,18 +391,18 @@ class OptWBoundEignVal(object):
         pstart = time.time()  # start timer
         for i in range(0, np.min([self.ndim, self.max_pow_iter])):
             start = time.time()  # start timer
-            vnew = self.hvp_op.Hv(v, storedGrad=True)  # compute H*v
-            # vnew = self.kfac(v)
+            v_new = self.hvp_op.Hv(v, storedGrad=True)  # compute H*v
+            # v_new = self.kfac(v)
             hvTime += time.time() - start
 
             # if converged, break
-            lam = torch.dot(vnew, v)  # update eigenvalue
+            lam = torch.dot(v_new, v)  # update eigenvalue
             if torch.is_tensor(lam):
                 lam = lam.item()
             if lam < 0:
                 lam = -1*lam
                 v = -1*v
-            r = vnew-lam*v  # residual
+            r = v_new-lam*v  # residual
             n = torch.norm(r)  # norm of H*v-lambda*v
             rn = np.min([torch.norm(r-r_old), torch.norm(r+r_old)])
             if self.verbose:
@@ -432,8 +432,8 @@ class OptWBoundEignVal(object):
                 r = self.kfac(r)
 
             # update vector and normalize
-            vnew = v + alpha*r
-            v = 1.0/torch.norm(vnew)*vnew
+            v_new = v + alpha*r
+            v = 1.0/torch.norm(v_new)*v_new
 
         pTime += time.time() - pstart
 
