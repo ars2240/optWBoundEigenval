@@ -374,6 +374,7 @@ class OptWBoundEignVal(object):
         if self.lobpcg and self.kfac_iter >= self.kfac_batch:
             self.init_kfac(data)
             self.kfac_iter = 1
+            print(self.model)
         elif self.lobpcg:
             self.kfac_iter += 1
 
