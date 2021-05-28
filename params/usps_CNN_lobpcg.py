@@ -45,7 +45,7 @@ def options():
     opt['header'] = 'USPS_LOBPCG4_8'
     opt['use_gpu'] = True
     opt['train'] = True
-    opt['lobpcg'] = False
+    opt['lobpcg'] = True
     opt['verbose'] = True
     opt['pow_iter_alpha'] = alpha
     opt['mem_track'] = True

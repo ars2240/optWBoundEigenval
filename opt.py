@@ -303,6 +303,8 @@ class OptWBoundEignVal(object):
         opt.acc_stats = False
         opt.zero_grad()
 
+        del loss_sample
+
     def init_kfac(self, data=None):
         # initializes KFAC on batch
 
@@ -333,6 +335,8 @@ class OptWBoundEignVal(object):
 
         for m in self.kfac_opt.modules:
             self.kfac_opt._update_inv(m)
+
+        del inputs, target, output, data
 
     def kfac(self, r):
         # computes K-FAC on batch, given residual vector
@@ -374,7 +378,6 @@ class OptWBoundEignVal(object):
         if self.lobpcg and self.kfac_iter >= self.kfac_batch:
             self.init_kfac(data)
             self.kfac_iter = 1
-            print(self.v.size())
         elif self.lobpcg:
             self.kfac_iter += 1
 
