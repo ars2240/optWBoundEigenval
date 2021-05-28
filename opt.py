@@ -311,7 +311,7 @@ class OptWBoundEignVal(object):
         log_file = open(os.devnull, 'w')  # open log file
         sys.stdout = log_file  # write to log file
 
-        model = copy.deepcopy(self.moodel)
+        model = copy.deepcopy(self.model)
         self.kfac_opt = KFACOptimizer(model)
 
         log_file.close()  # close log file
