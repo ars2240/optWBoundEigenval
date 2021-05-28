@@ -289,6 +289,20 @@ class OptWBoundEignVal(object):
     def random_v(self):
         return torch.from_numpy(1.0/np.sqrt(self.ndim)*np.ones(self.ndim)).to(self.device)
 
+    def comp_fisher(self, opt, output, target=None):
+        # compute true fisher
+        opt.acc_stats = True
+        if self.kfac_rand:
+            with torch.no_grad():
+                if self.loss.__class__.__name__ == 'W_BCEWithLogitsLoss':
+                    target = torch.bernoulli(output.cpu().data).squeeze().to(self.device)
+                else:
+                    target = torch.multinomial(F.softmax(output.cpu().data, dim=1), 1).squeeze().to(self.device)
+        loss_sample = self.loss(output, target)
+        loss_sample.backward()
+        opt.acc_stats = False
+        opt.zero_grad()
+
     def init_kfac(self, data=None):
         # initializes KFAC on batch
 
@@ -315,18 +329,7 @@ class OptWBoundEignVal(object):
             raise Exception('Data type not supported')
         output = self.model(inputs)
 
-        # compute true fisher
-        self.kfac_opt.acc_stats = True
-        if self.kfac_rand:
-            with torch.no_grad():
-                if self.loss.__class__.__name__ == 'W_BCEWithLogitsLoss':
-                    target = torch.bernoulli(output.cpu().data).squeeze().to(self.device)
-                else:
-                    target = torch.multinomial(F.softmax(output.cpu().data, dim=1), 1).squeeze().to(self.device)
-        loss_sample = self.loss(output, target)
-        loss_sample.backward(retain_graph=True)
-        self.kfac_opt.acc_stats = False
-        self.kfac_opt.zero_grad()
+        self.comp_fisher(self.kfac_opt, output, target)
 
         for m in self.kfac_opt.modules:
             self.kfac_opt._update_inv(m)
@@ -601,21 +604,7 @@ class OptWBoundEignVal(object):
                 loss = self.loss(output, target)  # loss function
                 if self.optimizer.__class__.__name__ == "KFACOptimizer" and \
                         self.optimizer.steps % self.optimizer.TCov == 0:
-                    # compute true fisher
-                    self.optimizer.acc_stats = True
-                    if self.kfac_rand:
-                        with torch.no_grad():
-                            if self.loss.__class__.__name__ == 'W_BCEWithLogitsLoss':
-                                sampled_y = torch.bernoulli(output.cpu().data).squeeze().to(self.device)
-                            else:
-                                sampled_y = torch.multinomial(F.softmax(output.cpu().data, dim=1), 1).squeeze() \
-                                    .to(self.device)
-                    else:
-                        sampled_y = target
-                    loss_sample = self.loss(output, sampled_y)
-                    loss_sample.backward(retain_graph=True)
-                    self.optimizer.acc_stats = False
-                    self.optimizer.zero_grad()
+                    self.comp_fisher(self.optimizer, output, target)
                 loss.backward()  # back prop
 
             # optimizer step
