@@ -341,7 +341,7 @@ class OptWBoundEignVal(object):
             if classname != 'Sequential' and ((s == 2 and hasattr(m, 'bias') and m.bias is not None) or
                                               (s == 1 and hasattr(m, 'bias') and m.bias is None) or
                                               (s == 1 and not hasattr(m, 'bias'))):
-                ps = [p.data.size() for p in m.parameters()]
+                ps = [p.size() for p in m.parameters()]
                 npar = [torch.prod(torch.tensor(s)) for s in ps]  # total number of parameters
                 sn = sum(npar)
                 if m in self.kfac_opt.modules:
@@ -420,20 +420,21 @@ class OptWBoundEignVal(object):
             if any(i < self.pow_iter_eps for i in stop):
                 break
 
-            alpha = self.pow_iter_alpha(i) if callable(self.pow_iter_alpha) else self.pow_iter_alpha
-
-            Tr = r
-            if self.lobpcg:
-                Tr = self.kfac(r)
-
-            vnew = v + alpha*Tr
-
-            v = 1.0/torch.norm(vnew)*vnew  # update vector and normalize
             if i < (np.min([self.ndim, self.max_pow_iter])-1) and not reset:
                 lam_old = lam
                 r_old, n_old = r, n
             else:
                 reset = False
+
+            alpha = self.pow_iter_alpha(i) if callable(self.pow_iter_alpha) else self.pow_iter_alpha
+
+            if self.lobpcg:
+                r = self.kfac(r)
+
+            # update vector and normalize
+            vnew = v + alpha*r
+            v = 1.0/torch.norm(vnew)*vnew
+
         pTime += time.time() - pstart
 
         if self.verbose:
@@ -445,6 +446,9 @@ class OptWBoundEignVal(object):
         self.v = v  # update eigenvector
         self.rho = np.abs(lam)  # update spectral radius
         self.norm = n  # update norm
+
+        # delete some old tensors
+        del v, v_old, v_new, r, r_old
 
         if all(i > self.pow_iter_eps for i in stop):
             pr = 'Warning: power iteration has not fully converged.'
@@ -465,6 +469,11 @@ class OptWBoundEignVal(object):
             print('Rho:', self.rho)
             log_file.close()  # close log file
             sys.stdout = old_stdout  # reset output
+
+        if self.use_gpu:
+            torch.cuda.empty_cache()
+            # check max memory usage
+            self.mem_check()
 
         return i, rn, self.hvp_op.size
 
@@ -573,7 +582,7 @@ class OptWBoundEignVal(object):
 
                 i = 0
                 for param in self.model.parameters():
-                    s = param.data.size()  # number of input & output nodes
+                    s = param.size()  # number of input & output nodes
                     n = torch.prod(torch.tensor(s))  # total number of parameters
                     param.grad = p[i:(i + n)].view(s).float()  # adjust gradient
                     i += n  # increment
@@ -623,7 +632,7 @@ class OptWBoundEignVal(object):
                         else:
                             prec1, = accuracy(output.data, target.data, topk=(1,))
                         err = 100.-prec1.item()
-                        return loss.data.item(), err
+                        return loss.item(), err
                     return feval
                 self.optimizer.step(helper(), self.model, self.loss)
             else:
@@ -820,12 +829,7 @@ class OptWBoundEignVal(object):
             dataloader = loader
         elif x is not None and y is not None:
             # create dataloader
-            train_data = utils_data.TensorDataset(x, y)
-            if self.use_gpu:
-                dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size,
-                                                   num_workers=self.num_workers, pin_memory=True)
-            else:
-                dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size)
+            dataloader = self.to_loader(x, y)
         else:
             raise Exception('No test data')
 
@@ -855,12 +859,7 @@ class OptWBoundEignVal(object):
                 dataloader = loader
             elif x is not None and y is not None:
                 # create dataloader
-                train_data = utils_data.TensorDataset(x, y)
-                if self.use_gpu:
-                    dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size,
-                                                       num_workers=self.num_workers, pin_memory=True)
-                else:
-                    dataloader = utils_data.DataLoader(train_data, batch_size=self.batch_size)
+                dataloader = self.to_loader(x, y)
             else:
                 raise Exception('No test data')
 
