@@ -306,10 +306,6 @@ class OptWBoundEignVal(object):
     def init_kfac(self, data=None):
         # initializes KFAC on batch
 
-        print('Init KFAC')
-
-        self.mem_check()
-
         old_stdout = sys.stdout  # save old output
         log_file = open(os.devnull, 'w')  # open log file
         sys.stdout = log_file  # write to log file
@@ -318,8 +314,6 @@ class OptWBoundEignVal(object):
 
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
-
-        self.mem_check()
 
         if data is None:
             data = iter(self.dataloader).next()
@@ -335,23 +329,10 @@ class OptWBoundEignVal(object):
             raise Exception('Data type not supported')
         output = self.model(inputs)
 
-        self.mem_check()
-
         self.comp_fisher(self.kfac_opt, output, target)
-
-        self.mem_check()
 
         for m in self.kfac_opt.modules:
             self.kfac_opt._update_inv(m)
-
-        self.mem_check()
-
-        if self.use_gpu:
-            torch.cuda.empty_cache()
-            # check max memory usage
-            self.mem_check()
-
-        print('Finish Init')
 
     def kfac(self, r):
         # computes K-FAC on batch, given residual vector
@@ -375,7 +356,7 @@ class OptWBoundEignVal(object):
                     if hasattr(m, 'bias') and m.bias is not None:
                         r2 = r[(j + npar[0]):(j + sn)].view(ps[1]).float()
                         p_grad_mat = torch.cat([p_grad_mat, r2.view(-1, 1)], 1)
-                    o = self.kfac_opt._get_natural_grad(m, p_grad_mat, 0)
+                    o = self.kfac_opt._get_natural_grad(m, p_grad_mat, 0).detach()
                     trt = [t.flatten().tolist() for t in o]
                     t = trt[0] + trt[1] if m.bias is not None else trt[0]
                     Tr[j:(j + sn)] = torch.tensor(t)
@@ -391,8 +372,11 @@ class OptWBoundEignVal(object):
         self.hvp_op = HVPOperator(self.model, data, self.loss, use_gpu=self.use_gpu)
 
         if self.lobpcg and self.kfac_iter >= self.kfac_batch:
+            print('Init KFAC')
+            self.mem_check()
             self.init_kfac(data)
             self.kfac_iter = 1
+            self.mem_check()
         elif self.lobpcg:
             self.kfac_iter += 1
 
@@ -491,11 +475,6 @@ class OptWBoundEignVal(object):
             print('Rho:', self.rho)
             log_file.close()  # close log file
             sys.stdout = old_stdout  # reset output
-
-        if False:
-            torch.cuda.empty_cache()
-            # check max memory usage
-            self.mem_check()
 
         return i, rn, self.hvp_op.size
 
