@@ -336,7 +336,7 @@ class OptWBoundEignVal(object):
 
     def kfac(self, r):
         # computes K-FAC on batch, given residual vector
-        Tr = r
+        Tr = r.clone()
         j = 0
         for m in self.model.modules():
             s = sum(1 for _ in m.parameters())
@@ -374,7 +374,6 @@ class OptWBoundEignVal(object):
         if self.lobpcg and self.kfac_iter >= self.kfac_batch:
             self.init_kfac(data)
             self.kfac_iter = 1
-            print(self.v.size())
         elif self.lobpcg:
             self.kfac_iter += 1
 
