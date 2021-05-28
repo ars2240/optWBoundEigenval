@@ -373,10 +373,8 @@ class OptWBoundEignVal(object):
 
         if self.lobpcg and self.kfac_iter >= self.kfac_batch:
             print('Init KFAC')
-            self.mem_check()
             self.init_kfac(data)
             self.kfac_iter = 1
-            self.mem_check()
         elif self.lobpcg:
             self.kfac_iter += 1
 
@@ -435,7 +433,10 @@ class OptWBoundEignVal(object):
             alpha = self.pow_iter_alpha(i) if callable(self.pow_iter_alpha) else self.pow_iter_alpha
 
             if self.lobpcg:
+                print('LOBPCG KFAC')
+                self.mem_check()
                 r = self.kfac(r)
+                self.mem_check()
 
             # update vector and normalize
             v_new = v + alpha*r
