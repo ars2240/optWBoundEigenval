@@ -303,8 +303,6 @@ class OptWBoundEignVal(object):
         opt.acc_stats = False
         opt.zero_grad()
 
-        del loss_sample
-
     def init_kfac(self, data=None):
         # initializes KFAC on batch
 
@@ -312,7 +310,8 @@ class OptWBoundEignVal(object):
         log_file = open(os.devnull, 'w')  # open log file
         sys.stdout = log_file  # write to log file
 
-        self.kfac_opt = KFACOptimizer(self.model)
+        model = copy.deepcopy(self.moodel)
+        self.kfac_opt = KFACOptimizer(model)
 
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
@@ -329,14 +328,12 @@ class OptWBoundEignVal(object):
             inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
         else:
             raise Exception('Data type not supported')
-        output = self.model(inputs)
+        output = model(inputs)
 
         self.comp_fisher(self.kfac_opt, output, target)
 
         for m in self.kfac_opt.modules:
             self.kfac_opt._update_inv(m)
-
-        del inputs, target, output, data
 
     def kfac(self, r):
         # computes K-FAC on batch, given residual vector
@@ -454,9 +451,6 @@ class OptWBoundEignVal(object):
         self.v = v  # update eigenvector
         self.rho = np.abs(lam)  # update spectral radius
         self.norm = n  # update norm
-
-        # delete some old tensors
-        del v, v_old, v_new, r, r_old
 
         if all(i > self.pow_iter_eps for i in stop):
             pr = 'Warning: power iteration has not fully converged.'
