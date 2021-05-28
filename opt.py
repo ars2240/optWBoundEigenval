@@ -306,6 +306,8 @@ class OptWBoundEignVal(object):
     def init_kfac(self, data=None):
         # initializes KFAC on batch
 
+        self.mem_check()
+
         old_stdout = sys.stdout  # save old output
         log_file = open(os.devnull, 'w')  # open log file
         sys.stdout = log_file  # write to log file
@@ -314,6 +316,8 @@ class OptWBoundEignVal(object):
 
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
+
+        self.mem_check()
 
         if data is None:
             data = iter(self.dataloader).next()
@@ -329,10 +333,21 @@ class OptWBoundEignVal(object):
             raise Exception('Data type not supported')
         output = self.model(inputs)
 
+        self.mem_check()
+
         self.comp_fisher(self.kfac_opt, output, target)
+
+        self.mem_check()
 
         for m in self.kfac_opt.modules:
             self.kfac_opt._update_inv(m)
+
+        self.mem_check()
+
+        if self.use_gpu:
+            torch.cuda.empty_cache()
+            # check max memory usage
+            self.mem_check()
 
     def kfac(self, r):
         # computes K-FAC on batch, given residual vector
@@ -473,7 +488,7 @@ class OptWBoundEignVal(object):
             log_file.close()  # close log file
             sys.stdout = old_stdout  # reset output
 
-        if self.use_gpu:
+        if False:
             torch.cuda.empty_cache()
             # check max memory usage
             self.mem_check()
