@@ -375,8 +375,10 @@ class OptWBoundEignVal(object):
             print('Init KFAC')
             self.init_kfac(data)
             self.kfac_iter = 1
+            track = True
         elif self.lobpcg:
             self.kfac_iter += 1
+            track = False
 
         v = self.v  # initial guess for eigenvector (prior eigenvector)
         v_old = None
@@ -394,10 +396,17 @@ class OptWBoundEignVal(object):
         # power iteration
         pstart = time.time()  # start timer
         for i in range(0, np.min([self.ndim, self.max_pow_iter])):
+            if track:
+                print('Pow Iter')
+                self.mem_check()
+
             start = time.time()  # start timer
             v_new = self.hvp_op.Hv(v, storedGrad=True)  # compute H*v
             # v_new = self.kfac(v)
             hvTime += time.time() - start
+
+            if track:
+                self.mem_check()
 
             # if converged, break
             lam = torch.dot(v_new, v)  # update eigenvalue
@@ -412,17 +421,26 @@ class OptWBoundEignVal(object):
             if self.verbose:
                 print('%d\t %f\t %f\t %f' % (i, lam, n, rn))
 
+            if track:
+                self.mem_check()
+
             if v_old is not None and n_old != 0 and n > n_old and callable(self.pow_iter_alpha):
                 v_new, v = v, v_old
                 reset = True
             else:
                 v_old = v
 
+            if track:
+                self.mem_check()
+
             # stopping criteria
             inf = float('inf')
             stop = [n, rn / n_old if n_old != 0 else inf, np.abs(lam - lam_old) / lam_old if lam_old != 0 else inf]
             if any(i < self.pow_iter_eps for i in stop):
                 break
+
+            if track:
+                self.mem_check()
 
             if i < (np.min([self.ndim, self.max_pow_iter])-1) and not reset:
                 lam_old = lam
@@ -432,13 +450,18 @@ class OptWBoundEignVal(object):
 
             alpha = self.pow_iter_alpha(i) if callable(self.pow_iter_alpha) else self.pow_iter_alpha
 
+            if track:
+                self.mem_check()
+
             if self.lobpcg:
                 r = self.kfac(r)
 
             # update vector and normalize
             v_new = v + alpha*r
             v = 1.0/torch.norm(v_new)*v_new
-            print(r.requires_grad)
+
+            if track:
+                self.mem_check()
 
         pTime += time.time() - pstart
 
