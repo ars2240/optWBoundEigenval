@@ -70,6 +70,7 @@ def get_data(u = 'https://archive.ics.uci.edu/ml/machine-learning-databases/covt
     return {'inputs': X, 'target': y, 'inputs_valid': X_valid, 'target_valid': y_valid, 'inputs_test': X_test,
             'target_test': y_test}
 
+
 # Neural Network Architecture
 class Net(nn.Module):
     def __init__(self):
