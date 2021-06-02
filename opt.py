@@ -580,6 +580,7 @@ class OptWBoundEignVal(object):
 
                 if self.optimizer.__class__.__name__ == "KFACOptimizer" and \
                         self.optimizer.steps % self.optimizer.TCov == 0:
+                    self.optimizer.zero_grad()  # zero gradient
                     if type(data) == list:
                         inputs, target = data
                         inputs = inputs.to(self.device)
@@ -591,11 +592,8 @@ class OptWBoundEignVal(object):
                         raise Exception('Data type not supported')
                     output = self.model(inputs)
                     self.comp_fisher(self.optimizer, output, target, retain_graph=True)
-                    self.optimizer.zero_grad()  # zero gradient
                     loss = self.loss(output, target)  # loss function
                     loss.backward()  # back prop
-                    self.optimizer.zero_grad()  # zero gradient
-                    self.optimizer.steps += 1
 
                 i = 0
                 for param in self.model.parameters():
