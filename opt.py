@@ -310,7 +310,8 @@ class OptWBoundEignVal(object):
         log_file = open(os.devnull, 'w')  # open log file
         sys.stdout = log_file  # write to log file
 
-        self.kfac_opt = KFACOptimizer(self.model)
+        if self.kfac_opt is None:
+            self.kfac_opt = KFACOptimizer(self.model)
 
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
@@ -359,8 +360,8 @@ class OptWBoundEignVal(object):
                     o = self.kfac_opt._get_natural_grad(m, p_grad_mat, 0)
                     trt = [t.flatten().tolist() for t in o]
                     t = trt[0] + trt[1] if m.bias is not None else trt[0]
-                    #Tr[j:(j + sn)] = torch.tensor(t)
-                    Tr[j:(j + sn)] = r[j:(j + sn)]
+                    Tr[j:(j + sn)] = torch.tensor(t)
+                    #Tr[j:(j + sn)] = r[j:(j + sn)]
                 j += sn  # increment
         return Tr
 
