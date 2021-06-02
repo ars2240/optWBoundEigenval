@@ -578,13 +578,6 @@ class OptWBoundEignVal(object):
                 aTime1 += self.hvp_op.aTime1
                 aTime2 += self.hvp_op.aTime2
 
-                i = 0
-                for param in self.model.parameters():
-                    s = param.size()  # number of input & output nodes
-                    n = torch.prod(torch.tensor(s))  # total number of parameters
-                    param.grad = p[i:(i + n)].view(s).float()  # adjust gradient
-                    i += n  # increment
-
                 if self.optimizer.__class__.__name__ == "KFACOptimizer" and \
                         self.optimizer.steps % self.optimizer.TCov == 0:
                     if type(data) == list:
@@ -598,7 +591,19 @@ class OptWBoundEignVal(object):
                         raise Exception('Data type not supported')
                     output = self.model(inputs)
                     self.comp_fisher(self.optimizer, output, target, retain_graph=True)
+                    self.optimizer.zero_grad()  # zero gradient
+                    loss = self.loss(output, target)  # loss function
+                    loss.backward()  # back prop
+                    self.optimizer.zero_grad()  # zero gradient
                     self.optimizer.steps += 1
+
+                i = 0
+                for param in self.model.parameters():
+                    s = param.size()  # number of input & output nodes
+                    n = torch.prod(torch.tensor(s))  # total number of parameters
+                    param.grad = p[i:(i + n)].view(s).float()  # adjust gradient
+                    i += n  # increment
+
             else:
                 # for testing purposes
                 self.optimizer.zero_grad()  # zero gradient
