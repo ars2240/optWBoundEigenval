@@ -24,7 +24,7 @@ def options():
     enc = 'dens121'  # model type
 
     # batch size
-    batch_size = 4
+    batch_size = 2
     opt['batch_size'] = batch_size
 
     # set number of threads
