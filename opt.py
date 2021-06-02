@@ -452,7 +452,7 @@ class OptWBoundEignVal(object):
             sys.stdout = old_stdout  # reset output
 
         self.v = v  # update eigenvector
-        print(torch.count_nonzero(v).item()/torch.numel(v))
+        print(len(v[v!=0])/len(v))
         self.rho = np.abs(lam)  # update spectral radius
         self.norm = n  # update norm
 
