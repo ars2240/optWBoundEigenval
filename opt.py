@@ -584,6 +584,20 @@ class OptWBoundEignVal(object):
                     n = torch.prod(torch.tensor(s))  # total number of parameters
                     param.grad = p[i:(i + n)].view(s).float()  # adjust gradient
                     i += n  # increment
+
+                if self.optimizer.__class__.__name__ == "KFACOptimizer" and \
+                        self.optimizer.steps % self.optimizer.TCov == 0:
+                    if type(data) == list:
+                        inputs, target = data
+                        inputs = inputs.to(self.device)
+                        target = target.to(self.device)
+                    elif type(data) == dict:
+                        inputs, target = Variable(data['image'].to(self.device)), Variable(
+                            data['label'].to(self.device))
+                    else:
+                        raise Exception('Data type not supported')
+                    output = self.model(inputs)
+                    self.comp_fisher(self.optimizer, output, target, retain_graph=True)
             else:
                 # for testing purposes
                 self.optimizer.zero_grad()  # zero gradient
@@ -596,10 +610,10 @@ class OptWBoundEignVal(object):
                 else:
                     raise Exception('Data type not supported')
                 output = self.model(inputs)
-                loss = self.loss(output, target)  # loss function
                 if self.optimizer.__class__.__name__ == "KFACOptimizer" and \
                         self.optimizer.steps % self.optimizer.TCov == 0:
                     self.comp_fisher(self.optimizer, output, target, retain_graph=True)
+                loss = self.loss(output, target)  # loss function
                 loss.backward()  # back prop
 
             # optimizer step
@@ -621,7 +635,6 @@ class OptWBoundEignVal(object):
                 self.optimizer.step(helper(), self.model, self.loss)
             else:
                 try:
-                    print(self.optimizer.steps)
                     self.optimizer.step()
                 except RuntimeError:
                     self.model_load('./models/' + self.header2 + '_trained_model.pt')
