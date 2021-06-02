@@ -47,7 +47,7 @@ def options():
     opt['header'] = 'USPS_E-3'
     opt['use_gpu'] = True
     opt['train'] = True
-    opt['pow_iter'] = False
+    opt['pow_iter'] = True
     opt['mem_track'] = True
 
     opt['aug_test'] = True
