@@ -233,7 +233,7 @@ class OptWBoundEignVal(object):
         self.gradg = torch.zeros(self.ndim).to(self.device)  # gradient of g
         self.h = 0  # objective function f+mu*g
         self.mu = mu  # coefficient in front of regularizer
-        self.Kmin = flaot(K) # constant, spectral radius > Kmin
+        self.Kmin = float(K)  # constant, spectral radius > Kmin
         self.K = float(K)  # constant, spectral radius < K
         self.batch_size = batch_size  # batch size
         self.eps = eps  # convergence
