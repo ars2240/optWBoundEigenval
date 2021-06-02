@@ -9,7 +9,6 @@
 # Dependencies:
 #   Packages: requests, numpy, scipy, sklearn, torch
 
-import copy
 import inspect
 import random
 import re
@@ -311,8 +310,7 @@ class OptWBoundEignVal(object):
         log_file = open(os.devnull, 'w')  # open log file
         sys.stdout = log_file  # write to log file
 
-        model = copy.deepcopy(self.model)
-        self.kfac_opt = KFACOptimizer(model)
+        self.kfac_opt = KFACOptimizer(self.model)
 
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
@@ -329,7 +327,7 @@ class OptWBoundEignVal(object):
             inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
         else:
             raise Exception('Data type not supported')
-        output = model(inputs)
+        output = self.model(inputs)
 
         self.comp_fisher(self.kfac_opt, output, target)
 
@@ -550,6 +548,8 @@ class OptWBoundEignVal(object):
             if j == rbatch:
                 rdata = data
 
+            inputs = None
+
             if self.pow_iter:
                 start = time.time()  # start timer
                 self.comp_g(data)  # compute g
@@ -626,13 +626,14 @@ class OptWBoundEignVal(object):
                     self.model_load('./models/' + self.header2 + '_trained_model.pt')
 
             if self.optimizer.__class__.__name__ == "KFACOptimizer":
-                if type(data) == list:
-                    inputs, _ = data
-                    inputs = inputs.to(self.device)
-                elif type(data) == dict:
-                    inputs = Variable(data['image'].to(self.device))
-                else:
-                    raise Exception('Data type not supported')
+                if inputs is not None:
+                    if type(data) == list:
+                        inputs, _ = data
+                        inputs = inputs.to(self.device)
+                    elif type(data) == dict:
+                        inputs = Variable(data['image'].to(self.device))
+                    else:
+                        raise Exception('Data type not supported')
                 output = self.model(inputs)
                 if torch.isnan(output).any():
                     self.model_load('./models/' + self.header2 + '_trained_model.pt')
