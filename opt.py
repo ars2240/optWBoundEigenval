@@ -289,7 +289,7 @@ class OptWBoundEignVal(object):
     def random_v(self):
         return torch.from_numpy(1.0/np.sqrt(self.ndim)*np.ones(self.ndim)).to(self.device)
 
-    def comp_fisher(self, opt, output, target=None):
+    def comp_fisher(self, opt, output, target=None, retain_graph=False):
         # compute true fisher
         opt.acc_stats = True
         if self.kfac_rand:
@@ -299,7 +299,7 @@ class OptWBoundEignVal(object):
                 else:
                     target = torch.multinomial(F.softmax(output.cpu().data, dim=1), 1).squeeze().to(self.device)
         loss_sample = self.loss(output, target)
-        loss_sample.backward()
+        loss_sample.backward(retain_graph=retain_graph)
         opt.acc_stats = False
         opt.zero_grad()
 
@@ -599,7 +599,7 @@ class OptWBoundEignVal(object):
                 loss = self.loss(output, target)  # loss function
                 if self.optimizer.__class__.__name__ == "KFACOptimizer" and \
                         self.optimizer.steps % self.optimizer.TCov == 0:
-                    self.comp_fisher(self.optimizer, output, target)
+                    self.comp_fisher(self.optimizer, output, target, retain_graph=True)
                 loss.backward()  # back prop
 
             # optimizer step
