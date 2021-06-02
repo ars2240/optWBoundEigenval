@@ -359,7 +359,8 @@ class OptWBoundEignVal(object):
                     o = self.kfac_opt._get_natural_grad(m, p_grad_mat, 0)
                     trt = [t.flatten().tolist() for t in o]
                     t = trt[0] + trt[1] if m.bias is not None else trt[0]
-                    Tr[j:(j + sn)] = torch.tensor(t)
+                    #Tr[j:(j + sn)] = torch.tensor(t)
+                    Tr[j:(j + sn)] = r[j:(j + sn)]
                 j += sn  # increment
         return Tr
 
