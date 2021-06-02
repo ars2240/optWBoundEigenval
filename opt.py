@@ -621,6 +621,7 @@ class OptWBoundEignVal(object):
                 self.optimizer.step(helper(), self.model, self.loss)
             else:
                 try:
+                    print(self.optimizer.steps)
                     self.optimizer.step()
                 except RuntimeError:
                     self.model_load('./models/' + self.header2 + '_trained_model.pt')
