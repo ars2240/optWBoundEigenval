@@ -48,7 +48,7 @@ def options():
     opt['lobpcg'] = True
     opt['verbose'] = True
     opt['pow_iter_alpha'] = alpha
-    opt['mem_track'] = True
+    opt['mem_track'] = False
 
     opt['aug_test'] = True
     opt['rho_test'] = True
