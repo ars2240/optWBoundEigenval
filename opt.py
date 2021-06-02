@@ -452,7 +452,7 @@ class OptWBoundEignVal(object):
             sys.stdout = old_stdout  # reset output
 
         self.v = v  # update eigenvector
-        print(len(v[v!=0])/len(v))
+        # print(len(v[v!=0])/len(v))
         self.rho = np.abs(lam)  # update spectral radius
         self.norm = n  # update norm
 
