@@ -213,7 +213,7 @@ def timeHMS(t, head=''):
 
 
 class OptWBoundEignVal(object):
-    def __init__(self, model, loss, optimizer, scheduler=None, mu=0, K=0, eps=-1, pow_iter_eps=1e-3,
+    def __init__(self, model, loss, optimizer, scheduler=None, mu=0, Kmin=0, K=0, eps=-1, pow_iter_eps=1e-3,
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, pow_iter=True,
                  max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header='', num_workers=0,
                  test_func='maxacc', lobpcg=False, pow_iter_alpha=1, kfac_batch=1, kfac_rand=True):
@@ -233,6 +233,7 @@ class OptWBoundEignVal(object):
         self.gradg = torch.zeros(self.ndim).to(self.device)  # gradient of g
         self.h = 0  # objective function f+mu*g
         self.mu = mu  # coefficient in front of regularizer
+        self.Kmin = flaot(K) # constant, spectral radius > Kmin
         self.K = float(K)  # constant, spectral radius < K
         self.batch_size = batch_size  # batch size
         self.eps = eps  # convergence
@@ -266,6 +267,7 @@ class OptWBoundEignVal(object):
         # log files
         self.header = header  # header to files
         self.header2 = header + "_" + name + "_mu" + mname + "_K" + str(K)
+        self.header2 += '_Kmin' + str(Kmin) if Kmin > 0 else ''
         self.log_file = "./logs/" + self.header2 + ".log"
         self.verbose_log_file = "./logs/" + self.header2 + "_verbose.log"
         self.ignore_bad_vals = ignore_bad_vals  # whether or not to ignore bad power iteration values
@@ -514,7 +516,7 @@ class OptWBoundEignVal(object):
         # computes g
 
         self.comp_rho(data)
-        self.g = np.max([0.0, self.rho - self.K])
+        self.g = np.max([0.0, self.rho - self.K, self.Kmin - self.rho])
 
     def iter(self):
         # performs one gradient descent iteration
@@ -569,7 +571,8 @@ class OptWBoundEignVal(object):
                 start = time.time()  # start timer
                 if self.g > 0:
                     self.comp_gradrho()  # compute gradient of rho
-                    self.gradg = self.gradrho  # compute g
+                    sign = 1 if self.rho > self.K else -1
+                    self.gradg = sign * self.gradrho  # compute g
                 else:
                     self.gradg = torch.zeros(self.ndim).double().to(self.device)  # set gradient to zero
                 ggTime += time.time() - start
