@@ -38,8 +38,10 @@ def options():
     opt['optimizer'] = torch.optim.SGD(opt['model'].parameters(), lr=0.5)
     # opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(options['optimizer'], lr_lambda=alpha)
     opt['header'] = 'Forest'
-    opt['train'] = True
+    opt['train'] = False
     opt['pow_iter'] = False
     opt['asymmetric_valley'] = True
+    opt['rho_test'] = True
+    opt['ignore_bad_vals'] = False
 
     return opt

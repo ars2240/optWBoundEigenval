@@ -41,5 +41,7 @@ def options():
     opt['header'] = 'Forest'
     opt['train'] = False
     opt['pow_iter'] = False
+    opt['rho_test'] = True
+    opt['ignore_bad_vals'] = False
 
     return opt

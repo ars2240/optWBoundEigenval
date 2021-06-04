@@ -14,14 +14,14 @@ from opt import *
 
 class AsymmetricValley(OptWBoundEignVal):
 
-    def __init__(self, model, loss, optimizer, scheduler=None, mu=0, K=0, eps=-1, pow_iter_eps=1e-3,
+    def __init__(self, model, loss, optimizer, scheduler=None, mu=0, Kmin=0, K=0, eps=-1, pow_iter_eps=1e-3,
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=250, max_pow_iter=1000, pow_iter=True,
                  max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header='', num_workers=0,
                  test_func='maxacc', swa=True, swa_start=161, sgd_start=201, swa_c_epochs=1, swa_lr=0.05, eval_freq=5,
                  save_freq=5, division_part=40, distances=20):
-        super().__init__(model, loss, optimizer, scheduler, mu, K, eps, pow_iter_eps, use_gpu, batch_size, min_iter,
-                         max_iter, max_pow_iter, pow_iter, max_samples, ignore_bad_vals, verbose, mem_track, header,
-                         num_workers, test_func)
+        super().__init__(model, loss, optimizer, scheduler, mu, Kmin, K, eps, pow_iter_eps, use_gpu, batch_size,
+                         min_iter, max_iter, max_pow_iter, pow_iter, max_samples, ignore_bad_vals, verbose, mem_track,
+                         header, num_workers, test_func)
         self.swa = swa
         self.swa_start = swa_start
         self.sgd_start = sgd_start

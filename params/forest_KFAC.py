@@ -39,7 +39,9 @@ def options():
     opt['optimizer'] = KFACOptimizer(opt['model'])
     # opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(options['optimizer'], lr_lambda=alpha)
     opt['header'] = 'Forest'
-    opt['train'] = True
+    opt['train'] = False
     opt['pow_iter'] = False
+    opt['rho_test'] = True
+    opt['ignore_bad_vals'] = False
 
     return opt

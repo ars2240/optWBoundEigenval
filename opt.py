@@ -233,7 +233,7 @@ class OptWBoundEignVal(object):
         self.gradg = torch.zeros(self.ndim).to(self.device)  # gradient of g
         self.h = 0  # objective function f+mu*g
         self.mu = mu  # coefficient in front of regularizer
-        self.Kmin = float(K)  # constant, spectral radius > Kmin
+        self.Kmin = float(Kmin)  # constant, spectral radius > Kmin
         self.K = float(K)  # constant, spectral radius < K
         self.batch_size = batch_size  # batch size
         self.eps = eps  # convergence
@@ -277,7 +277,7 @@ class OptWBoundEignVal(object):
         self.test_func = test_func  # test function
         self.pow_iter_alpha = pow_iter_alpha  # power iteration step size
         self.lobpcg = lobpcg  # whether or not to use LOBPCG method
-        self.kfac_opt = None  # KFAC optimizer for LOBPCG
+        self.kfac_opt = KFACOptimizer(self.model) if lobpcg else None  # KFAC optimizer for LOBPCG
         self.kfac_batch = kfac_batch  # how frequently the KFAC matrix is updated
         self.kfac_iter = kfac_batch  # counter on KFAC batches
         self.kfac_rand = kfac_rand  # if randomizer used for kfac
@@ -311,9 +311,6 @@ class OptWBoundEignVal(object):
         old_stdout = sys.stdout  # save old output
         log_file = open(os.devnull, 'w')  # open log file
         sys.stdout = log_file  # write to log file
-
-        if self.kfac_opt is None:
-            self.kfac_opt = KFACOptimizer(self.model)
 
         log_file.close()  # close log file
         sys.stdout = old_stdout  # reset output
@@ -392,7 +389,7 @@ class OptWBoundEignVal(object):
             old_stdout = sys.stdout  # save old output
             log_file = open(self.verbose_log_file, "a")  # open log file
             sys.stdout = log_file  # write to log file
-            print('iter\t lam\t norm\t delRes')
+            print('iter\t lam\t norm\t delRes\t vnnorm')
 
         # power iteration
         pstart = time.time()  # start timer
@@ -408,19 +405,23 @@ class OptWBoundEignVal(object):
             if torch.is_tensor(lam):
                 lam = lam.item()
             if lam < 0:
-                lam = -1*lam
-                v = -1*v
+                lam *= -1
+                v_new *= -1
             r = v_new-lam*v  # residual
-            n = torch.norm(r)  # norm of H*v-lambda*v
+            n = torch.norm(r).item()  # norm of H*v-lambda*v
             rn = np.min([torch.norm(r-r_old), torch.norm(r+r_old)])
+            vnn = torch.norm(v_new).item()  # norm of v_new
             if self.verbose:
-                print('%d\t %f\t %f\t %f' % (i, lam, n, rn))
+                print('%d\t %f\t %f\t %f\t %f' % (i, lam, n, rn, vnn))
 
+            """
             if v_old is not None and n_old != 0 and n > n_old and callable(self.pow_iter_alpha):
                 v_new, v = v, v_old
+                print('Reset')
                 reset = True
             else:
                 v_old = v
+            """
 
             # stopping criteria
             inf = float('inf')
