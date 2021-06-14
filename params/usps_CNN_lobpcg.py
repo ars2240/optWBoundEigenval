@@ -19,7 +19,7 @@ from usps_data import get_train_valid_loader, get_test_loader, CNN
 
 def options():
     # create options dictionary and some parameters
-    opt = {'seed': 1226, 'tol': 0.001, 'mu': .0005, 'K': 100, 'Kmin': 100}
+    opt = {'seed': 1226, 'tol': 0.001, 'mu': .0001, 'K': 100, 'Kmin': 100}
 
     # batch size
     batch_size = 128
