@@ -974,7 +974,7 @@ class OptWBoundEignVal(object):
         if fname is None:
             fname = './models/' + self.header2 + '_trained_model_best.pt'
 
-        state = self.load_state(fname)
+        state = fname if fname.endswith('.pt') else self.load_state(fname)
         self.model.load_state_dict(state)
         self.model.to(self.device)
 
