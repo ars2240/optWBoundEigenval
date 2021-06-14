@@ -953,7 +953,10 @@ class OptWBoundEignVal(object):
 
     def load_state(self, fname, dic='state_dict'):
 
-        state = torch.load(fname)
+        try:
+            state = torch.load(fname)
+        except RuntimeError:
+            state = torch.jit.load(fname)
         if dic in state.keys():
             state2 = state[dic]
 
