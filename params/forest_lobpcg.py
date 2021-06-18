@@ -20,7 +20,7 @@ from forest_data import get_data, Net
 
 def options():
     # create options dictionary and some parameters
-    opt = {'seed': 1226, 'tol': 0.001, 'mu': 0.0025, 'K': 1}
+    opt = {'seed': 1226, 'tol': 0.001, 'mu': 0.002, 'K': 1}
 
     # batch size
     batch_size = 128

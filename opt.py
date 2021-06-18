@@ -216,7 +216,7 @@ class OptWBoundEignVal(object):
     def __init__(self, model, loss, optimizer, scheduler=None, mu=0, Kmin=0, K=0, eps=-1, pow_iter_eps=1e-3,
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, pow_iter=True,
                  max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header='', num_workers=0,
-                 test_func='maxacc', lobpcg=False, pow_iter_alpha=1, kfac_batch=1, kfac_rand=True):
+                 test_func='maxacc', lobpcg=False, pow_iter_alpha=1, kfac_batch=1, kfac_rand=True, best_h=False):
 
         # set default device
         if use_gpu and torch.cuda.is_available():
@@ -253,8 +253,10 @@ class OptWBoundEignVal(object):
         self.i = 0  # iteration count
         self.norm = 0  # norm of H*v-lambda*v
         self.val_acc = 0  # validation accuracy (only used if validation set is provided)
+        self.best_h_val = best_h  # whether loss or validation accuracy is used to choose the best model (true for loss)
+        self.best_h = 0  # best h
         self.best_val_acc = 0  # best validation accuracy (only used if validation set is provided)
-        self.best_val_iter = 0  # best validation iterate
+        self.best_iter = 0  # best validation iterate
         self.best_rho = 0  # spectral radius at best validation accuracy
         self.verbose = verbose  # more extensive read-out
         self.x = None  # input data
@@ -776,10 +778,15 @@ class OptWBoundEignVal(object):
             else:
                 with torch.no_grad():
                     _, self.val_acc, val_f1 = self.test_model(inputs_valid, target_valid, valid_loader)
-                if self.val_acc > self.best_val_acc:
+                if self.h > self.best_h and self.best_h_val:
+                    self.best_h = self.h
+                    self.best_rho = self.rho
+                    self.best_iter = self.i
+                    self.save('_trained_model_best.pt')
+                elif self.val_acc > self.best_val_acc and not self.best_h_val:
                     self.best_val_acc = self.val_acc
                     self.best_rho = self.rho
-                    self.best_val_iter = self.i
+                    self.best_iter = self.i
                     self.save('_trained_model_best.pt')
                 print('%d\t %f\t %f\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm,
                                                             self.val_acc, val_f1))
@@ -807,8 +814,11 @@ class OptWBoundEignVal(object):
         timeHMS(tTime)
 
         # best validation accuracy
-        print('Best Validation Iterate:', self.best_val_iter)
-        print('Best Validation Accuracy:', self.best_val_acc)
+        print('Best Iterate:', self.best_iter)
+        if self.best_h_val:
+            print('Best H:', self.best_h)
+        else:
+            print('Best Validation Accuracy:', self.best_val_acc)
         print('Rho:', self.best_rho)
 
         log_file.close()  # close log file
@@ -1158,8 +1168,8 @@ class OptWBoundEignVal(object):
 
         order = [0, 2, 3, 4, 5, 6, 7, 1]
         res = [res[i] for i in order]
-        print('Best_Val_Acc  Train_Loss  Train_Acc  Train_F1  Test_Loss  Test_Acc  Test_F1  Rho')
-        print('  '.join(res))
+        print('Best_Val_Acc\tTrain_Loss\tTrain_Acc\tTrain_F1\tTest_Loss\tTest_Acc\tTest_F1\tRho')
+        print('\t'.join(res))
 
 
 def get_prob(inputs,  m=[0], sd=[1], skew=[0]):

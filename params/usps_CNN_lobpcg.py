@@ -19,7 +19,7 @@ from usps_data import get_train_valid_loader, get_test_loader, CNN
 
 def options():
     # create options dictionary and some parameters
-    opt = {'seed': 1226, 'tol': 0.001, 'mu': .001, 'K': 15, 'Kmin': 10}
+    opt = {'seed': 1226, 'tol': 0.001, 'mu': .000015, 'K': 100, 'Kmin': 50}
 
     # batch size
     batch_size = 128
@@ -44,7 +44,7 @@ def options():
     # opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(options['optimizer'], lr_lambda=alpha)
     opt['header'] = 'USPS_LOBPCG4_8_Pre'
     opt['max_iter'] = 10
-    opt['use_gpu'] = True
+    opt['use_gpu'] = False
     opt['train'] = True
     opt['lobpcg'] = True
     opt['verbose'] = True
@@ -52,6 +52,7 @@ def options():
     opt['mem_track'] = False
     opt['ignore_bad_vals'] = True
     opt['fname'] = './models/USPS_KFACOptimizer_mu0_K0_trained_model_best.pt'
+    opt['best_h_val'] = True
 
     opt['aug_test'] = True
     opt['rho_test'] = True
