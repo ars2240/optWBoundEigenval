@@ -49,7 +49,7 @@ def options():
     opt['pow_iter_alpha'] = alpha
 
     opt['kfac_rand'] = False
-    opt['kfac_batch'] = 4
+    opt['kfac_batch'] = 8
     opt['rho_test'] = True
 
     return opt
