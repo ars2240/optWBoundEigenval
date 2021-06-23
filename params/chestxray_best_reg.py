@@ -96,6 +96,7 @@ def options():
     opt['train'] = False
     opt['test'] = False
     opt['comp_test'] = False
+    opt['ignore_bad_vals'] = False
     opt['rho_test'] = True
     #opt['fname'] = './models/m-25012018-123527.pth.tar'
     opt['fname'] = './models/chestxray_dens121_Adam_mu' + str(opt['mu']) + '_K' + str(opt['K']) +\
