@@ -20,7 +20,7 @@ from dcnn import *
 
 def options():
     # create options dictionary and some parameters
-    opt = {'seed': 1226, 'tol': 0.001, 'mu': 1e-5, 'K': 0}
+    opt = {'seed': 1226, 'tol': 0.001, 'mu': 1e-6, 'K': 0}
     enc = 'dens121'  # model type
 
     # batch size
@@ -94,14 +94,13 @@ def options():
     opt['test_func'] = 'accauc sigmoid'
     opt['max_iter'] = 1
     opt['max_pow_iter'] = 100
-    opt['ignore_bad_vals'] = True
+    opt['ignore_bad_vals'] = False
     opt['pow_iter_eps'] = 0.1
     opt['pow_iter_alpha'] = alpha
     opt['verbose'] = True
     opt['train'] = False
     opt['test'] = False
     opt['comp_test'] = False
-    opt['ignore_bad_vals'] = False
     opt['rho_test'] = True
     #opt['fname'] = './models/m-25012018-123527.pth.tar'
     opt['fname'] = './models/chestxray_dens121_Adam_mu' + str(opt['mu']) + '_K' + str(opt['K']) +\
