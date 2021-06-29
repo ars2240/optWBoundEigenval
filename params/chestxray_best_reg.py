@@ -80,6 +80,10 @@ def options():
     elif enc == 'dens121':
         model = MyDensNet121(14)
 
+    # learning rate
+    def alpha(k):
+        return np.exp(-k/10)
+
     # Training Setup
     opt['model'] = model
     opt['loss'] = W_BCEWithLogitsLoss()
@@ -92,6 +96,7 @@ def options():
     opt['max_pow_iter'] = 100
     opt['ignore_bad_vals'] = True
     opt['pow_iter_eps'] = 0.1
+    opt['pow_iter_alpha'] = alpha
     opt['verbose'] = True
     opt['train'] = False
     opt['test'] = False
