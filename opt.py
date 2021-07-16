@@ -447,7 +447,7 @@ class OptWBoundEignVal(object):
                 r = self.kfac(r)
 
             # update vector and normalize
-            v_new = v + alpha*r if self.res_step else v + alpha*(vnew - v)
+            v_new = v + alpha*r if self.res_step else v + alpha*(v_new - v)
             v = 1.0/torch.norm(v_new)*v_new
 
         pTime += time.time() - pstart
