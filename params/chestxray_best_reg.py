@@ -96,7 +96,7 @@ def options():
     opt['max_pow_iter'] = 100
     opt['ignore_bad_vals'] = False
     opt['pow_iter_eps'] = 0.1
-    opt['pow_iter_alpha'] = alpha
+    # opt['pow_iter_alpha'] = alpha
     opt['verbose'] = True
     opt['train'] = False
     opt['test'] = False
