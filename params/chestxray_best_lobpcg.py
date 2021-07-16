@@ -97,6 +97,7 @@ def options():
     opt['test'] = True
     opt['comp_test'] = True
     opt['fname'] = './models/m-25012018-123527.pth.tar'
+    opt['res_step'] = False
 
     # learning rate
     def alpha(k):
