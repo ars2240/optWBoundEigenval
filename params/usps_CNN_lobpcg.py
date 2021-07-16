@@ -52,7 +52,6 @@ def options():
     opt['mem_track'] = False
     opt['ignore_bad_vals'] = True
     opt['fname'] = './models/USPS_E-3_KFACOptimizer_mu0_K0_trained_model_best.pt'
-    opt['best_h_val'] = True
 
     opt['aug_test'] = True
     opt['rho_test'] = True

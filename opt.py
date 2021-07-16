@@ -216,8 +216,7 @@ class OptWBoundEignVal(object):
     def __init__(self, model, loss, optimizer, scheduler=None, mu=0, Kmin=0, K=0, eps=-1, pow_iter_eps=1e-3,
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, pow_iter=True,
                  max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header='', num_workers=0,
-                 test_func='maxacc', lobpcg=False, pow_iter_alpha=1, kfac_batch=1, kfac_rand=True, best_h=False,
-                 res_step=None):
+                 test_func='maxacc', lobpcg=False, pow_iter_alpha=1, kfac_batch=1, kfac_rand=True, best_h=False):
 
         # set default device
         if use_gpu and torch.cuda.is_available():
@@ -279,9 +278,6 @@ class OptWBoundEignVal(object):
         self.num_workers = num_workers  # number of GPUs
         self.test_func = test_func  # test function
         self.pow_iter_alpha = pow_iter_alpha  # power iteration step size
-        if res_step is None:
-            res_step = lobpcg
-        self.res_step = res_step  # is residual used in power iteration step or not
         self.lobpcg = lobpcg  # whether or not to use LOBPCG method
         self.kfac_opt = KFACOptimizer(self.model) if lobpcg else None  # KFAC optimizer for LOBPCG
         self.kfac_batch = kfac_batch  # how frequently the KFAC matrix is updated
@@ -445,9 +441,11 @@ class OptWBoundEignVal(object):
 
             if self.lobpcg:
                 r = self.kfac(r)
+                v_new = v + alpha * r
+            else:
+                v_new = v + alpha (v_new - v)
 
             # update vector and normalize
-            v_new = v + alpha*r if self.res_step else v + alpha*(v_new - v)
             v = 1.0/torch.norm(v_new)*v_new
 
         pTime += time.time() - pstart
