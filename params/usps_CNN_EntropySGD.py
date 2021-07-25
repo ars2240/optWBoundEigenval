@@ -104,8 +104,8 @@ def options():
     opt['train'] = False
     opt['pow_iter'] = False
 
-    opt['aug_test'] = True
-    opt['rho_test'] = False
+    opt['aug_test'] = False
+    opt['rho_test'] = True
     opt['ignore_bad_vals'] = False
 
     return opt

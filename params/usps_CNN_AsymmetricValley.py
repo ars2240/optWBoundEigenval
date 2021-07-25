@@ -44,7 +44,7 @@ def options():
     opt['pow_iter'] = False
     opt['asymmetric_valley'] = True
 
-    opt['aug_test'] = True
-    opt['rho_test'] = False
+    opt['aug_test'] = False
+    opt['rho_test'] = True
 
     return opt

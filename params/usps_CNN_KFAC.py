@@ -45,12 +45,12 @@ def options():
     opt['optimizer'] = KFACOptimizer(opt['model'], lr=1e-3)
     # opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(options['optimizer'], lr_lambda=alpha)
     opt['header'] = 'USPS_E-3'
-    opt['use_gpu'] = True
-    opt['train'] = True
+    opt['use_gpu'] = False
+    opt['train'] = False
     opt['pow_iter'] = True
     opt['mem_track'] = True
 
-    opt['aug_test'] = True
+    opt['aug_test'] = False
     opt['rho_test'] = True
     opt['ignore_bad_vals'] = False
 
