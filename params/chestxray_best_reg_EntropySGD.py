@@ -94,9 +94,10 @@ def options():
     opt['ignore_bad_vals'] = True
     opt['pow_iter_eps'] = 0.1
     opt['verbose'] = True
-    opt['train'] = True
-    opt['test'] = True
-    opt['comp_test'] = True
+    opt['train'] = False
+    opt['test'] = False
+    opt['comp_test'] = False
+    opt['rho_test'] = True
     opt['fname'] = './models/m-25012018-123527.pth.tar'
 
     return opt
