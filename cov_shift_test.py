@@ -47,10 +47,11 @@ indices = "./logs/" + header + "_cov_shift_indices.csv"
 model = Net()
 loss = torch.nn.CrossEntropyLoss()
 
-"""
+
 optimizer = torch.optim.SGD(model.parameters(), lr=.5)
 scheduler = torch.optim.lr_scheduler.LambdaLR(optimizer, lr_lambda=alpha)
 
+"""
 mu = 0.01
 K = 1
 opt1 = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
@@ -87,22 +88,31 @@ K = 0
 opt7 = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
                         max_pow_iter=10000, verbose=False, header='Forest')
 
-
 optimizer = KFACOptimizer(model)
 mu = 0
 K = 0
 opt8 = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
                         max_pow_iter=10000, verbose=False, header='Forest')
-"""
 
-optimizer = torch.optim.SGD(model.parameters(), lr=.5)
 mu = 0
 K = 0
 opt9 = AsymmetricValley(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
                         max_pow_iter=10000, verbose=False, header='Forest')
 
-models = [opt9]
-#models = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9]
+
+mu = 0.003
+K = 1
+opt10 = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
+                         max_pow_iter=10000, verbose=False, header='Forest_LOBPCG4')
+"""
+
+mu = 0.0028
+K = 1
+opt11 = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
+                         max_pow_iter=10000, verbose=False, header='Forest_LOBPCG4')
+
+models = [opt11]
+# models = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9]
 
 cov_shift_tester(models, x=dic['inputs_test'], y=dic['target_test'], iters=1000, bad_modes=[28],
                  header=header, mult=.05, mean_diff=1, indices=indices, append=True)
