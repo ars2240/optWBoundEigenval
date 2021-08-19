@@ -85,7 +85,7 @@ def options():
     opt['model'] = model
     opt['loss'] = W_BCEWithLogitsLoss()
     opt['optimizer'] = torch.optim.SGD(opt['model'].parameters(), lr=1e-5)
-    opt['header'] = 'chestxray_' + enc
+    opt['header'] = 'chestxray_AsymValley_' + enc
     opt['use_gpu'] = True
     opt['pow_iter'] = False
     opt['test_func'] = 'accauc sigmoid'
