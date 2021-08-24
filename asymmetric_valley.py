@@ -328,8 +328,12 @@ class AsymmetricValley(OptWBoundEignVal):
             loss = self.loss(output, target_var)
 
             loss_sum += loss.item() * input.size(0)
-            pred = output.data.max(1, keepdim=True)[1]
-            correct += pred.eq(target_var.data.view_as(pred)).sum().item()
+            if self.loss.__class__.__name__ == 'W_BCEWithLogitsLoss':
+                predicted = (output.data > 0.5).float()
+                correct += torch.sum((predicted == target).float())
+            else:
+                pred = output.data.max(1, keepdim=True)[1]
+                correct += pred.eq(target_var.data.view_as(pred)).sum().item()
 
         # print(len(loader.dataset))
         return {
