@@ -98,11 +98,11 @@ def options():
     opt['pow_iter_eps'] = 0.1
     # opt['pow_iter_alpha'] = alpha
     opt['verbose'] = True
-    opt['train'] = True
-    opt['test'] = True
+    opt['train'] = False
+    opt['test'] = False
     opt['comp_test'] = True
     opt['rho_test'] = True
-    opt['fname'] = './models/m-25012018-123527.pth.tar'
-    #opt['fname'] = './models/chestxray_dens121_Adam_mu' + str(opt['mu']) + '_K' + str(opt['K']) + '_trained_model_best.pt'
+    # opt['fname'] = './models/m-25012018-123527.pth.tar'
+    # opt['fname'] = './models/chestxray_dens121_Adam_mu' + str(opt['mu']) + '_K' + str(opt['K']) + '_trained_model_best.pt'
 
     return opt
