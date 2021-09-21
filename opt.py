@@ -877,8 +877,8 @@ class OptWBoundEignVal(object):
         self.model.eval()  # set model to evaluation mode
 
         # transform to list
-        if other_classes is not None and type(other_classes) != list:
-            other_classes = list(other_classes)
+        if other_classes is not None and type(other_classes) == int:
+            other_classes = [other_classes]
 
         with torch.no_grad():
             if loader is not None:
