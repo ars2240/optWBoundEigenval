@@ -871,10 +871,14 @@ class OptWBoundEignVal(object):
         print(*np.average(np.array(stats, dtype='float'), axis=0, weights=size)[1:], sep='\t')
         np.savetxt("./logs/" + self.header2 + "_rho_test.csv", stats, delimiter=",")
 
-    def test_model(self, x=None, y=None, loader=None, classes=None, model_classes=None):
+    def test_model(self, x=None, y=None, loader=None, classes=None, model_classes=None, other_classes=None):
         # Computes the loss and accuracy of model on given dataset
 
         self.model.eval()  # set model to evaluation mode
+
+        # transform to list
+        if other_classes is not None and type(other_classes) != list:
+            other_classes = list(other_classes)
 
         with torch.no_grad():
             if loader is not None:
@@ -891,6 +895,7 @@ class OptWBoundEignVal(object):
             size = []
             outputs = []
             labels = []
+            oc = []
             for _, data in enumerate(dataloader):
 
                 if type(data) == list:
@@ -903,6 +908,9 @@ class OptWBoundEignVal(object):
                 # compute loss
                 f, ops = self.comp_f(inputs, target, classes, model_classes)
                 f_list.append(f)
+
+                if other_classes is not None:
+                    oc.append(np.nansum(target[:, [i for i in range(target.shape[1]) if i not in classes]], axis=0))
 
                 # subset classes
                 if classes is not None:
@@ -937,6 +945,10 @@ class OptWBoundEignVal(object):
                     f1 = f1_score(target, predicted, average='micro')
                     f1_list.append(f1)
 
+            if other_classes is not None:
+                unique, counts = np.unique(oc, return_counts=True)
+                print(np.asarray((unique, counts)))
+
             if 'auc' in self.test_func:
                 labels = torch.cat(labels)
                 outputs = torch.cat(outputs)
@@ -950,6 +962,11 @@ class OptWBoundEignVal(object):
                     good = labels2 == labels2
                     outputs2 = outputs2[good]
                     labels2 = labels2[good]
+
+                    if other_classes is not None:
+                        ll = [l in other_classes for l in labels2]
+                        outputs2 = outputs2[ll]
+                        labels2 = labels2[ll]
 
                     roc[i] = roc_auc_score(labels2, outputs2, average=None)  # compute AUC of ROC curves
                     f1[i] = f1_score(labels2, (outputs2 > 0.5).float(), average='micro')
@@ -993,18 +1010,18 @@ class OptWBoundEignVal(object):
         self.model.load_state_dict(state)
         self.model.to(self.device)
 
-    def test_model_best(self, x=None, y=None, loader=None, classes=None, model_classes=None, fname=None):
+    def test_model_best(self, x=None, y=None, loader=None, classes=None, model_classes=None, other_classes=None, fname=None):
         # tests best model, loaded from file
 
         self.model_load(fname)
-        return self.test_model(x, y, loader, classes, model_classes)
+        return self.test_model(x, y, loader, classes, model_classes, other_classes)
 
-    def test_set(self, x=None, y=None, loader=None, classes=None, model_classes=None, fname=None, label="Train"):
+    def test_set(self, x=None, y=None, loader=None, classes=None, model_classes=None, other_classes=None, fname=None, label="Train"):
         old_stdout = sys.stdout  # save old output
         log_file = open(self.log_file, "a")  # open log file
         sys.stdout = log_file  # write to log file
 
-        loss, acc, f1 = self.test_model_best(x, y, loader, classes, model_classes, fname)  # test best model
+        loss, acc, f1 = self.test_model_best(x, y, loader, classes, model_classes, other_classes, fname)  # test best model
 
         print(label, 'Loss:', loss)
         print(label, 'Accuracy:', acc)
@@ -1121,7 +1138,7 @@ class OptWBoundEignVal(object):
         print('Max-weight:', max_weight)
 
     # comparison test (requires list of data loaders)
-    def comp_test(self, loaders, fname=None):
+    def comp_test(self, loaders, fname=None, other_classes=None):
         # test loader for model must be 0 index in list
         classes = [loader.classes.keys() for loader in loaders if not isinstance(loader, utils_data.DataLoader)]
         if len(classes) > 1:
@@ -1153,9 +1170,10 @@ class OptWBoundEignVal(object):
             if len(classes) > 1:
                 c = [x for x in range(len(classes[i])) if list(classes[i])[x] in overlap]
                 self.test_set(loader=assert_dl(loader, self.batch_size, self.num_workers), classes=c, model_classes=mc,
-                              fname=fname, label="Test")
+                              fname=fname, label="Test", other_classes=other_classes)
             else:
-                self.test_set(loader=assert_dl(loader, self.batch_size, self.num_workers), fname=fname, label="Test")
+                self.test_set(loader=assert_dl(loader, self.batch_size, self.num_workers), fname=fname, label="Test",
+                              other_classes=other_classes)
             i += 1
 
     def parse(self):
@@ -1384,17 +1402,19 @@ def main(pfile):
     if 'aug_test' in options.keys() and options['aug_test']:
         if type(options['test_loader_aug']) is list:
             for i in range(len(options['test_loader_aug'])):
-                _, acc, f1 = opt.test_model_best(loader=options['test_loader_aug'][i], fname=options['fname'])
+                _, acc, f1 = opt.test_model_best(loader=options['test_loader_aug'][i], fname=options['fname'],
+                                                 other_classes=options['other_classes'])
                 print('Aug_Test_{0}\tAug_Test_F1'.format(i))
                 print(str(acc) + '\t' + str(f1))
         else:
-            _, acc, f1 = opt.test_model_best(loader=options['test_loader_aug'], fname=options['fname'])
+            _, acc, f1 = opt.test_model_best(loader=options['test_loader_aug'], fname=options['fname'],
+                                             other_classes=options['other_classes'])
             print('Aug_Test_Acc\tAug_Test_F1')
             print(str(acc) + '\t' + str(f1))
 
     # Comparison Test (requires data loader)
     if 'comp_test' in options.keys() and options['comp_test'] and type(options['test_loader']) is list:
-        opt.comp_test(options['test_loader'], fname=options['fname'])
+        opt.comp_test(options['test_loader'], fname=options['fname'], other_classes=options['other_classes'])
 
     if 'rho_test' in options.keys() and options['rho_test']:
         opt.rho_test(options['inputs'], options['target'], options['train_loader'], fname=options['fname'])
