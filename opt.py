@@ -962,6 +962,8 @@ class OptWBoundEignVal(object):
 
                     if other_classes is not None:
                         ll = [o in other_classes for o in oc]
+                        print(ll.shape)
+                        print(ll)
                         outputs2 = outputs2[ll]
                         labels2 = labels2[ll]
 
