@@ -946,6 +946,7 @@ class OptWBoundEignVal(object):
                     f1_list.append(f1)
 
             if other_classes is not None:
+                print(len(oc))
                 unique, counts = np.unique(oc, return_counts=True)
                 print(np.asarray((unique, counts)))
 
@@ -959,10 +960,10 @@ class OptWBoundEignVal(object):
                     # remove NaN labels
                     outputs2 = outputs[:, i]
                     labels2 = labels[:, i]
+                    print(len(outputs2))
 
                     if other_classes is not None:
                         ll = [o in other_classes for o in oc]
-                        print(ll)
                         outputs2 = outputs2[ll]
                         labels2 = labels2[ll]
 
