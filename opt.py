@@ -910,8 +910,7 @@ class OptWBoundEignVal(object):
                 f_list.append(f)
 
                 if other_classes is not None:
-                    print(np.nansum(target[:, [i for i in range(target.shape[1]) if i not in classes]], axis=0))
-                    oc.extend(np.nansum(target[:, [i for i in range(target.shape[1]) if i not in classes]], axis=0))
+                    oc.extend(np.nansum(target[:, [i for i in range(target.shape[1]) if i not in classes]], axis=1))
 
                 # subset classes
                 if classes is not None:
