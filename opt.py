@@ -961,7 +961,6 @@ class OptWBoundEignVal(object):
                     labels2 = labels[:, i]
 
                     if other_classes is not None:
-                        print(oc)
                         ll = [o in other_classes for o in oc]
                         outputs2 = outputs2[ll]
                         labels2 = labels2[ll]
@@ -970,7 +969,11 @@ class OptWBoundEignVal(object):
                     outputs2 = outputs2[good]
                     labels2 = labels2[good]
 
-                    roc[i] = roc_auc_score(labels2, outputs2, average=None)  # compute AUC of ROC curves
+                    try:
+                        roc[i] = roc_auc_score(labels2, outputs2, average=None)  # compute AUC of ROC curves
+                    except ValueError as e:
+                        print(e)
+                        roc[i] = np.nan
                     f1[i] = f1_score(labels2, (outputs2 > 0.5).float(), average='micro')
                 test_acc = roc.mean()  # mean AUCs
                 # weighted mean of f1 scores
