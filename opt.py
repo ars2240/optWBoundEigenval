@@ -910,6 +910,7 @@ class OptWBoundEignVal(object):
                 f_list.append(f)
 
                 if other_classes is not None:
+                    print(np.nansum(target[:, [i for i in range(target.shape[1]) if i not in classes]], axis=0))
                     oc.extend(np.nansum(target[:, [i for i in range(target.shape[1]) if i not in classes]], axis=0))
 
                 # subset classes
@@ -946,7 +947,6 @@ class OptWBoundEignVal(object):
                     f1_list.append(f1)
 
             if other_classes is not None:
-                print(len(oc))
                 unique, counts = np.unique(oc, return_counts=True)
                 print(np.asarray((unique, counts)))
 
@@ -960,7 +960,6 @@ class OptWBoundEignVal(object):
                     # remove NaN labels
                     outputs2 = outputs[:, i]
                     labels2 = labels[:, i]
-                    print(len(outputs2))
 
                     if other_classes is not None:
                         ll = [o in other_classes for o in oc]
