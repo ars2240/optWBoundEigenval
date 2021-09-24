@@ -96,7 +96,8 @@ def options():
     opt['train'] = False
     opt['test'] = False
     opt['comp_test'] = True
-    opt['rho_test'] = True
+    opt['rho_test'] = False
+    opt['other_classes'] = 0
     # opt['fname'] = './models/m-25012018-123527.pth.tar'
     opt['asymmetric_valley'] = True
     opt['swa_start'] = 1
