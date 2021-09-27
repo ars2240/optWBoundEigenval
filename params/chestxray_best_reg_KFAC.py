@@ -98,7 +98,7 @@ def options():
     opt['test'] = False
     opt['comp_test'] = True
     opt['rho_test'] = False
-    opt['other_classes'] = 0
+    opt['other_classes'] = list(range(1, 7))
     # opt['fname'] = './models/m-25012018-123527.pth.tar'
 
     return opt
