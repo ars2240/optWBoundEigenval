@@ -1227,7 +1227,7 @@ class OptWBoundEignVal(object):
                     raise Exception('Data type not supported')
 
                 c = [x for x in range(len(classes[i])) if list(classes[i])[x] in overlap]
-                f, _ = self.comp_f(self, inputs, target, classes=c, model_classes=mc)
+                f, _ = self.comp_f(inputs, target, classes=c, model_classes=mc)
                 f.backward()  # back prop
 
                 for j in range(inputs.shape[0]):
