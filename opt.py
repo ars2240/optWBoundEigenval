@@ -489,7 +489,7 @@ class OptWBoundEignVal(object):
 
         self.gradrho = self.hvp_op.vGHv(self.v, storedGrad=True)  # compute v*gradH*v
 
-    def comp_f(self, inputs, target, classes=None, model_classes=None):
+    def comp_f(self, inputs, target, classes=None, model_classes=None, item=True):
         # computes f
 
         self.model.eval()  # set model to evaluation mode
@@ -514,9 +514,11 @@ class OptWBoundEignVal(object):
             if self.loss.__class__.__name__ == 'KLDivLoss':
                 target_onehot = torch.zeros(output.shape)
                 target_onehot.scatter_(1, target.view(-1, 1), 1)
-                f = self.loss(output.float(), target_onehot.float()).item()
+                f = self.loss(output.float(), target_onehot.float())
             else:
-                f = self.loss(output, target).item()
+                f = self.loss(output, target)
+            if item:
+                f = f.item()
             return f, output
 
     def comp_g(self, data):
@@ -1227,7 +1229,7 @@ class OptWBoundEignVal(object):
                     raise Exception('Data type not supported')
 
                 c = [x for x in range(len(classes[i])) if list(classes[i])[x] in overlap]
-                f, _ = self.comp_f(inputs, target, classes=c, model_classes=mc)
+                f, _ = self.comp_f(inputs, target, classes=c, model_classes=mc, item=False)
                 f.backward()  # back prop
 
                 for j in range(inputs.shape[0]):
