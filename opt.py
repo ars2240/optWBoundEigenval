@@ -12,6 +12,7 @@
 import inspect
 import random
 import re
+import matplotlib.pyplot as plt
 import numpy as np
 import os
 import shutil
@@ -1196,6 +1197,42 @@ class OptWBoundEignVal(object):
         print('Best_Val_Acc\tTrain_Loss\tTrain_Acc\tTrain_F1\tTest_Loss\tTest_Acc\tTest_F1\tRho')
         print('\t'.join(res))
 
+    def saliency(self, loaders, batches=5):
+        # test loader for model must be 0 index in list
+        check_folder('./plots')
+        for loader in loaders:
+            n = 0
+            for i in range(batches):
+                data = iter(loader).next()
+                if type(data) == list:
+                    inputs, target = data
+                    inputs = inputs.to(self.device)
+                    target = target.to(self.device)
+                elif type(data) == dict:
+                    inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
+                else:
+                    raise Exception('Data type not supported')
+
+                output = self.model(inputs)
+                if self.optimizer.__class__.__name__ == "KFACOptimizer" and \
+                        self.optimizer.steps % self.optimizer.TCov == 0:
+                    self.comp_fisher(self.optimizer, output, target, retain_graph=True)
+                loss = self.loss(output, target)  # loss function
+                loss.backward()  # back prop
+
+                for j in range(inputs.shape[0]):
+                    saliency, _ = torch.max(inputs[j].grad.data.abs(), dim=1)
+
+                    fig, ax = plt.subplots(1, 2)
+                    ax[0].imshow(inputs[j].cpu().detach().numpy().transpose(1, 2, 0))
+                    ax[0].axis('off')
+                    ax[1].imshow(saliency.cpu(), cmap='hot')
+                    ax[1].axis('off')
+                    plt.tight_layout()
+                    plt.savefig('./plots/' + self.header2 + '_' + str(n) + '.png')
+
+                    n += 1
+
 
 def get_prob(inputs,  m=[0], sd=[1], skew=[0]):
     # computes log pdf of inputs given mean (m), standard deviation (sd), and skewness (skew)
@@ -1423,3 +1460,6 @@ def main(pfile):
 
     if 'rho_test' in options.keys() and options['rho_test']:
         opt.rho_test(options['inputs'], options['target'], options['train_loader'], fname=options['fname'])
+
+    if 'saliency' in options.keys() and options['saliency'] > 0:
+        opt.saliency(options['test_loader'], batches=options['saliency'])
