@@ -1229,7 +1229,7 @@ class OptWBoundEignVal(object):
                     ax[1].imshow(saliency.cpu(), cmap='hot')
                     ax[1].axis('off')
                     plt.tight_layout()
-                    plt.savefig('./plots/' + self.header2 + '_' + str(n) + '.png')
+                    plt.savefig('./plots/' + self.header2 + '_saliency_' + str(n) + '.png')
 
                     n += 1
 
