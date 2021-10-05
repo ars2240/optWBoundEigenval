@@ -1202,9 +1202,8 @@ class OptWBoundEignVal(object):
         check_folder('./plots')
         for loader in loaders:
             n = 0
-            print(loader)
+            loader = assert_dl(loader, self.batch_size, self.num_workers)
             for i in range(batches):
-                print(i)
                 data = iter(loader).next()
                 if type(data) == list:
                     inputs, target = data
