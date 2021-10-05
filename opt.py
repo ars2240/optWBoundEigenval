@@ -1200,6 +1200,18 @@ class OptWBoundEignVal(object):
     def saliency(self, loaders, batches=5):
         # test loader for model must be 0 index in list
         check_folder('./plots')
+
+        # get class overlap
+        classes = [loader.classes.keys() for loader in loaders if not isinstance(loader, utils_data.DataLoader)]
+        if len(classes) > 1:
+            overlap = classes[0]
+            for c in classes[1:]:
+                overlap = [x for x in overlap if x in c]
+
+            # model classes
+            mc = [x for x in range(len(classes[0])) if list(classes[0])[x] in overlap]
+
+        k = 0
         for loader in loaders:
             n = 0
             loader = assert_dl(loader, self.batch_size, self.num_workers)
@@ -1214,18 +1226,12 @@ class OptWBoundEignVal(object):
                 else:
                     raise Exception('Data type not supported')
 
-                inputs.requires_grad_()
-                output = self.model(inputs)
-                if self.optimizer.__class__.__name__ == "KFACOptimizer" and \
-                        self.optimizer.steps % self.optimizer.TCov == 0:
-                    self.comp_fisher(self.optimizer, output, target, retain_graph=True)
-                loss = self.loss(output, target)  # loss function
-                loss.backward()  # back prop
+                f, _ = comp_f(self, inputs, target, classes=classes, model_classes=mc)
+                f.backward()  # back prop
 
                 for j in range(inputs.shape[0]):
-                    print(inputs.grad)
-                    print(inputs.grad[j])
                     saliency, _ = torch.max(inputs.grad[j].data.abs(), dim=1)
+                    print(saliency.shape)
 
                     fig, ax = plt.subplots(1, 2)
                     ax[0].imshow(inputs[j].cpu().detach().numpy().transpose(1, 2, 0))
@@ -1233,9 +1239,10 @@ class OptWBoundEignVal(object):
                     ax[1].imshow(saliency.cpu(), cmap='hot')
                     ax[1].axis('off')
                     plt.tight_layout()
-                    plt.savefig('./plots/' + self.header2 + '_saliency_' + str(n) + '.png')
+                    plt.savefig('./plots/' + self.header2 + '_saliency_test' + str(k) + '_' + str(n) + '.png')
 
                     n += 1
+            k += 1
 
 
 def get_prob(inputs,  m=[0], sd=[1], skew=[0]):
