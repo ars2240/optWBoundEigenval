@@ -489,7 +489,7 @@ class OptWBoundEignVal(object):
 
         self.gradrho = self.hvp_op.vGHv(self.v, storedGrad=True)  # compute v*gradH*v
 
-    def comp_f(self, inputs, target, classes=None, model_classes=None, item=True):
+    def comp_f(self, inputs, target, classes=None, model_classes=None):
         # computes f
 
         self.model.eval()  # set model to evaluation mode
@@ -514,11 +514,9 @@ class OptWBoundEignVal(object):
             if self.loss.__class__.__name__ == 'KLDivLoss':
                 target_onehot = torch.zeros(output.shape)
                 target_onehot.scatter_(1, target.view(-1, 1), 1)
-                f = self.loss(output.float(), target_onehot.float())
+                f = self.loss(output.float(), target_onehot.float()).item()
             else:
-                f = self.loss(output, target)
-            if item:
-                f = f.item()
+                f = self.loss(output, target).item()
             return f, output
 
     def comp_g(self, data):
@@ -1228,8 +1226,27 @@ class OptWBoundEignVal(object):
                 else:
                     raise Exception('Data type not supported')
 
+                inputs.requires_grad_()
                 c = [x for x in range(len(classes[i])) if list(classes[i])[x] in overlap]
-                f, _ = self.comp_f(inputs, target, classes=c, model_classes=mc, item=False)
+                output = self.model(inputs)  # compute prediction
+
+                # subset classes
+                if c is not None:
+                    if mc is None:
+                        mc = c
+                    if target.shape[1] == 1:
+                        print('"Classes" argument only implemented for one-hot encoding')
+                    else:
+                        target = target[:, c]
+                        output = output[:, mc]
+
+                # compute loss
+                if self.loss.__class__.__name__ == 'KLDivLoss':
+                    target_onehot = torch.zeros(output.shape)
+                    target_onehot.scatter_(1, target.view(-1, 1), 1)
+                    f = self.loss(output.float(), target_onehot.float())
+                else:
+                    f = self.loss(output, target)
                 f.backward()  # back prop
 
                 for j in range(inputs.shape[0]):
