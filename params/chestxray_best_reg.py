@@ -20,7 +20,7 @@ from dcnn import *
 
 def options():
     # create options dictionary and some parameters
-    opt = {'seed': 1226, 'tol': 0.001, 'mu': 1e-4, 'K': 0}
+    opt = {'seed': 1226, 'tol': 0.001, 'mu': 0, 'K': 0}
     enc = 'dens121'  # model type
 
     # batch size
@@ -104,7 +104,7 @@ def options():
     opt['rho_test'] = False
     # opt['other_classes'] = list(range(1, 7))
     opt['saliency'] = 5
-    # opt['fname'] = './models/m-25012018-123527.pth.tar'
+    opt['fname'] = './models/m-25012018-123527.pth.tar'
     # opt['fname'] = './models/chestxray_dens121_Adam_mu' + str(opt['mu']) + '_K' + str(opt['K']) + '_trained_model_best.pt'
 
     return opt
