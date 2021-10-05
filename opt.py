@@ -1253,7 +1253,7 @@ class OptWBoundEignVal(object):
                     saliency, _ = torch.max(inputs.grad[j].data.abs(), dim=0)
 
                     fig, ax = plt.subplots(1, 2)
-                    ax[0].imshow(inputs[j].cpu().detach().numpy().transpose(1, 2, 0).numpy().astype('uint8'))
+                    ax[0].imshow(inputs[j].cpu().detach().numpy().transpose(1, 2, 0).astype('uint8'))
                     ax[0].axis('off')
                     ax[1].imshow(saliency.cpu().numpy().astype('uint8'), cmap='hot')
                     ax[1].axis('off')
