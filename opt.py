@@ -1222,6 +1222,8 @@ class OptWBoundEignVal(object):
                 loss.backward()  # back prop
 
                 for j in range(inputs.shape[0]):
+                    print(inputs.grad)
+                    print(inputs.grad[j])
                     saliency, _ = torch.max(inputs.grad[j].data.abs(), dim=1)
 
                     fig, ax = plt.subplots(1, 2)
