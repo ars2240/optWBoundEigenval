@@ -1214,6 +1214,7 @@ class OptWBoundEignVal(object):
                 else:
                     raise Exception('Data type not supported')
 
+                inputs.requires_grad_()
                 output = self.model(inputs)
                 if self.optimizer.__class__.__name__ == "KFACOptimizer" and \
                         self.optimizer.steps % self.optimizer.TCov == 0:
