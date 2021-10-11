@@ -1287,7 +1287,9 @@ class OptWBoundEignVal(object):
         comp_model.to(self.device)
 
         # get max f1 cutoffs, using training set
-        outputs, comp_outs, labels = [], [], []
+        outputs = []
+        comp_outs = []
+        labels = []
         for _, data in enumerate(train_loader):
             if type(data) == list:
                 inputs, target = data
@@ -1308,6 +1310,8 @@ class OptWBoundEignVal(object):
             comp_outs.append(comp_out.data)
             labels.append(target)
 
+        print(outputs)
+        print(np.shape(outputs))
         classes = outputs.size()[1]
         cut = np.zeros(classes)
         comp_cut = np.zeros(classes)
