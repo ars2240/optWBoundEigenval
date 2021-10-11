@@ -1280,6 +1280,7 @@ class OptWBoundEignVal(object):
         # compute jaccard intersection of saliency maps
 
         # load comparison model
+        comp_model = copy.deepcopy(self.model)
         state = self.load_state(fname)
         comp_model.load_state_dict(state)
         comp_model.to(self.device)
