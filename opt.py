@@ -1620,5 +1620,5 @@ def main(pfile):
     if 'saliency' in options.keys() and options['saliency'] > 0:
         opt.saliency(options['test_loader'], batches=options['saliency'])
 
-    if 'jaccard' in option.keys() and 'comp_fname' in options.keys() and options['jaccard']:
+    if 'jaccard' in options.keys() and 'comp_fname' in options.keys() and options['jaccard']:
         opt.jaccard(options['test_loader'], opt['train_loader'], fname=opt['comp_fname'])
