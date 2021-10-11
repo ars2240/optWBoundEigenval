@@ -1305,6 +1305,8 @@ class OptWBoundEignVal(object):
             comp_outs.append(comp_out.data)
             labels.append(target)
 
+        print(outputs)
+        print(np.shape(outputs))
         classes = outputs.size()[1]
         cut = np.zeros(classes)
         comp_cut = np.zeros(classes)
