@@ -137,8 +137,10 @@ class HVPOperator(object):
         # vec_grad_hessian_vec = vec_grad_hessian_vec.to('cpu')
         return vec_grad_hessian_vec.data.double()
 
-    def zero_grad(self, model=self.model):
+    def zero_grad(self, model=None):
         # Zeros out the gradient info for each parameter in the model
+        if model is None:
+            model = self.model
         for p in model.parameters():
             if p.grad is not None:
                 p.grad.data.zero_()
@@ -294,8 +296,10 @@ class OptWBoundEignVal(object):
     def random_v(self):
         return torch.from_numpy(1.0/np.sqrt(self.ndim)*np.ones(self.ndim)).to(self.device)
 
-    def zero_grad(self, model=self.model):
+    def zero_grad(self, model=None):
         # Zeros out the gradient info for each parameter in the model
+        if model is None:
+            model = self.model
         for p in model.parameters():
             if p.grad is not None:
                 p.grad.data.zero_()
