@@ -9,6 +9,7 @@
 # Dependencies:
 #   Packages: requests, numpy, scipy, sklearn, torch
 
+import copy
 import inspect
 import random
 import re
