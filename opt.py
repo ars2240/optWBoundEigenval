@@ -1301,12 +1301,13 @@ class OptWBoundEignVal(object):
             output = self.model(inputs)  # compute prediction
             comp_out = comp_model(inputs)
 
+            output = output.to('cpu')
+            comp_out = comp_out.to('cpu')
+            target = target.to('cpu')
             outputs.append(output.data)
             comp_outs.append(comp_out.data)
             labels.append(target)
 
-        print(outputs)
-        print(np.shape(outputs))
         classes = outputs.size()[1]
         cut = np.zeros(classes)
         comp_cut = np.zeros(classes)
