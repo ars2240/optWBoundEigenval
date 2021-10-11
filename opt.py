@@ -19,7 +19,7 @@ import shutil
 import sys
 from scipy.stats import skewnorm
 from scipy.stats import norm
-from sklearn.metrics import f1_score, roc_auc_score
+from sklearn.metrics import f1_score, roc_auc_score, precision_recall_curve
 import time
 import torch
 from torch.autograd import Variable
@@ -137,9 +137,9 @@ class HVPOperator(object):
         # vec_grad_hessian_vec = vec_grad_hessian_vec.to('cpu')
         return vec_grad_hessian_vec.data.double()
 
-    def zero_grad(self):
+    def zero_grad(self, model=self.model):
         # Zeros out the gradient info for each parameter in the model
-        for p in self.model.parameters():
+        for p in model.parameters():
             if p.grad is not None:
                 p.grad.data.zero_()
 
@@ -293,6 +293,12 @@ class OptWBoundEignVal(object):
 
     def random_v(self):
         return torch.from_numpy(1.0/np.sqrt(self.ndim)*np.ones(self.ndim)).to(self.device)
+
+    def zero_grad(self, model=self.model):
+        # Zeros out the gradient info for each parameter in the model
+        for p in model.parameters():
+            if p.grad is not None:
+                p.grad.data.zero_()
 
     def comp_fisher(self, opt, output, target=None, retain_graph=False):
         # compute true fisher
@@ -1198,6 +1204,8 @@ class OptWBoundEignVal(object):
         print('\t'.join(res))
 
     def saliency(self, loaders, batches=5):
+        # make saliency maps on test data sets
+
         # test loader for model must be 0 index in list
         check_folder('./plots')
 
@@ -1215,8 +1223,9 @@ class OptWBoundEignVal(object):
         for loader in loaders:
             n = 0
             loader = assert_dl(loader, self.batch_size, self.num_workers)
+            it = iter(loader)
             for i in range(batches):
-                data = iter(loader).next()
+                data = it.next()
                 if type(data) == list:
                     inputs, target = data
                     inputs = inputs.to(self.device)
@@ -1262,6 +1271,119 @@ class OptWBoundEignVal(object):
 
                     n += 1
             k += 1
+
+    def jaccard(self, loaders, train_loader, fname):
+        # compute jaccard intersection of saliency maps
+
+        # load comparison model
+        state = self.load_state(fname)
+        comp_model.load_state_dict(state)
+        comp_model.to(self.device)
+
+        # get max f1 cutoffs, using training set
+        outputs, comp_outs, labels = [], [], []
+        for _, data in enumerate(train_loader):
+            if type(data) == list:
+                inputs, target = data
+                inputs = inputs.to(self.device)
+                target = target.to(self.device)
+            elif type(data) == dict:
+                inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
+            else:
+                raise Exception('Data type not supported')
+
+            output = self.model(inputs)  # compute prediction
+            comp_out = comp_model(inputs)
+
+            outputs.append(output.data)
+            comp_outs.append(comp_out.data)
+            labels.append(target)
+
+        classes = outputs.size()[1]
+        cut = np.zeros(classes)
+        comp_cut = np.zeros(classes)
+        for i in range(classes):
+            # remove NaN labels
+            outputs2 = outputs[:, i]
+            comp_outs2 = comp_outs[:, i]
+            labels2 = labels[:, i]
+
+            good = labels2 == labels2
+            outputs2 = outputs2[good]
+            comp_outs2 = comp_outs2[good]
+            labels2 = labels2[good]
+
+            precision, recall, thresholds = precision_recall_curve(labels2, outputs2, average=None)
+            f1 = 2 / (1 / precision + 1 / recall)
+            cut[i] = thresholds[np.argmax(f1)]
+
+            precision, recall, thresholds = precision_recall_curve(labels2, comp_outs2, average=None)
+            f1 = 2 / (1 / precision + 1 / recall)
+            comp_cut[i] = thresholds[np.argmax(f1)]
+
+        print(cut)
+        print(comp_cut)
+
+        # get class overlap
+        classes = [loader.classes.keys() for loader in loaders if not isinstance(loader, utils_data.DataLoader)]
+        if len(classes) > 1:
+            overlap = classes[0]
+            for c in classes[1:]:
+                overlap = [x for x in overlap if x in c]
+
+            # model classes
+            mc = [x for x in range(len(classes[0])) if list(classes[0])[x] in overlap]
+
+        for loader in loaders:
+            loader = assert_dl(loader, self.batch_size, self.num_workers)
+            cut2 = cut[mc]
+            comp_cut2 = comp_cut[mc]
+            for _, data in enumerate(loader):
+                if type(data) == list:
+                    inputs, target = data
+                    inputs = inputs.to(self.device)
+                    target = target.to(self.device)
+                elif type(data) == dict:
+                    inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
+                else:
+                    raise Exception('Data type not supported')
+
+                inputs.requires_grad_()
+                c = [x for x in range(len(classes[i])) if list(classes[i])[x] in overlap]
+                output = self.model(inputs)  # compute prediction
+                comp_out = comp_model(inputs)
+
+                # subset classes
+                if c is not None:
+                    if mc is None:
+                        mc = c
+                    if target.shape[1] == 1:
+                        print('"Classes" argument only implemented for one-hot encoding')
+                    else:
+                        target = target[:, c]
+                        output = output[:, mc]
+                        comp_out = comp_out[:, mc]
+
+                # compute loss
+                if self.loss.__class__.__name__ == 'KLDivLoss':
+                    target_onehot = torch.zeros(output.shape)
+                    target_onehot.scatter_(1, target.view(-1, 1), 1)
+                    f = self.loss(output.float(), target_onehot.float())
+                    comp_f = self.loss(comp_out.float(), target_onehot.float())
+                else:
+                    f = self.loss(output, target)
+                    comp_f = self.loss(comp_out, target)
+
+                self.zero_grad()
+                f.backward()  # back prop
+                saliency, _ = torch.max(inputs.grad.data.abs(), dim=1)
+                print(saliency)
+
+                self.zero_grad(comp_model)
+                comp_f.backward()  # back prop
+                sal_comp, _ = torch.max(inputs.grad.data.abs(), dim=1)
+                print(sal_comp)
+                raise Exception('Test')
 
 
 def get_prob(inputs,  m=[0], sd=[1], skew=[0]):
@@ -1493,3 +1615,6 @@ def main(pfile):
 
     if 'saliency' in options.keys() and options['saliency'] > 0:
         opt.saliency(options['test_loader'], batches=options['saliency'])
+
+    if 'jaccard' in option.keys() and 'comp_fname' in options.keys() and options['jaccard']:
+        opt.jaccard(options['test_loader'], opt['train_loader'], fname=opt['comp_fname'])
