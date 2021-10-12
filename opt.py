@@ -1405,7 +1405,7 @@ class OptWBoundEignVal(object):
                 sal_comp = sal_comp.to('cpu')
 
                 for j in range(inputs.shape[0]):
-                    jac = jaccard_score(saliency[j] > thresh, sal_comp[j] > thresh)
+                    jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
                     for x in range(len(mc)):
                         if target[j, x] > 0 and output[j, x] > cut2[x] and comp_out[j, x] > comp_cut[x]:
                             jac_dic[list(classes[0])[mc[x]]].append(jac)
