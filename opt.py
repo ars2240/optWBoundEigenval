@@ -20,7 +20,7 @@ import shutil
 import sys
 from scipy.stats import skewnorm
 from scipy.stats import norm
-from sklearn.metrics import f1_score, roc_auc_score, precision_recall_curve
+from sklearn.metrics import f1_score, roc_auc_score, precision_recall_curve, jaccard_score
 import time
 import torch
 from torch.autograd import Variable
@@ -1228,6 +1228,7 @@ class OptWBoundEignVal(object):
         for loader in loaders:
             n = 0
             loader = assert_dl(loader, self.batch_size, self.num_workers)
+            c = [x for x in range(len(classes[k])) if list(classes[k])[x] in overlap]
             it = iter(loader)
             for i in range(batches):
                 data = it.next()
@@ -1241,7 +1242,6 @@ class OptWBoundEignVal(object):
                     raise Exception('Data type not supported')
 
                 inputs.requires_grad_()
-                c = [x for x in range(len(classes[i])) if list(classes[i])[x] in overlap]
                 output = self.model(inputs)  # compute prediction
 
                 # subset classes
@@ -1277,7 +1277,7 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname):
+    def jaccard(self, loaders, train_loader, fname, thresh=1e-4):
         # compute jaccard intersection of saliency maps
 
         # load comparison model
@@ -1328,11 +1328,11 @@ class OptWBoundEignVal(object):
             labels2 = labels2[good]
 
             precision, recall, thresholds = precision_recall_curve(labels2, outputs2)
-            f1 = 2 / (1 / precision + 1 / recall)
+            f1 = 2 * precision * recall / (precision + recall)
             cut[i] = thresholds[np.argmax(f1)]
 
             precision, recall, thresholds = precision_recall_curve(labels2, comp_outs2)
-            f1 = 2 / (1 / precision + 1 / recall)
+            f1 = 2 * precision * recall / (precision + recall)
             comp_cut[i] = thresholds[np.argmax(f1)]
 
         print(cut)
@@ -1347,12 +1347,20 @@ class OptWBoundEignVal(object):
 
             # model classes
             mc = [x for x in range(len(classes[0])) if list(classes[0])[x] in overlap]
+            print(mc)
+            print(list(classes[0])[mc])
 
         i = 0
+        jac_dic = {}
+        for x in mc:
+            jac_dic[list(classes[0])[x]] = []
         for loader in loaders:
             loader = assert_dl(loader, self.batch_size, self.num_workers)
             cut2 = cut[mc]
             comp_cut2 = comp_cut[mc]
+            c = [x for x in range(len(classes[i])) if list(classes[i])[x] in overlap]
+            print(c)
+            print(list(classes[i])[c])
             for _, data in enumerate(loader):
                 if type(data) == list:
                     inputs, target = data
@@ -1364,7 +1372,6 @@ class OptWBoundEignVal(object):
                     raise Exception('Data type not supported')
 
                 inputs.requires_grad_()
-                c = [x for x in range(len(classes[i])) if list(classes[i])[x] in overlap]
                 output = self.model(inputs)  # compute prediction
                 comp_out = comp_model(inputs)
 
@@ -1392,12 +1399,17 @@ class OptWBoundEignVal(object):
                 self.zero_grad()
                 f.backward()  # back prop
                 saliency, _ = torch.max(inputs.grad.data.abs(), dim=1)
-                print(saliency)
 
                 self.zero_grad(comp_model)
                 comp_f.backward()  # back prop
                 sal_comp, _ = torch.max(inputs.grad.data.abs(), dim=1)
-                print(sal_comp)
+
+                for j in range(inputs.shape[0]):
+                    jac = jaccard_score(saliency[j] > thresh, sal_comp[j] > thresh)
+                    for x in mc:
+                        if True:
+                            jac_dic[list(classes[0])[x]].append(jac)
+                print(jac_dic)
                 raise Exception('Test')
             i += 1
 
