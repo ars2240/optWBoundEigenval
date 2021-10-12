@@ -1397,10 +1397,12 @@ class OptWBoundEignVal(object):
                 self.zero_grad()
                 f.backward()  # back prop
                 saliency, _ = torch.max(inputs.grad.data.abs(), dim=1)
+                saliency = saliency.to('cpu')
 
                 self.zero_grad(comp_model)
                 comp_f.backward()  # back prop
                 sal_comp, _ = torch.max(inputs.grad.data.abs(), dim=1)
+                sal_comp = sal_comp.to('cpu')
 
                 for j in range(inputs.shape[0]):
                     jac = jaccard_score(saliency[j] > thresh, sal_comp[j] > thresh)
