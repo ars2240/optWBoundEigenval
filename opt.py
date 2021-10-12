@@ -1185,7 +1185,7 @@ class OptWBoundEignVal(object):
 
             # test model
             if len(classes) > 1:
-                c = [x for x in range(len(classes[i])) if list(classes[i])[x] in overlap]
+                c = [list(classes[k]).index(x) for x in overlap]
                 self.test_set(loader=assert_dl(loader, self.batch_size, self.num_workers), classes=c, model_classes=mc,
                               fname=fname, label="Test", other_classes=other_classes)
             else:
@@ -1228,7 +1228,7 @@ class OptWBoundEignVal(object):
         for loader in loaders:
             n = 0
             loader = assert_dl(loader, self.batch_size, self.num_workers)
-            c = [x for x in range(len(classes[k])) if list(classes[k])[x] in overlap]
+            c = [list(classes[k]).index(x) for x in overlap]
             it = iter(loader)
             for i in range(batches):
                 data = it.next()
@@ -1347,8 +1347,8 @@ class OptWBoundEignVal(object):
 
             # model classes
             mc = [x for x in range(len(classes[0])) if list(classes[0])[x] in overlap]
-            print(mc)
-            print(list(classes[0])[mc])
+        else:
+            raise Exception('Insufficient Classes')
 
         i = 0
         jac_dic = {}
@@ -1358,9 +1358,7 @@ class OptWBoundEignVal(object):
             loader = assert_dl(loader, self.batch_size, self.num_workers)
             cut2 = cut[mc]
             comp_cut2 = comp_cut[mc]
-            c = [x for x in range(len(classes[i])) if list(classes[i])[x] in overlap]
-            print(c)
-            print(list(classes[i])[c])
+            c = [list(classes[k]).index(x) for x in overlap]
             for _, data in enumerate(loader):
                 if type(data) == list:
                     inputs, target = data
@@ -1406,9 +1404,9 @@ class OptWBoundEignVal(object):
 
                 for j in range(inputs.shape[0]):
                     jac = jaccard_score(saliency[j] > thresh, sal_comp[j] > thresh)
-                    for x in mc:
-                        if True:
-                            jac_dic[list(classes[0])[x]].append(jac)
+                    for x in range(len(mc)):
+                        if target[j, x] > 0 and output[j, x] > cut2[x] and comp_out[j, x] > comp_cut[x]:
+                            jac_dic[list(classes[0])[mc[x]]].append(jac)
                 print(jac_dic)
                 raise Exception('Test')
             i += 1
