@@ -1348,6 +1348,7 @@ class OptWBoundEignVal(object):
             # model classes
             mc = [x for x in range(len(classes[0])) if list(classes[0])[x] in overlap]
 
+        i = 0
         for loader in loaders:
             loader = assert_dl(loader, self.batch_size, self.num_workers)
             cut2 = cut[mc]
@@ -1398,6 +1399,7 @@ class OptWBoundEignVal(object):
                 sal_comp, _ = torch.max(inputs.grad.data.abs(), dim=1)
                 print(sal_comp)
                 raise Exception('Test')
+            i += 1
 
 
 def get_prob(inputs,  m=[0], sd=[1], skew=[0]):
