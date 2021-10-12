@@ -1185,7 +1185,7 @@ class OptWBoundEignVal(object):
 
             # test model
             if len(classes) > 1:
-                c = [list(classes[k]).index(x) for x in overlap]
+                c = [list(classes[i]).index(x) for x in overlap]
                 self.test_set(loader=assert_dl(loader, self.batch_size, self.num_workers), classes=c, model_classes=mc,
                               fname=fname, label="Test", other_classes=other_classes)
             else:
@@ -1358,7 +1358,7 @@ class OptWBoundEignVal(object):
             loader = assert_dl(loader, self.batch_size, self.num_workers)
             cut2 = cut[mc]
             comp_cut2 = comp_cut[mc]
-            c = [list(classes[k]).index(x) for x in overlap]
+            c = [list(classes[i]).index(x) for x in overlap]
             for _, data in enumerate(loader):
                 if type(data) == list:
                     inputs, target = data
