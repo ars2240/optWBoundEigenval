@@ -1327,11 +1327,11 @@ class OptWBoundEignVal(object):
             comp_outs2 = comp_outs2[good]
             labels2 = labels2[good]
 
-            precision, recall, thresholds = precision_recall_curve(labels2, outputs2, average=None)
+            precision, recall, thresholds = precision_recall_curve(labels2, outputs2)
             f1 = 2 / (1 / precision + 1 / recall)
             cut[i] = thresholds[np.argmax(f1)]
 
-            precision, recall, thresholds = precision_recall_curve(labels2, comp_outs2, average=None)
+            precision, recall, thresholds = precision_recall_curve(labels2, comp_outs2)
             f1 = 2 / (1 / precision + 1 / recall)
             comp_cut[i] = thresholds[np.argmax(f1)]
 
