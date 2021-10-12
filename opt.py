@@ -1310,8 +1310,9 @@ class OptWBoundEignVal(object):
             comp_outs.append(comp_out.data)
             labels.append(target)
 
-        print(outputs)
-        print(np.shape(outputs))
+        labels = torch.cat(labels)
+        outputs = torch.cat(outputs)
+        comp_outs = torch.cat(comp_outs)
         classes = outputs.size()[1]
         cut = np.zeros(classes)
         comp_cut = np.zeros(classes)
