@@ -1407,10 +1407,15 @@ class OptWBoundEignVal(object):
                 for j in range(inputs.shape[0]):
                     jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
                     for x in range(len(mc)):
-                        if target[j, x] > 0 and output[j, x] > cut2[x] and comp_out[j, x] > comp_cut[x]:
+                        if target[j, x] > 0 and output[j, x] > cut2[x] and comp_out[j, x] > comp_cut2[x]:
                             jac_dic[list(classes[0])[mc[x]]].append(jac)
-                print(jac_dic)
-                raise Exception('Test')
+
+            print(jac_dic)
+            for x in range(len(mc)):
+                lab = list(classes[0])[mc[x]]
+                plt.hist(jac_dic[lab])
+                plt.title(lab)
+                plt.savefig('./plots/' + self.header2 + '_jaccard_hist_' + lab + '_' + str(i) + '.png')
             i += 1
 
 
