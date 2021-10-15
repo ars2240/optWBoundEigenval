@@ -1409,7 +1409,7 @@ class OptWBoundEignVal(object):
                 for j in range(inputs.shape[0]):
                     jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
                     for x in range(len(mc)):
-                        if target[j, x] > 0:
+                        #if target[j, x] > 0:
                             #print('%s\t%f\t%f\t%f\t%f' % (list(classes[0])[mc[x]], output[j, x], cut2[x],
                             #                              comp_out[j, x], comp_cut2[x]))
                         if target[j, x] > 0 and output[j, x] > cut2[x] and comp_out[j, x] > comp_cut2[x]:
