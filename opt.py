@@ -1329,13 +1329,13 @@ class OptWBoundEignVal(object):
 
             precision, recall, thresholds = precision_recall_curve(labels2, outputs2)
             f1 = 2 * precision * recall / (precision + recall)
-            cut[i] = thresholds[np.argmax(f1)]
-            print(f1[np.argmax(f1)])
+            cut[i] = thresholds[np.nanargmax(f1)]
+            print(f1[np.nanargmax(f1)])
 
             precision, recall, thresholds = precision_recall_curve(labels2, comp_outs2)
             f1 = 2 * precision * recall / (precision + recall)
-            comp_cut[i] = thresholds[np.argmax(f1)]
-            print(f1[np.argmax(f1)])
+            comp_cut[i] = thresholds[np.nanargmax(f1)]
+            print(f1[np.nanargmax(f1)])
 
         print(cut)
         print(comp_cut)
@@ -1413,6 +1413,7 @@ class OptWBoundEignVal(object):
                             print('%s\t%f\t%f\t%f\t%f' % (list(classes[0])[mc[x]], output[j, x], cut2[x],
                                                           comp_out[j, x], comp_cut2[x]))
                         if target[j, x] > 0 and output[j, x] > cut2[x] and comp_out[j, x] > comp_cut2[x]:
+                            print('Hit!')
                             jac_dic[list(classes[0])[mc[x]]].append(jac)
 
             print(jac_dic)
