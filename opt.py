@@ -1330,12 +1330,12 @@ class OptWBoundEignVal(object):
             precision, recall, thresholds = precision_recall_curve(labels2, outputs2)
             f1 = 2 * precision * recall / (precision + recall)
             cut[i] = thresholds[np.nanargmax(f1)]
-            print(f1[np.nanargmax(f1)])
+            # print(f1[np.nanargmax(f1)])
 
             precision, recall, thresholds = precision_recall_curve(labels2, comp_outs2)
             f1 = 2 * precision * recall / (precision + recall)
             comp_cut[i] = thresholds[np.nanargmax(f1)]
-            print(f1[np.nanargmax(f1)])
+            # print(f1[np.nanargmax(f1)])
 
         print(cut)
         print(comp_cut)
@@ -1409,17 +1409,19 @@ class OptWBoundEignVal(object):
                 for j in range(inputs.shape[0]):
                     jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
                     for x in range(len(mc)):
-                        #if target[j, x] > 0:
-                            #print('%s\t%f\t%f\t%f\t%f' % (list(classes[0])[mc[x]], output[j, x], cut2[x],
-                            #                              comp_out[j, x], comp_cut2[x]))
+                        """
+                        if target[j, x] > 0:
+                            print('%s\t%f\t%f\t%f\t%f' % (list(classes[0])[mc[x]], output[j, x], cut2[x],
+                                                          comp_out[j, x], comp_cut2[x]))
+                        """
                         if target[j, x] > 0 and output[j, x] > cut2[x] and comp_out[j, x] > comp_cut2[x]:
-                            #print('Hit!')
+                            # print('Hit!')
                             jac_dic[list(classes[0])[mc[x]]].append(jac)
 
             print(jac_dic)
             for x in range(len(mc)):
                 lab = list(classes[0])[mc[x]]
-                plt.hist(jac_dic[lab], bins=20, range=(0,1))
+                plt.hist(jac_dic[lab])
                 plt.title(lab)
                 plt.savefig('./plots/' + self.header2 + '_jaccard_hist_' + lab + '_' + str(i) + '.png')
                 plt.clf()
