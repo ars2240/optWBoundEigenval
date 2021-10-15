@@ -1416,8 +1416,8 @@ class OptWBoundEignVal(object):
                         """
                         if target[j, x] > 0 and output[j, x] > cut2[x] and comp_out[j, x] > comp_cut2[x]:
                             # print('Hit!')
-                            print('%f\t%f' % (np.mean(saliency[j].flatten() > thresh),
-                                              np.mean(sal_comp[j].flatten() > thresh)))
+                            print('%f\t%f' % (torch.mean(saliency[j].flatten() > thresh).item(),
+                                              torch.mean(sal_comp[j].flatten() > thresh).item()))
                             jac_dic[list(classes[0])[mc[x]]].append(jac)
 
             print(jac_dic)
