@@ -1354,6 +1354,8 @@ class OptWBoundEignVal(object):
 
         i = 0
         jac_dic = {}
+        sal_mean = []
+        sal_comp_mean = []
         for x in mc:
             jac_dic[list(classes[0])[x]] = []
         for loader in loaders:
@@ -1408,6 +1410,8 @@ class OptWBoundEignVal(object):
 
                 for j in range(inputs.shape[0]):
                     jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
+                    sal_mean.append(torch.mean(saliency[j]).item())
+                    sal_comp_mean.append(torch.mean(sal_comp[j]).item())
                     for x in range(len(mc)):
                         """
                         if target[j, x] > 0:
@@ -1415,15 +1419,18 @@ class OptWBoundEignVal(object):
                                                           comp_out[j, x], comp_cut2[x]))
                         """
                         if target[j, x] > 0 and output[j, x] > cut2[x] and comp_out[j, x] > comp_cut2[x]:
-                            # print('Hit!')
+                            """
+                            print('Hit!')
                             print('%f\t%f' % (torch.mean((saliency[j].flatten() > thresh).float()).item(),
                                               torch.mean((sal_comp[j].flatten() > thresh).float()).item()))
+                            """
                             jac_dic[list(classes[0])[mc[x]]].append(jac)
 
+            print('%f\t%f' % (np.mean(sal_mean), np.mean(sal_comp_mean)))
             print(jac_dic)
             for x in range(len(mc)):
                 lab = list(classes[0])[mc[x]]
-                plt.hist(jac_dic[lab])
+                plt.hist(jac_dic[lab], bins=20, range=(0, 1))
                 plt.title(lab)
                 plt.savefig('./plots/' + self.header2 + '_jaccard_hist_' + lab + '_' + str(i) + '.png')
                 plt.clf()
