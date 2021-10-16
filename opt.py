@@ -1277,7 +1277,7 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=1e-2):
+    def jaccard(self, loaders, train_loader, fname, thresh=.0028):
         # compute jaccard intersection of saliency maps
 
         # load comparison model
@@ -1354,8 +1354,8 @@ class OptWBoundEignVal(object):
 
         i = 0
         jac_dic = {}
-        sal_mean = []
-        sal_comp_mean = []
+        # sal_mean = []
+        # sal_comp_mean = []
         for x in mc:
             jac_dic[list(classes[0])[x]] = []
         for loader in loaders:
@@ -1410,8 +1410,8 @@ class OptWBoundEignVal(object):
 
                 for j in range(inputs.shape[0]):
                     jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
-                    sal_mean.append(torch.mean(saliency[j]).item())
-                    sal_comp_mean.append(torch.mean(sal_comp[j]).item())
+                    # sal_mean.append(torch.mean(saliency[j]).item())
+                    #  sal_comp_mean.append(torch.mean(sal_comp[j]).item())
                     for x in range(len(mc)):
                         """
                         if target[j, x] > 0:
@@ -1426,7 +1426,7 @@ class OptWBoundEignVal(object):
                             """
                             jac_dic[list(classes[0])[mc[x]]].append(jac)
 
-            print('%f\t%f' % (np.mean(sal_mean), np.mean(sal_comp_mean)))
+            # print('%f\t%f' % (np.mean(sal_mean), np.mean(sal_comp_mean)))
             print(jac_dic)
             for x in range(len(mc)):
                 lab = list(classes[0])[mc[x]]
