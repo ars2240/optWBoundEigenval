@@ -87,8 +87,8 @@ def options():
     # Training Setup
     opt['model'] = model
     opt['loss'] = W_BCEWithLogitsLoss()
-    opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-6)
-    opt['header'] = 'chestxray_E-6_' + enc
+    opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-5)
+    opt['header'] = 'chestxray_' + enc
     opt['use_gpu'] = True
     opt['pow_iter'] = True
     opt['test_func'] = 'accauc sigmoid'
@@ -104,7 +104,7 @@ def options():
     opt['rho_test'] = False
     # opt['other_classes'] = list(range(1, 7))
     opt['saliency'] = 0
-    opt['jaccard'] = False
+    opt['jaccard'] = True
     opt['comp_fname'] = './models/m-25012018-123527.pth.tar'
     # opt['fname'] = './models/m-25012018-123527.pth.tar'
     # opt['fname'] = './models/chestxray_dens121_Adam_mu' + str(opt['mu']) + '_K' + str(opt['K']) + '_trained_model_best.pt'
