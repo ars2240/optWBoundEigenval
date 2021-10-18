@@ -100,11 +100,11 @@ def options():
     opt['verbose'] = True
     opt['train'] = False
     opt['test'] = False
-    opt['comp_test'] = False
+    opt['comp_test'] = True
     opt['rho_test'] = False
     # opt['other_classes'] = list(range(1, 7))
     opt['saliency'] = 0
-    opt['jaccard'] = True
+    opt['jaccard'] = False
     opt['comp_fname'] = './models/m-25012018-123527.pth.tar'
     # opt['fname'] = './models/m-25012018-123527.pth.tar'
     # opt['fname'] = './models/chestxray_dens121_Adam_mu' + str(opt['mu']) + '_K' + str(opt['K']) + '_trained_model_best.pt'
