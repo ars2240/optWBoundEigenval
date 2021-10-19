@@ -20,7 +20,7 @@ from dcnn import *
 
 def options():
     # create options dictionary and some parameters
-    opt = {'seed': 1226, 'tol': 0.001, 'mu': 0, 'K': 0}
+    opt = {'seed': 1226, 'tol': 0.001, 'mu': 1e-4, 'K': 0}
     enc = 'dens121'  # model type
 
     # batch size
@@ -52,6 +52,7 @@ def options():
     test_set = ChestXray_Dataset(use='test', transform=transform)
     opt['test_loader'].append(test_set)
 
+    """
     transform = transforms.Compose([transforms.Resize((256, 256)), transforms.CenterCrop((224, 224)),
                                     transforms.ToTensor(),
                                     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
@@ -63,6 +64,7 @@ def options():
     opt['test_loader'].append(test_set)
     test_set = MIMICCXR_Dataset(use='train', transform=transform)
     opt['test_loader'].append(test_set)
+    """
 
     # Create neural network
     if enc == 'alex':
@@ -87,8 +89,8 @@ def options():
     # Training Setup
     opt['model'] = model
     opt['loss'] = W_BCEWithLogitsLoss()
-    opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-5)
-    opt['header'] = 'chestxray_' + enc
+    opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-6)
+    opt['header'] = 'chestxray_E-6_' + enc
     opt['use_gpu'] = True
     opt['pow_iter'] = True
     opt['test_func'] = 'accauc sigmoid'
@@ -100,13 +102,13 @@ def options():
     opt['verbose'] = True
     opt['train'] = False
     opt['test'] = False
-    opt['comp_test'] = True
+    opt['comp_test'] = False
     opt['rho_test'] = False
     # opt['other_classes'] = list(range(1, 7))
     opt['saliency'] = 0
-    opt['jaccard'] = False
+    opt['jaccard'] = True
     opt['comp_fname'] = './models/m-25012018-123527.pth.tar'
-    opt['fname'] = './models/m-25012018-123527.pth.tar'
+    # opt['fname'] = './models/m-25012018-123527.pth.tar'
     # opt['fname'] = './models/chestxray_dens121_Adam_mu' + str(opt['mu']) + '_K' + str(opt['K']) + '_trained_model_best.pt'
 
     return opt
