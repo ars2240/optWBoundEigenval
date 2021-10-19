@@ -1277,7 +1277,7 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=.0028):
+    def jaccard(self, loaders, train_loader, fname, thresh=.0028, jac_thresh=.6):
         # compute jaccard intersection of saliency maps
 
         # load comparison model
@@ -1425,6 +1425,20 @@ class OptWBoundEignVal(object):
                                               torch.mean((sal_comp[j].flatten() > thresh).float()).item()))
                             """
                             jac_dic[list(classes[0])[mc[x]]].append(jac)
+
+                            if jac < jac_thresh:
+                                fig, ax = plt.subplots(1, 3)
+                                ax[0].imshow(inputs[j].cpu().detach().numpy().transpose(1, 2, 0))
+                                ax[0].axis('off')
+                                ax[1].imshow(saliency, cmap='hot')
+                                ax[1].axis('off')
+                                ax[2].imshow(sal_comp, cmap='hot')
+                                ax[2].axis('off')
+                                plt.tight_layout()
+                                plt.title(list(classes[0])[mc[x]] + ', Jac={:.3f}'.format(jac))
+                                p = data['pid'][j]
+                                plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + str(i) + '_' + p + '.png')
+                                plt.clf()
 
             # print('%f\t%f' % (np.mean(sal_mean), np.mean(sal_comp_mean)))
             print(jac_dic)
