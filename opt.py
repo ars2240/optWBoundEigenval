@@ -1427,6 +1427,8 @@ class OptWBoundEignVal(object):
                             jac_dic[list(classes[0])[mc[x]]].append(jac)
 
                             if jac < jac_thresh:
+                                lab = list(classes[0])[mc[x]]
+                                plt.title(lab + ', Jac={:.3f}'.format(jac))
                                 fig, ax = plt.subplots(1, 3)
                                 ax[0].imshow(inputs[j].cpu().detach().numpy().transpose(1, 2, 0))
                                 ax[0].axis('off')
@@ -1434,10 +1436,9 @@ class OptWBoundEignVal(object):
                                 ax[1].axis('off')
                                 ax[2].imshow(sal_comp[j], cmap='hot')
                                 ax[2].axis('off')
-                                plt.tight_layout()
-                                plt.title(list(classes[0])[mc[x]] + ', Jac={:.3f}'.format(jac))
-                                p = str(data['pid'][j])
-                                plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + str(i) + '_' + p + '.png')
+                                p = str(data['pid'][j].item())
+                                plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + lab + '_' + str(i) + '_' +
+                                            p + '.png')
                                 plt.clf()
 
             # print('%f\t%f' % (np.mean(sal_mean), np.mean(sal_comp_mean)))
