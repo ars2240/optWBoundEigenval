@@ -1277,7 +1277,7 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=.0028, jac_thresh=.6):
+    def jaccard(self, loaders, train_loader, fname, thresh=.0028, jac_thresh=.67):
         # compute jaccard intersection of saliency maps
 
         # load comparison model
@@ -1451,6 +1451,7 @@ class OptWBoundEignVal(object):
                 plt.savefig('./plots/' + self.header2 + '_jaccard_hist_' + lab + '_' + str(i) + '.png')
                 plt.clf()
             i += 1
+            break
 
 
 def get_prob(inputs,  m=[0], sd=[1], skew=[0]):

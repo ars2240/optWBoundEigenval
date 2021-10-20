@@ -58,14 +58,14 @@ def options():
                                     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
     test_set = CheXpert_Dataset(use='validation', transform=transform)
     opt['test_loader'].append(test_set)
-    """
+    # """
     test_set = MIMICCXR_Dataset(use='validation', transform=transform)
     opt['test_loader'].append(test_set)
     test_set = CheXpert_Dataset(use='train', transform=transform)
     opt['test_loader'].append(test_set)
     test_set = MIMICCXR_Dataset(use='train', transform=transform)
     opt['test_loader'].append(test_set)
-    """
+    # """
 
     # Create neural network
     if enc == 'alex':
