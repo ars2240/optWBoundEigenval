@@ -96,10 +96,12 @@ def options():
     opt['verbose'] = True
     opt['train'] = False
     opt['test'] = False
-    opt['comp_test'] = False
+    opt['comp_test'] = True
     opt['rho_test'] = False
     # opt['other_classes'] = list(range(1, 7))
-    opt['saliency'] = 5
+    opt['saliency'] = 0
+    opt['jaccard'] = True
+    opt['comp_fname'] = './models/m-25012018-123527.pth.tar'
     # opt['fname'] = './models/m-25012018-123527.pth.tar'
 
     return opt
