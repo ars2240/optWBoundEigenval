@@ -1436,7 +1436,7 @@ class OptWBoundEignVal(object):
                                 ax[2].axis('off')
                                 plt.tight_layout()
                                 plt.title(list(classes[0])[mc[x]] + ', Jac={:.3f}'.format(jac))
-                                p = data['pid'][j]
+                                p = str(data['pid'][j])
                                 plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + str(i) + '_' + p + '.png')
                                 plt.clf()
 
