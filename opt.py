@@ -1444,6 +1444,7 @@ class OptWBoundEignVal(object):
 
             # print('%f\t%f' % (np.mean(sal_mean), np.mean(sal_comp_mean)))
             print(jac_dic)
+            plt.rcdefaults()
             for x in range(len(mc)):
                 lab = list(classes[0])[mc[x]]
                 plt.hist(jac_dic[lab], bins=20, range=(0, 1))
@@ -1451,7 +1452,7 @@ class OptWBoundEignVal(object):
                 plt.savefig('./plots/' + self.header2 + '_jaccard_hist_' + lab + '_' + str(i) + '.png')
                 plt.clf()
             i += 1
-            break
+            # break
 
 
 def get_prob(inputs,  m=[0], sd=[1], skew=[0]):
