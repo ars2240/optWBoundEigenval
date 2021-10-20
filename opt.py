@@ -1428,14 +1428,15 @@ class OptWBoundEignVal(object):
 
                             if jac < jac_thresh:
                                 lab = list(classes[0])[mc[x]]
-                                plt.title(lab + ', Jac={:.3f}'.format(jac))
                                 fig, ax = plt.subplots(1, 3)
+                                fig.suptitle(lab + ', Jac={:.3f}'.format(jac))
                                 ax[0].imshow(inputs[j].cpu().detach().numpy().transpose(1, 2, 0))
                                 ax[0].axis('off')
                                 ax[1].imshow(saliency[j], cmap='hot')
                                 ax[1].axis('off')
                                 ax[2].imshow(sal_comp[j], cmap='hot')
                                 ax[2].axis('off')
+                                fig.tight_layout()
                                 p = str(data['pid'][j].item())
                                 plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + lab + '_' + str(i) + '_' +
                                             p + '.png')
