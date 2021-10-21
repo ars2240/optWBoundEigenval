@@ -95,7 +95,7 @@ def options():
     opt['verbose'] = True
     opt['train'] = False
     opt['test'] = False
-    opt['comp_test'] = True
+    opt['comp_test'] = False
     opt['rho_test'] = False
     # opt['other_classes'] = list(range(1, 7))
     opt['saliency'] = 0
