@@ -21,6 +21,7 @@ class KFACOptimizer(optim.Optimizer):
                         weight_decay=weight_decay)
         # TODO (CW): KFAC optimizer now only support model as input
         super(KFACOptimizer, self).__init__(model.parameters(), defaults)
+
         self.CovAHandler = ComputeCovA()
         self.CovGHandler = ComputeCovG()
         self.batch_averaged = batch_averaged
