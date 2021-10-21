@@ -20,7 +20,7 @@ from dcnn import *
 
 def options():
     # create options dictionary and some parameters
-    opt = {'seed': 1226, 'tol': 0.001, 'mu': 1e-4, 'K': 0}
+    opt = {'seed': 1226, 'tol': 0.001, 'mu': 1e-5, 'K': 0}
     enc = 'dens121'  # model type
 
     # batch size
@@ -103,7 +103,7 @@ def options():
     opt['verbose'] = True
     opt['train'] = False
     opt['test'] = False
-    opt['comp_test'] = False
+    opt['comp_test'] = True
     opt['rho_test'] = False
     # opt['other_classes'] = list(range(1, 7))
     opt['saliency'] = 0
