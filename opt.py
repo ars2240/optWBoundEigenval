@@ -1354,8 +1354,8 @@ class OptWBoundEignVal(object):
 
         i = 0
         jac_dic = {}
-        # sal_mean = []
-        # sal_comp_mean = []
+        sal_mean = []
+        sal_comp_mean = []
         for x in mc:
             jac_dic[list(classes[0])[x]] = []
         for loader in loaders:
@@ -1410,8 +1410,8 @@ class OptWBoundEignVal(object):
 
                 for j in range(inputs.shape[0]):
                     jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
-                    # sal_mean.append(torch.mean(saliency[j]).item())
-                    #  sal_comp_mean.append(torch.mean(sal_comp[j]).item())
+                    sal_mean.append(torch.quantile(saliency[j], .9).item())
+                    sal_comp_mean.append(torch.quantile(sal_comp[j], .9).item())
                     for x in range(len(mc)):
                         """
                         if target[j, x] > 0:
@@ -1432,9 +1432,9 @@ class OptWBoundEignVal(object):
                                 fig.suptitle(lab + ', Jac={:.3f}'.format(jac))
                                 ax[0].imshow(inputs[j].cpu().detach().numpy().transpose(1, 2, 0))
                                 ax[0].axis('off')
-                                ax[1].imshow(saliency[j], cmap='hot')
+                                ax[1].imshow(saliency[j] > thresh, cmap='hot')
                                 ax[1].axis('off')
-                                ax[2].imshow(sal_comp[j], cmap='hot')
+                                ax[2].imshow(sal_comp[j] > thresh, cmap='hot')
                                 ax[2].axis('off')
                                 fig.tight_layout()
                                 p = str(data['pid'][j].item())
@@ -1442,7 +1442,7 @@ class OptWBoundEignVal(object):
                                             p + '.png')
                                 plt.clf()
 
-            # print('%f\t%f' % (np.mean(sal_mean), np.mean(sal_comp_mean)))
+            print('%f\t%f' % (np.mean(sal_mean), np.mean(sal_comp_mean)))
             print(jac_dic)
             plt.rcdefaults()
             for x in range(len(mc)):
