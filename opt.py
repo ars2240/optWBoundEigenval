@@ -1354,8 +1354,7 @@ class OptWBoundEignVal(object):
 
         i = 0
         jac_dic = {}
-        sal_mean = []
-        sal_comp_mean = []
+        # sal_mean, sal_comp_mean = [], []
         for x in mc:
             jac_dic[list(classes[0])[x]] = []
         for loader in loaders:
@@ -1408,10 +1407,15 @@ class OptWBoundEignVal(object):
                 sal_comp, _ = torch.max(inputs.grad.data.abs(), dim=1)
                 sal_comp = sal_comp.to('cpu')
 
+                plt.hist(saliency, bins=20, range=(0, 1))
+                plt.savefig('./plots/' + self.header2 + '_saliency_hist_' + str(i) + '.png')
+                plt.clf()
+                break
+
                 for j in range(inputs.shape[0]):
                     jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
-                    sal_mean.append(np.quantile(saliency[j].numpy(), .9))
-                    sal_comp_mean.append(np.quantile(sal_comp[j].numpy(), .9))
+                    # sal_mean.append(np.quantile(saliency[j].numpy(), .9))
+                    # sal_comp_mean.append(np.quantile(sal_comp[j].numpy(), .9))
                     for x in range(len(mc)):
                         """
                         if target[j, x] > 0:
@@ -1442,7 +1446,7 @@ class OptWBoundEignVal(object):
                                             p + '.png')
                                 plt.clf()
 
-            print('%f\t%f' % (np.mean(sal_mean), np.mean(sal_comp_mean)))
+            # print('%f\t%f' % (np.mean(sal_mean), np.mean(sal_comp_mean)))
             print(jac_dic)
             plt.rcdefaults()
             for x in range(len(mc)):
