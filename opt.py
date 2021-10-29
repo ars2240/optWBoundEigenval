@@ -1407,10 +1407,12 @@ class OptWBoundEignVal(object):
                 sal_comp, _ = torch.max(inputs.grad.data.abs(), dim=1)
                 sal_comp = sal_comp.to('cpu')
 
-                plt.hist(saliency, bins=20, range=(0, 1))
+                #"""
+                plt.hist(saliency, bins=20)
                 plt.savefig('./plots/' + self.header2 + '_saliency_hist_' + str(i) + '.png')
                 plt.clf()
                 break
+                #"""
 
                 for j in range(inputs.shape[0]):
                     jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
