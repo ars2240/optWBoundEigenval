@@ -1277,7 +1277,7 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=.0003, jac_thresh=0.8):
+    def jaccard(self, loaders, train_loader, fname, thresh=.0028, jac_thresh=0.7):
         # compute jaccard intersection of saliency maps
 
         # load comparison model
