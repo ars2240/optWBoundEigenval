@@ -1277,7 +1277,7 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=.0028, jac_thresh=0.7):
+    def jaccard(self, loaders, train_loader, fname, thresh=.0028, jac_thresh=0.65):
         # compute jaccard intersection of saliency maps
 
         # load comparison model
@@ -1442,7 +1442,7 @@ class OptWBoundEignVal(object):
                                 ax[1].axis('off')
                                 ax[2].imshow(sal_comp[j] > thresh, cmap='hot')
                                 ax[2].axis('off')
-                                fig.tight_layout()
+                                #fig.tight_layout()
                                 p = str(data['pid'][j].item())
                                 plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + lab + '_' + str(i) + '_' +
                                             p + '.png')
