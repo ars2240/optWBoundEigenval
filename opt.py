@@ -1277,7 +1277,7 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=.0028, jac_thresh=0.65):
+    def jaccard(self, loaders, train_loader, fname, thresh=.0028, jac_thresh=0.1):
         # compute jaccard intersection of saliency maps
 
         # load comparison model
@@ -1415,7 +1415,9 @@ class OptWBoundEignVal(object):
                 """
 
                 for j in range(inputs.shape[0]):
-                    jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
+                    # jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
+                    jac = jaccard_score(saliency[j].flatten() > np.quantile(saliency[j].numpy(), .9),
+                                        sal_comp[j].flatten() > np.quantile(sal_comp[j].numpy(), .9))
                     # sal_mean.append(np.quantile(saliency[j].numpy(), .9))
                     # sal_comp_mean.append(np.quantile(sal_comp[j].numpy(), .9))
                     for x in range(len(mc)):
