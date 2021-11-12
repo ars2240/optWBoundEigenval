@@ -1419,9 +1419,9 @@ class OptWBoundEignVal(object):
                 """
 
                 for j in range(inputs.shape[0]):
-                    # jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
-                    jac = jaccard_score(saliency[j].flatten() > np.quantile(saliency[j].numpy(), .9),
-                                        sal_comp[j].flatten() > np.quantile(sal_comp[j].numpy(), .9))
+                    jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
+                    # jac = jaccard_score(saliency[j].flatten() > np.quantile(saliency[j].numpy(), .9),
+                    #                     sal_comp[j].flatten() > np.quantile(sal_comp[j].numpy(), .9))
                     # sal_mean.append(np.quantile(saliency[j].numpy(), .9))
                     # sal_comp_mean.append(np.quantile(sal_comp[j].numpy(), .9))
                     sal_mean.append(torch.mean(saliency[j]).item())
