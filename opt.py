@@ -9,7 +9,6 @@
 # Dependencies:
 #   Packages: requests, numpy, scipy, sklearn, torch
 
-import copy
 import inspect
 import random
 import re
@@ -27,6 +26,7 @@ from torch.autograd import Variable
 import torch.utils.data as utils_data
 import torch.nn.functional as F
 from kfac import KFACOptimizer
+from guided_backprop import GuidedBackprop
 import warnings
 
 warnings.simplefilter(action='ignore', category=UserWarning)
@@ -1281,7 +1281,7 @@ class OptWBoundEignVal(object):
         # compute jaccard intersection of saliency maps
 
         # load comparison model
-        comp_model = copy.deepcopy(self.model)
+        comp_model = self.model.clone()
         state = self.load_state(fname)
         comp_model.load_state_dict(state)
         comp_model.to(self.device)
@@ -1354,7 +1354,7 @@ class OptWBoundEignVal(object):
 
         i = 0
         jac_dic = {}
-        # sal_mean, sal_comp_mean = [], []
+        sal_mean, sal_comp_mean = [], []
         for x in mc:
             jac_dic[list(classes[0])[x]] = []
         for loader in loaders:
@@ -1399,12 +1399,16 @@ class OptWBoundEignVal(object):
 
                 self.zero_grad()
                 f.backward()  # back prop
-                saliency, _ = torch.max(inputs.grad.data.abs(), dim=1)
+                # saliency, _ = torch.max(inputs.grad.data.abs(), dim=1)
+                GBP = GuidedBackprop(self.model)
+                saliency = GBP.generate_gradients(inputs, target)
                 saliency = saliency.to('cpu')
 
                 self.zero_grad(comp_model)
                 comp_f.backward()  # back prop
-                sal_comp, _ = torch.max(inputs.grad.data.abs(), dim=1)
+                # sal_comp, _ = torch.max(inputs.grad.data.abs(), dim=1)
+                GBP = GuidedBackprop(comp_model)
+                sal_comp = GBP.generate_gradients(inputs, target)
                 sal_comp = sal_comp.to('cpu')
 
                 """
@@ -1420,6 +1424,8 @@ class OptWBoundEignVal(object):
                                         sal_comp[j].flatten() > np.quantile(sal_comp[j].numpy(), .9))
                     # sal_mean.append(np.quantile(saliency[j].numpy(), .9))
                     # sal_comp_mean.append(np.quantile(sal_comp[j].numpy(), .9))
+                    sal_mean.append(torch.mean(saliency[j]).item())
+                    sal_comp_mean.append(torch.mean(sal_comp[j]).item())
                     for x in range(len(mc)):
                         """
                         if target[j, x] > 0:
@@ -1450,7 +1456,7 @@ class OptWBoundEignVal(object):
                                             p + '.png')
                                 plt.clf()
 
-            # print('%f\t%f' % (np.mean(sal_mean), np.mean(sal_comp_mean)))
+            print('%f\t%f' % (np.mean(sal_mean), np.mean(sal_comp_mean)))
             print(jac_dic)
             plt.rcdefaults()
             for x in range(len(mc)):
