@@ -9,6 +9,7 @@
 # Dependencies:
 #   Packages: requests, numpy, scipy, sklearn, torch
 
+import copy
 import inspect
 import random
 import re
@@ -1281,7 +1282,7 @@ class OptWBoundEignVal(object):
         # compute jaccard intersection of saliency maps
 
         # load comparison model
-        comp_model = self.model.clone()
+        comp_model = copy.deepcopy(self.model)
         state = self.load_state(fname)
         comp_model.load_state_dict(state)
         comp_model.to(self.device)
