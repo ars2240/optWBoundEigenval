@@ -1458,7 +1458,7 @@ class OptWBoundEignVal(object):
                                 plt.clf()
 
             print('%f\t%f' % (np.mean(sal_mean), np.mean(sal_comp_mean)))
-            print(jac_dic)
+            # print(jac_dic)
             plt.rcdefaults()
             for x in range(len(mc)):
                 lab = list(classes[0])[mc[x]]
