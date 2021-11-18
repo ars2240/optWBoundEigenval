@@ -49,7 +49,7 @@ class GuidedBackprop():
             self.forward_relu_outputs.append(ten_out)
 
         # Loop through layers, hook up ReLUs
-        for pos, module in self.model.features._modules.items():
+        for pos, module in self.model.modules.items():
             if isinstance(module, ReLU):
                 module.register_backward_hook(relu_backward_hook_function)
                 module.register_forward_hook(relu_forward_hook_function)
