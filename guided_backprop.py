@@ -22,7 +22,7 @@ class GuidedBackprop():
         def hook_function(module, grad_in, grad_out):
             self.gradients = grad_in[0]
         # Register hook to the first layer
-        first_layer = list(self.model.modules())[0][1]
+        first_layer = list(self.model.modules())[0]  # [1]
         first_layer.register_backward_hook(hook_function)
 
     def update_relus(self):
