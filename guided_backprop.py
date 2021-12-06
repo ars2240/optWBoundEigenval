@@ -54,9 +54,10 @@ class GuidedBackprop():
                 module.register_backward_hook(relu_backward_hook_function)
                 module.register_forward_hook(relu_forward_hook_function)
 
-    def generate_gradients(self, input_image, target_class):
+    def generate_gradients(self, input_image, target_class, mc):
         # Forward pass
-        model_output = self.model(input_image)
+        output = self.model(input_image)
+        output = output[:, mc]
         # Zero gradients
         self.model.zero_grad()
         # Target for backprop
@@ -64,7 +65,7 @@ class GuidedBackprop():
         # one_hot_output[0][target_class] = 1
         # Backward pass
         # model_output.backward(gradient=one_hot_output)
-        model_output.backward(gradient=target_class)
+        output.backward(gradient=target_class)
         # Convert Pytorch variable to numpy array
         # [0] to get rid of the first channel (1,3,224,224)
         # gradients_as_arr = self.gradients.data.numpy()[0]

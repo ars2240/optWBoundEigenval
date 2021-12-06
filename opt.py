@@ -1402,7 +1402,7 @@ class OptWBoundEignVal(object):
                 f.backward()  # back prop
                 # saliency, _ = torch.max(inputs.grad.data.abs(), dim=1)
                 GBP = GuidedBackprop(self.model)
-                saliency = GBP.generate_gradients(inputs, target)
+                saliency = GBP.generate_gradients(inputs, target, mc)
                 saliency = saliency.to('cpu')
 
                 self.zero_grad(comp_model)
