@@ -1388,6 +1388,7 @@ class OptWBoundEignVal(object):
                         output = output[:, mc]
                         comp_out = comp_out[:, mc]
 
+                """
                 # compute loss
                 if self.loss.__class__.__name__ == 'KLDivLoss':
                     target_onehot = torch.zeros(output.shape)
@@ -1397,19 +1398,20 @@ class OptWBoundEignVal(object):
                 else:
                     f = self.loss(output, target)
                     comp_f = self.loss(comp_out, target)
+                """
 
                 self.zero_grad()
-                f.backward()  # back prop
+                # f.backward()  # back prop
                 # saliency, _ = torch.max(inputs.grad.data.abs(), dim=1)
                 GBP = GuidedBackprop(self.model)
                 saliency = GBP.generate_gradients(inputs, target, mc)
                 saliency = saliency.to('cpu')
 
                 self.zero_grad(comp_model)
-                comp_f.backward()  # back prop
+                # comp_f.backward()  # back prop
                 # sal_comp, _ = torch.max(inputs.grad.data.abs(), dim=1)
                 GBP = GuidedBackprop(comp_model)
-                sal_comp = GBP.generate_gradients(inputs, target)
+                sal_comp = GBP.generate_gradients(inputs, target, mc)
                 sal_comp = sal_comp.to('cpu')
 
                 """
