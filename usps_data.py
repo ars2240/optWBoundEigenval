@@ -187,6 +187,9 @@ class CNN(nn.Module):
         self.fc2 = nn.Linear(64, 10)
 
     def forward(self, x):
+        if type(x).__moduel__ == 'numpy':
+            x = torch.from_numpy(x)
+
         # change shape
         x = x.view(-1, 1, 16, 16)
 
