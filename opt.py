@@ -1374,8 +1374,8 @@ class OptWBoundEignVal(object):
                     raise Exception('Data type not supported')
 
                 inputs.requires_grad_()
-                output = self.model(inputs)  # compute prediction
-                comp_out = comp_model(inputs)
+                # output = self.model(inputs)  # compute prediction
+                # comp_out = comp_model(inputs)
 
                 # subset classes
                 if c is not None:
@@ -1385,8 +1385,8 @@ class OptWBoundEignVal(object):
                         print('"Classes" argument only implemented for one-hot encoding')
                     else:
                         target = target[:, c]
-                        output = output[:, mc]
-                        comp_out = comp_out[:, mc]
+                        # output = output[:, mc]
+                        # comp_out = comp_out[:, mc]
 
                 """
                 # compute loss
@@ -1404,14 +1404,14 @@ class OptWBoundEignVal(object):
                 # f.backward()  # back prop
                 # saliency, _ = torch.max(inputs.grad.data.abs(), dim=1)
                 GBP = GuidedBackprop(self.model)
-                saliency = GBP.generate_gradients(inputs, target, mc)
+                saliency, output = GBP.generate_gradients(inputs, target, mc)
                 saliency = saliency.to('cpu')
 
                 self.zero_grad(comp_model)
                 # comp_f.backward()  # back prop
                 # sal_comp, _ = torch.max(inputs.grad.data.abs(), dim=1)
                 GBP = GuidedBackprop(comp_model)
-                sal_comp = GBP.generate_gradients(inputs, target, mc)
+                sal_comp, comp_out = GBP.generate_gradients(inputs, target, mc)
                 sal_comp = sal_comp.to('cpu')
 
                 """
