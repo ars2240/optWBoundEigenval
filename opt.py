@@ -1438,14 +1438,15 @@ class OptWBoundEignVal(object):
                                                           comp_out[j, x], comp_cut2[x]))
                         """
                         if target[j, x] > 0 and output[j, x] > cut2[x] and comp_out[j, x] > comp_cut2[x]:
-                            #"""
+                            """
                             print('Hit!')
                             print('%f\t%f' % (torch.mean((saliency[j].flatten() > thresh).float()).item(),
                                               torch.mean((sal_comp[j].flatten() > thresh).float()).item()))
-                            #"""
+                            """
                             jac_dic[list(classes[0])[mc[x]]].append(jac)
 
                             if jac < jac_thresh:
+                                print('Hit! ' + str(jac))
                                 lab = list(classes[0])[mc[x]]
                                 fig, ax = plt.subplots(1, 3)
                                 fig.suptitle(lab + ', Jac={:.3f}'.format(jac))
