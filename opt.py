@@ -410,7 +410,7 @@ class OptWBoundEignVal(object):
         pstart = time.time()  # start timer
         for i in range(0, np.min([self.ndim, self.max_pow_iter])):
 
-            start = time.time()  # start timer
+            c
             v_new = self.hvp_op.Hv(v, storedGrad=True)  # compute H*v
             # v_new = self.kfac(v)
             hvTime += time.time() - start
@@ -1328,13 +1328,15 @@ class OptWBoundEignVal(object):
             comp_outs2 = comp_outs2[good]
             labels2 = labels2[good]
 
+            np.seterr(invalid='ignore')
+
             precision, recall, thresholds = precision_recall_curve(labels2, outputs2)
-            f1 = 2 * precision * recall / (precision + recall)
+            f1 = np.divide(2 * precision * recall, precision + recall)
             cut[i] = thresholds[np.nanargmax(f1)]
             # print(f1[np.nanargmax(f1)])
 
             precision, recall, thresholds = precision_recall_curve(labels2, comp_outs2)
-            f1 = 2 * precision * recall / (precision + recall)
+            f1 = np.divide(2 * precision * recall, precision + recall)
             comp_cut[i] = thresholds[np.nanargmax(f1)]
             # print(f1[np.nanargmax(f1)])
 
@@ -1353,17 +1355,19 @@ class OptWBoundEignVal(object):
         else:
             raise Exception('Insufficient Classes')
 
-        i = 0
         jac_dic = {}
         sal_mean, sal_comp_mean = [], []
         for x in mc:
             jac_dic[list(classes[0])[x]] = []
         for loader in loaders:
+            i = 0
             loader = assert_dl(loader, self.batch_size, self.num_workers)
             cut2 = cut[mc]
             comp_cut2 = comp_cut[mc]
             c = [list(classes[i]).index(x) for x in overlap]
             for _, data in enumerate(loader):
+                start = time.time()
+
                 if type(data) == list:
                     inputs, target = data
                     inputs = inputs.to(self.device)
@@ -1400,7 +1404,7 @@ class OptWBoundEignVal(object):
                     comp_f = self.loss(comp_out, target)
                 """
 
-                self.zero_grad()
+                # self.zero_grad()
                 # f.backward()  # back prop
                 # saliency, _ = torch.max(inputs.grad.data.abs(), dim=1)
                 GBP = GuidedBackprop(self.model)
@@ -1408,7 +1412,7 @@ class OptWBoundEignVal(object):
                 saliency, _ = torch.max(saliency.abs(), dim=1)
                 saliency = saliency.to('cpu')
 
-                self.zero_grad(comp_model)
+                # self.zero_grad(comp_model)
                 # comp_f.backward()  # back prop
                 # sal_comp, _ = torch.max(inputs.grad.data.abs(), dim=1)
                 GBP = GuidedBackprop(comp_model)
@@ -1461,6 +1465,9 @@ class OptWBoundEignVal(object):
                                 plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + lab + '_' + str(i) + '_' +
                                             p + '.png')
                                 plt.clf()
+                stop = time.time() - start
+                timeHMS(stop, 'Batch ' + str(i) + ' ')
+                i += 1
 
             print('%f\t%f' % (np.mean(sal_mean), np.mean(sal_comp_mean)))
             # print(jac_dic)
