@@ -1409,6 +1409,7 @@ class OptWBoundEignVal(object):
                 # saliency, _ = torch.max(inputs.grad.data.abs(), dim=1)
                 GBP = GuidedBackprop(self.model)
                 saliency, output = GBP.generate_gradients(inputs, target, mc)
+                del GBP
                 saliency, _ = torch.max(saliency.abs(), dim=1)
                 saliency = saliency.to('cpu')
 
@@ -1417,6 +1418,7 @@ class OptWBoundEignVal(object):
                 # sal_comp, _ = torch.max(inputs.grad.data.abs(), dim=1)
                 GBP = GuidedBackprop(comp_model)
                 sal_comp, comp_out = GBP.generate_gradients(inputs, target, mc)
+                del GBP
                 sal_comp, _ = torch.max(sal_comp.abs(), dim=1)
                 sal_comp = sal_comp.to('cpu')
 
@@ -1465,6 +1467,9 @@ class OptWBoundEignVal(object):
                                 plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + lab + '_' + str(i) + '_' +
                                             p + '.png')
                                 plt.clf()
+
+                if self.use_gpu:
+                    torch.cuda.empty_cache()
                 stop = time.time() - start
                 timeHMS(stop, 'Batch ' + str(i) + ' ')
                 i += 1
