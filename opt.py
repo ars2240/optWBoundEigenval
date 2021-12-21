@@ -1356,11 +1356,11 @@ class OptWBoundEignVal(object):
             raise Exception('Insufficient Classes')
 
         jac_dic = {}
-        sal_mean, sal_comp_mean = [], []
         for x in mc:
             jac_dic[list(classes[0])[x]] = []
         for loader in loaders:
-            i = 0
+            sal_mean, sal_comp_mean = 0, 0
+            i, n = 0, 0
             loader = assert_dl(loader, self.batch_size, self.num_workers)
             cut2 = cut[mc]
             comp_cut2 = comp_cut[mc]
@@ -1435,8 +1435,9 @@ class OptWBoundEignVal(object):
                     #                     sal_comp[j].flatten() > np.quantile(sal_comp[j].numpy(), .9))
                     # sal_mean.append(np.quantile(saliency[j].numpy(), .9))
                     # sal_comp_mean.append(np.quantile(sal_comp[j].numpy(), .9))
-                    sal_mean.append(torch.mean(saliency[j]).item())
-                    sal_comp_mean.append(torch.mean(sal_comp[j]).item())
+                    sal_mean = sal_mean * n/(n+1) + torch.mean(saliency[j]).item()/(n+1)
+                    sal_comp_mean = sal_comp_mean * n/(n+1) + torch.mean(sal_comp[j]).item()/(n+1)
+                    n += 1
                     for x in range(len(mc)):
                         """
                         if target[j, x] > 0:
@@ -1456,7 +1457,7 @@ class OptWBoundEignVal(object):
                                 lab = list(classes[0])[mc[x]]
                                 fig, ax = plt.subplots(1, 3)
                                 fig.suptitle(lab + ', Jac={:.3f}'.format(jac))
-                                ax[0].imshow(inputs[j].cpu().detach().numpy().transpose(1, 2, 0))
+                                ax[0].imshow(inputs[j].detach().cpu().numpy().transpose(1, 2, 0))
                                 ax[0].axis('off')
                                 ax[1].imshow(saliency[j] > thresh, cmap='hot')
                                 ax[1].axis('off')
