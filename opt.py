@@ -1472,6 +1472,7 @@ class OptWBoundEignVal(object):
                 if self.use_gpu:
                     torch.cuda.empty_cache()
                     self.mem_check()
+                    check_cpu()
                 stop = time.time() - start
                 timeHMS(stop, 'Batch ' + str(i) + ' ')
                 i += 1
