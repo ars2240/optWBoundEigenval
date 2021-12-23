@@ -1356,6 +1356,8 @@ class OptWBoundEignVal(object):
             raise Exception('Insufficient Classes')
 
         jac_dic = {}
+        GBP = GuidedBackprop(self.model)
+        GBP_comp = GuidedBackprop(comp_model)
         for x in mc:
             jac_dic[list(classes[0])[x]] = []
         for loader in loaders:
@@ -1392,8 +1394,8 @@ class OptWBoundEignVal(object):
                         # output = output[:, mc]
                         # comp_out = comp_out[:, mc]
 
-                stop = time.time() - start
-                timeHMS(stop, 'Part 1 ')
+                # stop = time.time() - start
+                # timeHMS(stop, 'Part 1 ')
 
                 """
                 # compute loss
@@ -1410,23 +1412,19 @@ class OptWBoundEignVal(object):
                 # self.zero_grad()
                 # f.backward()  # back prop
                 # saliency, _ = torch.max(inputs.grad.data.abs(), dim=1)
-                GBP = GuidedBackprop(self.model)
                 saliency, output = GBP.generate_gradients(inputs, target, mc)
-                del GBP
                 saliency, _ = torch.max(saliency.abs(), dim=1)
                 saliency = saliency.to('cpu')
 
                 # self.zero_grad(comp_model)
                 # comp_f.backward()  # back prop
                 # sal_comp, _ = torch.max(inputs.grad.data.abs(), dim=1)
-                GBP = GuidedBackprop(comp_model)
-                sal_comp, comp_out = GBP.generate_gradients(inputs, target, mc)
-                del GBP
+                sal_comp, comp_out = GBP_comp.generate_gradients(inputs, target, mc)
                 sal_comp, _ = torch.max(sal_comp.abs(), dim=1)
                 sal_comp = sal_comp.to('cpu')
 
-                stop = time.time() - start
-                timeHMS(stop, 'Part 2 ')
+                # stop = time.time() - start
+                # timeHMS(stop, 'Part 2 ')
 
                 """
                 plt.hist(saliency.flatten(), bins=20)
