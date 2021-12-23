@@ -1368,7 +1368,7 @@ class OptWBoundEignVal(object):
             comp_cut2 = comp_cut[mc]
             c = [list(classes[i]).index(x) for x in overlap]
             for _, data in enumerate(loader):
-                start = time.time()
+                # start = time.time()
 
                 if type(data) == list:
                     inputs, target = data
@@ -1478,8 +1478,8 @@ class OptWBoundEignVal(object):
                     if self.mem_track:
                         self.mem_check()
                         check_cpu()
-                stop = time.time() - start
-                timeHMS(stop, 'Batch ' + str(i) + ' ')
+                # stop = time.time() - start
+                # timeHMS(stop, 'Batch ' + str(i) + ' ')
                 i += 1
 
             print('%f\t%f' % (sal_mean, sal_comp_mean))
