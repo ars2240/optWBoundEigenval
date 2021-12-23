@@ -1377,7 +1377,7 @@ class OptWBoundEignVal(object):
                 else:
                     raise Exception('Data type not supported')
 
-                inputs.requires_grad_()
+                # inputs.requires_grad_()
                 # output = self.model(inputs)  # compute prediction
                 # comp_out = comp_model(inputs)
 
@@ -1391,6 +1391,9 @@ class OptWBoundEignVal(object):
                         target = target[:, c]
                         # output = output[:, mc]
                         # comp_out = comp_out[:, mc]
+
+                stop = time.time() - start
+                timeHMS(stop, 'Part 1 ')
 
                 """
                 # compute loss
@@ -1421,6 +1424,9 @@ class OptWBoundEignVal(object):
                 del GBP
                 sal_comp, _ = torch.max(sal_comp.abs(), dim=1)
                 sal_comp = sal_comp.to('cpu')
+
+                stop = time.time() - start
+                timeHMS(stop, 'Part 2 ')
 
                 """
                 plt.hist(saliency.flatten(), bins=20)
@@ -1471,8 +1477,9 @@ class OptWBoundEignVal(object):
 
                 if self.use_gpu:
                     torch.cuda.empty_cache()
-                    self.mem_check()
-                    check_cpu()
+                    if self.mem_track:
+                        self.mem_check()
+                        check_cpu()
                 stop = time.time() - start
                 timeHMS(stop, 'Batch ' + str(i) + ' ')
                 i += 1
