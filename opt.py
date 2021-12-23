@@ -1278,7 +1278,7 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=.0028, jac_thresh=0.2):
+    def jaccard(self, loaders, train_loader, fname, thresh=.05, jac_thresh=0.2):
         # compute jaccard intersection of saliency maps
 
         # load comparison model
@@ -1358,11 +1358,12 @@ class OptWBoundEignVal(object):
         jac_dic = {}
         GBP = GuidedBackprop(self.model)
         GBP_comp = GuidedBackprop(comp_model)
+        i = 0
         for x in mc:
             jac_dic[list(classes[0])[x]] = []
         for loader in loaders:
             sal_mean, sal_comp_mean = 0, 0
-            i, n = 0, 0
+            b, n = 0, 0
             loader = assert_dl(loader, self.batch_size, self.num_workers)
             cut2 = cut[mc]
             comp_cut2 = comp_cut[mc]
@@ -1415,6 +1416,7 @@ class OptWBoundEignVal(object):
                 saliency, output = GBP.generate_gradients(inputs, target, mc)
                 saliency, _ = torch.max(saliency.abs(), dim=1)
                 saliency = saliency.to('cpu')
+                print(saliency.shape)
 
                 # self.zero_grad(comp_model)
                 # comp_f.backward()  # back prop
@@ -1480,7 +1482,7 @@ class OptWBoundEignVal(object):
                         check_cpu()
                 # stop = time.time() - start
                 # timeHMS(stop, 'Batch ' + str(i) + ' ')
-                i += 1
+                b += 1
 
             print('%f\t%f' % (sal_mean, sal_comp_mean))
             # print(jac_dic)
