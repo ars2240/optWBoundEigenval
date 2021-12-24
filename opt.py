@@ -1278,7 +1278,7 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=.05, jac_thresh=0.25):
+    def jaccard(self, loaders, train_loader, fname, thresh=.003, jac_thresh=0.25):
         # compute jaccard intersection of saliency maps
 
         # load comparison model
@@ -1414,7 +1414,7 @@ class OptWBoundEignVal(object):
                 # f.backward()  # back prop
                 # saliency, _ = torch.max(inputs.grad.data.abs(), dim=1)
                 saliency, output = GBP.generate_gradients(inputs, target, mc)
-                print(saliency.shape)
+                # print(saliency.shape)
                 saliency, _ = torch.max(saliency.abs(), dim=1)
                 saliency = saliency.to('cpu')
 
