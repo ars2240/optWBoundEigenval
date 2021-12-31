@@ -1436,9 +1436,9 @@ class OptWBoundEignVal(object):
                 """
 
                 for j in range(inputs.shape[0]):
-                    jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
-                    # jac = jaccard_score(saliency[j].flatten() > np.quantile(saliency[j].numpy(), .9),
-                    #                     sal_comp[j].flatten() > np.quantile(sal_comp[j].numpy(), .9))
+                    # jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
+                    jac = jaccard_score(saliency[j].flatten() > np.quantile(saliency[j].numpy(), .9),
+                                        sal_comp[j].flatten() > np.quantile(sal_comp[j].numpy(), .9))
                     # sal_mean.append(np.quantile(saliency[j].numpy(), .9))
                     # sal_comp_mean.append(np.quantile(sal_comp[j].numpy(), .9))
                     sal_mean = sal_mean * n/(n+1) + torch.mean(saliency[j]).item()/(n+1)
@@ -1474,6 +1474,7 @@ class OptWBoundEignVal(object):
                                 plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + lab + '_' + str(i) + '_' +
                                             p + '.png')
                                 plt.clf()
+                                plt.close()
 
                 if self.use_gpu:
                     torch.cuda.empty_cache()
@@ -1493,6 +1494,7 @@ class OptWBoundEignVal(object):
                 plt.title(lab)
                 plt.savefig('./plots/' + self.header2 + '_jaccard_hist_' + lab + '_' + str(i) + '.png')
                 plt.clf()
+                plt.close()
             i += 1
             # break
 
