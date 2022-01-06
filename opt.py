@@ -1278,7 +1278,7 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=.003, jac_thresh=0.9):
+    def jaccard(self, loaders, train_loader, fname, thresh=.003, jac_thresh=0.9, tail='_RC_UI'):
         # compute jaccard intersection of saliency maps
 
         # load comparison model
@@ -1450,7 +1450,7 @@ class OptWBoundEignVal(object):
                             print('%s\t%f\t%f\t%f\t%f' % (list(classes[0])[mc[x]], output[j, x], cut2[x],
                                                           comp_out[j, x], comp_cut2[x]))
                         """
-                        if target[j, x] > 0 and output[j, x] > cut2[x] and comp_out[j, x] > comp_cut2[x]:
+                        if target[j, x] > 0 and output[j, x] > cut2[x] and comp_out[j, x] < comp_cut2[x]:
                             """
                             print('Hit!')
                             print('%f\t%f' % (torch.mean((saliency[j].flatten() > thresh).float()).item(),
@@ -1472,7 +1472,7 @@ class OptWBoundEignVal(object):
                                 #fig.tight_layout()
                                 p = str(data['pid'][j].item())
                                 plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + lab + '_' + str(i) + '_' +
-                                            p + '.png')
+                                            p + tail +'.png')
                                 plt.clf()
                                 plt.close()
 
@@ -1492,7 +1492,7 @@ class OptWBoundEignVal(object):
                 lab = list(classes[0])[mc[x]]
                 plt.hist(jac_dic[lab], bins=20, range=(0, 1))
                 plt.title(lab)
-                plt.savefig('./plots/' + self.header2 + '_jaccard_hist_' + lab + '_' + str(i) + '.png')
+                plt.savefig('./plots/' + self.header2 + '_jaccard_hist_' + lab + '_' + str(i) + tail + '.png')
                 plt.clf()
                 plt.close()
             i += 1
