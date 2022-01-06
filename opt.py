@@ -1278,7 +1278,7 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=.003, jac_thresh=0.9, tail='_RC_UI'):
+    def jaccard(self, loaders, train_loader, fname, thresh=.003, jac_thresh=0.9, tail='_RI_UC'):
         # compute jaccard intersection of saliency maps
 
         # load comparison model
@@ -1450,7 +1450,7 @@ class OptWBoundEignVal(object):
                             print('%s\t%f\t%f\t%f\t%f' % (list(classes[0])[mc[x]], output[j, x], cut2[x],
                                                           comp_out[j, x], comp_cut2[x]))
                         """
-                        if target[j, x] > 0 and output[j, x] > cut2[x] and comp_out[j, x] < comp_cut2[x]:
+                        if target[j, x] > 0 and output[j, x] < cut2[x] and comp_out[j, x] > comp_cut2[x]:
                             """
                             print('Hit!')
                             print('%f\t%f' % (torch.mean((saliency[j].flatten() > thresh).float()).item(),
