@@ -1278,7 +1278,7 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=.003, jac_thresh=0.9, tail='_RI_UI'):
+    def jaccard(self, loaders, train_loader, fname, thresh=.003, jac_thresh=0.85, tail=''):
         # compute jaccard intersection of saliency maps
 
         # load comparison model
@@ -1450,19 +1450,22 @@ class OptWBoundEignVal(object):
                             print('%s\t%f\t%f\t%f\t%f' % (list(classes[0])[mc[x]], output[j, x], cut2[x],
                                                           comp_out[j, x], comp_cut2[x]))
                         """
-                        if target[j, x] > 0 and output[j, x] < cut2[x] and comp_out[j, x] < comp_cut2[x]:
+                        if target[j, x] > 0: # and output[j, x] < cut2[x] and comp_out[j, x] < comp_cut2[x]:
                             """
                             print('Hit!')
                             print('%f\t%f' % (torch.mean((saliency[j].flatten() > thresh).float()).item(),
                                               torch.mean((sal_comp[j].flatten() > thresh).float()).item()))
                             """
                             jac_dic[list(classes[0])[mc[x]]].append(jac)
+                            tit = 'Model Incorrect, ' if output[j, x] < cut2[x] else 'Model Correct, '
+                            tit += 'Comp Incorrect' if comp_out[j, x] < comp_cut2[x] else 'Comp Correct'
 
                             if 0 < jac < jac_thresh:
                                 print('Hit! ' + str(jac))
                                 lab = list(classes[0])[mc[x]]
                                 fig, ax = plt.subplots(1, 3)
                                 fig.suptitle(lab + ', Jac={:.3f}'.format(jac))
+                                fig.title(tit)
                                 ax[0].imshow(inputs[j].detach().cpu().numpy().transpose(1, 2, 0))
                                 ax[0].axis('off')
                                 ax[1].imshow(saliency[j] > np.quantile(saliency[j].numpy(), .9), cmap='hot')
