@@ -1464,8 +1464,7 @@ class OptWBoundEignVal(object):
                                 print('Hit! ' + str(jac))
                                 lab = list(classes[0])[mc[x]]
                                 fig, ax = plt.subplots(1, 3)
-                                fig.suptitle(lab + ', Jac={:.3f}'.format(jac))
-                                fig.title(tit)
+                                fig.suptitle(lab + ', Jac={:.3f}\n'.format(jac) + tit)
                                 ax[0].imshow(inputs[j].detach().cpu().numpy().transpose(1, 2, 0))
                                 ax[0].axis('off')
                                 ax[1].imshow(saliency[j] > np.quantile(saliency[j].numpy(), .9), cmap='hot')
