@@ -5,8 +5,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as cp
 from collections import OrderedDict
-from torchvision.models.utils import load_state_dict_from_url
-from torch import Tensor
+from torchvision.hub import load_state_dict_from_url
+from torch import Tensorf
 from torch.jit.annotations import List
 
 

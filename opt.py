@@ -1282,6 +1282,8 @@ class OptWBoundEignVal(object):
 
     def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.85, tail='', method='backprop',
                 thresh_type='quantile', max_img=20):
+        # method = saliency, backprop, or cam
+        # thresh_type = fixed or quantile
         # compute jaccard intersection of saliency maps
 
         # load comparison model
@@ -1428,16 +1430,15 @@ class OptWBoundEignVal(object):
 
                     self.zero_grad(comp_model)
                     comp_f.backward()  # back prop
-                    sal_comp = inputs.grad.data
-                    sal_comp, _ = torch.max(sal_comp.abs(), dim=1)
+                    sal_comp = inputs.grad.data.abs()
                 elif method == 'backprop':
                     saliency, output = GBP.generate_gradients(inputs, target, mc)
+                    saliency = saliency.abs()
                     print(saliency.shape)
-                    raise Exception('stop')
-                    saliency, _ = torch.max(saliency.abs(), dim=1)
+                    raise Exception('Stop')
 
                     sal_comp, comp_out = GBP_comp.generate_gradients(inputs, target, mc)
-                    sal_comp, _ = torch.max(sal_comp.abs(), dim=1)
+                    sal_comp = sal_comp.abs()
                 elif method == 'cam':
                     saliency = cam(input_tensor=inputs, target_category=target)
                     sal_comp = cam_comp(input_tensor=inputs, target_category=target)
