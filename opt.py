@@ -16,6 +16,8 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 import os
+from pytorch_grad_cam import GradCAM
+from pytorch_grad_cam.utils.image import show_cam_on_image
 import shutil
 import sys
 from scipy.stats import skewnorm
@@ -1278,7 +1280,8 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=.003, jac_thresh=0.85, tail=''):
+    def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.85, tail='', method='backprop',
+                thresh_type='quantile', max_img=20):
         # compute jaccard intersection of saliency maps
 
         # load comparison model
@@ -1356,9 +1359,13 @@ class OptWBoundEignVal(object):
             raise Exception('Insufficient Classes')
 
         jac_dic = {}
-        GBP = GuidedBackprop(self.model)
-        GBP_comp = GuidedBackprop(comp_model)
-        i = 0
+        if method == 'backprop':
+            GBP = GuidedBackprop(self.model)
+            GBP_comp = GuidedBackprop(comp_model)
+        elif method == 'cam':
+            cam = GradCAM(model=self.model, target_layers=[self.model.layer4[-1]], use_cuda=self.use_gpu)
+            cam_comp = GradCAM(model=self.model, target_layers=[self.model.layer4[-1]], use_cuda=self.use_gpu)
+        i, n_img = 0, 0
         for x in mc:
             jac_dic[list(classes[0])[x]] = []
         for loader in loaders:
@@ -1380,16 +1387,12 @@ class OptWBoundEignVal(object):
                 else:
                     raise Exception('Data type not supported')
 
-                # inputs.requires_grad_()
-                # output = self.model(inputs)  # compute prediction
-                # comp_out = comp_model(inputs)
-
                 # subset classes
                 if c is not None:
                     if mc is None:
                         mc = c
                     if target.shape[1] == 1:
-                        print('"Classes" argument only implemented for one-hot encoding')
+                        warnings.warn('"Classes" argument only implemented for one-hot encoding')
                     else:
                         target = target[:, c]
                         # output = output[:, mc]
@@ -1398,31 +1401,50 @@ class OptWBoundEignVal(object):
                 # stop = time.time() - start
                 # timeHMS(stop, 'Part 1 ')
 
-                """
-                # compute loss
-                if self.loss.__class__.__name__ == 'KLDivLoss':
-                    target_onehot = torch.zeros(output.shape)
-                    target_onehot.scatter_(1, target.view(-1, 1), 1)
-                    f = self.loss(output.float(), target_onehot.float())
-                    comp_f = self.loss(comp_out.float(), target_onehot.float())
+                if method == 'saliency':
+                    inputs.requires_grad_()
+                    output = self.model(inputs)  # compute prediction
+                    comp_out = comp_model(inputs)
+
+                    if c is not None:
+                        if target.shape[1] != 1:
+                            output = output[:, mc]
+                            comp_out = comp_out[:, mc]
+
+                    # compute loss
+                    if self.loss.__class__.__name__ == 'KLDivLoss':
+                        target_onehot = torch.zeros(output.shape)
+                        target_onehot.scatter_(1, target.view(-1, 1), 1)
+                        f = self.loss(output.float(), target_onehot.float())
+                        comp_f = self.loss(comp_out.float(), target_onehot.float())
+                    else:
+                        f = self.loss(output, target)
+                        comp_f = self.loss(comp_out, target)
+
+                    self.zero_grad()
+                    f.backward()  # back prop
+                    saliency = inputs.grad.data
+                    saliency, _ = torch.max(saliency.abs(), dim=1)
+
+                    self.zero_grad(comp_model)
+                    comp_f.backward()  # back prop
+                    sal_comp = inputs.grad.data
+                    sal_comp, _ = torch.max(sal_comp.abs(), dim=1)
+                elif method == 'backprop':
+                    saliency, output = GBP.generate_gradients(inputs, target, mc)
+                    print(saliency.shape)
+                    raise Exception('stop')
+                    saliency, _ = torch.max(saliency.abs(), dim=1)
+
+                    sal_comp, comp_out = GBP_comp.generate_gradients(inputs, target, mc)
+                    sal_comp, _ = torch.max(sal_comp.abs(), dim=1)
+                elif method == 'cam':
+                    saliency = cam(input_tensor=inputs, target_category=target)
+                    sal_comp = cam_comp(input_tensor=inputs, target_category=target)
                 else:
-                    f = self.loss(output, target)
-                    comp_f = self.loss(comp_out, target)
-                """
+                    raise Exception('Bad method.')
 
-                # self.zero_grad()
-                # f.backward()  # back prop
-                # saliency, _ = torch.max(inputs.grad.data.abs(), dim=1)
-                saliency, output = GBP.generate_gradients(inputs, target, mc)
-                # print(saliency.shape)
-                saliency, _ = torch.max(saliency.abs(), dim=1)
                 saliency = saliency.to('cpu')
-
-                # self.zero_grad(comp_model)
-                # comp_f.backward()  # back prop
-                # sal_comp, _ = torch.max(inputs.grad.data.abs(), dim=1)
-                sal_comp, comp_out = GBP_comp.generate_gradients(inputs, target, mc)
-                sal_comp, _ = torch.max(sal_comp.abs(), dim=1)
                 sal_comp = sal_comp.to('cpu')
 
                 # stop = time.time() - start
@@ -1436,9 +1458,13 @@ class OptWBoundEignVal(object):
                 """
 
                 for j in range(inputs.shape[0]):
-                    # jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
-                    jac = jaccard_score(saliency[j].flatten() > np.quantile(saliency[j].numpy(), .9),
-                                        sal_comp[j].flatten() > np.quantile(sal_comp[j].numpy(), .9))
+                    if thresh_type == 'fixed':
+                        jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
+                    elif thresh_type == 'quantile':
+                        jac = jaccard_score(saliency[j].flatten() > np.quantile(saliency[j].numpy(), thresh),
+                                            sal_comp[j].flatten() > np.quantile(sal_comp[j].numpy(), thresh))
+                    else:
+                        raise Exception('Bad thresh_type.')
                     # sal_mean.append(np.quantile(saliency[j].numpy(), .9))
                     # sal_comp_mean.append(np.quantile(sal_comp[j].numpy(), .9))
                     sal_mean = sal_mean * n/(n+1) + torch.mean(saliency[j]).item()/(n+1)
@@ -1450,7 +1476,7 @@ class OptWBoundEignVal(object):
                             print('%s\t%f\t%f\t%f\t%f' % (list(classes[0])[mc[x]], output[j, x], cut2[x],
                                                           comp_out[j, x], comp_cut2[x]))
                         """
-                        if target[j, x] > 0: # and output[j, x] < cut2[x] and comp_out[j, x] < comp_cut2[x]:
+                        if target[j, x] > 0:  # and output[j, x] < cut2[x] and comp_out[j, x] < comp_cut2[x]:
                             """
                             print('Hit!')
                             print('%f\t%f' % (torch.mean((saliency[j].flatten() > thresh).float()).item(),
@@ -1460,16 +1486,15 @@ class OptWBoundEignVal(object):
                             tit = 'Model Incorrect, ' if output[j, x] < cut2[x] else 'Model Correct, '
                             tit += 'Comp Incorrect' if comp_out[j, x] < comp_cut2[x] else 'Comp Correct'
 
-                            if 0 < jac < jac_thresh:
-                                print('Hit! ' + str(jac))
+                            if 0 < jac < jac_thresh and n_img < max_img:
                                 lab = list(classes[0])[mc[x]]
                                 fig, ax = plt.subplots(1, 3)
                                 fig.suptitle(lab + ', Jac={:.3f}\n'.format(jac) + tit)
                                 ax[0].imshow(inputs[j].detach().cpu().numpy().transpose(1, 2, 0))
                                 ax[0].axis('off')
-                                ax[1].imshow(saliency[j] > np.quantile(saliency[j].numpy(), .9), cmap='hot')
+                                ax[1].imshow(saliency[j] > np.quantile(saliency[j].numpy(), thresh), cmap='hot')
                                 ax[1].axis('off')
-                                ax[2].imshow(sal_comp[j] > np.quantile(sal_comp[j].numpy(), .9), cmap='hot')
+                                ax[2].imshow(sal_comp[j] > np.quantile(sal_comp[j].numpy(), thresh), cmap='hot')
                                 ax[2].axis('off')
                                 #fig.tight_layout()
                                 p = str(data['pid'][j].item())
@@ -1477,6 +1502,9 @@ class OptWBoundEignVal(object):
                                             p + tail +'.png')
                                 plt.clf()
                                 plt.close()
+                                n_img += 1
+                            elif 0 < jac < jac_thresh:
+                                warnings.warn('Number of allowed images exceeded.')
 
                 if self.use_gpu:
                     torch.cuda.empty_cache()
