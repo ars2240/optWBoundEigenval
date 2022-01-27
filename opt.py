@@ -1425,12 +1425,13 @@ class OptWBoundEignVal(object):
 
                     self.zero_grad()
                     f.backward()  # back prop
-                    saliency = inputs.grad.data
-                    saliency, _ = torch.max(saliency.abs(), dim=1)
+                    saliency = inputs.grad.data.abs()
+                    # saliency, _ = torch.max(saliency, dim=1)
 
                     self.zero_grad(comp_model)
                     comp_f.backward()  # back prop
                     sal_comp = inputs.grad.data.abs()
+                    # sal_comp, _ = torch.max(sal_comp, dim=1)
                 elif method == 'backprop':
                     saliency, output = GBP.generate_gradients(inputs, target, mc)
                     saliency = saliency.abs()
@@ -1440,8 +1441,8 @@ class OptWBoundEignVal(object):
                     sal_comp, comp_out = GBP_comp.generate_gradients(inputs, target, mc)
                     sal_comp = sal_comp.abs()
                 elif method == 'cam':
-                    saliency = cam(input_tensor=inputs, target_category=target)
-                    sal_comp = cam_comp(input_tensor=inputs, target_category=target)
+                    saliency = cam(input_tensor=inputs)
+                    sal_comp = cam_comp(input_tensor=inputs)
                 else:
                     raise Exception('Bad method.')
 
