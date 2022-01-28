@@ -1,3 +1,4 @@
+import importlib
 import re
 import torch
 from torch.autograd import Function
@@ -5,9 +6,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as cp
 from collections import OrderedDict
-from torchvision.hub import load_state_dict_from_url
 from torch import Tensorf
 from torch.jit.annotations import List
+if importlib.util.find_spec(".hub", package="torchvision") is None:
+    from torchvision.models.utils import load_state_dict_from_url
+else:
+    from torchvision.hub import load_state_dict_from_url
 
 
 # Mostly based on: https://github.com/pytorch/vision/blob/master/torchvision/models/densenet.py
