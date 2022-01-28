@@ -229,6 +229,8 @@ class OptWBoundEignVal(object):
         if use_gpu and torch.cuda.is_available():
             self.device = torch.device('cuda')
         else:
+            if use_gpu:
+                warnings.warn('Cuda unavailable.')
             self.device = torch.device('cpu')
         self.ndim = sum(p.numel() for p in model.parameters())  # number of dimensions
         self.f = 0  # loss function value
