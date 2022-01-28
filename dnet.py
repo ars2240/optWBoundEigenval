@@ -8,10 +8,10 @@ import torch.utils.checkpoint as cp
 from collections import OrderedDict
 from torch import Tensor
 from torch.jit.annotations import List
-if importlib.util.find_spec(".hub", package="torchvision") is None:
+if importlib.util.find_spec(".hub", package="torch") is None:
     from torchvision.models.utils import load_state_dict_from_url
 else:
-    from torchvision.hub import load_state_dict_from_url
+    from torch.hub import load_state_dict_from_url
 
 
 # Mostly based on: https://github.com/pytorch/vision/blob/master/torchvision/models/densenet.py
