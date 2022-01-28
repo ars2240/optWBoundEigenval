@@ -8,9 +8,11 @@ import torch.utils.checkpoint as cp
 from collections import OrderedDict
 from torch import Tensor
 from torch.jit.annotations import List
+import warnings
 if importlib.util.find_spec(".models.utils", package="torchvision") is not None:
     from torchvision.models.utils import load_state_dict_from_url
 else:
+    warnings.warn('torchvision.models.utils unavailable. Using torch.hub')
     from torch.hub import load_state_dict_from_url
 
 
