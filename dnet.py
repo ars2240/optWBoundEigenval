@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as cp
 from collections import OrderedDict
-from torch import Tensorf
+from torch import Tensor
 from torch.jit.annotations import List
 if importlib.util.find_spec(".hub", package="torchvision") is None:
     from torchvision.models.utils import load_state_dict_from_url
