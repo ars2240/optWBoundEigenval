@@ -1282,7 +1282,7 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.85, tail='', method='backprop',
+    def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.85, tail='', method='cam',
                 thresh_type='quantile', max_img=20):
         # method = saliency, backprop, or cam
         # thresh_type = fixed or quantile
@@ -1428,23 +1428,25 @@ class OptWBoundEignVal(object):
                     self.zero_grad()
                     f.backward()  # back prop
                     saliency = inputs.grad.data.abs()
-                    # saliency, _ = torch.max(saliency, dim=1)
+                    saliency, _ = torch.max(saliency, dim=1)
 
                     self.zero_grad(comp_model)
                     comp_f.backward()  # back prop
                     sal_comp = inputs.grad.data.abs()
-                    # sal_comp, _ = torch.max(sal_comp, dim=1)
+                    sal_comp, _ = torch.max(sal_comp, dim=1)
                 elif method == 'backprop':
                     saliency, output = GBP.generate_gradients(inputs, target, mc)
                     saliency = saliency.abs()
-                    print(saliency.shape)
-                    raise Exception('Stop')
+                    saliency, _ = torch.max(saliency, dim=1)
 
                     sal_comp, comp_out = GBP_comp.generate_gradients(inputs, target, mc)
                     sal_comp = sal_comp.abs()
+                    sal_comp, _ = torch.max(sal_comp, dim=1)
                 elif method == 'cam':
                     saliency = cam(input_tensor=inputs)
                     sal_comp = cam_comp(input_tensor=inputs)
+                    print(saliency.shape)
+                    raise Exception('Stop')
                 else:
                     raise Exception('Bad method.')
 
