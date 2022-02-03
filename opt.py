@@ -1367,8 +1367,9 @@ class OptWBoundEignVal(object):
             GBP = GuidedBackprop(self.model)
             GBP_comp = GuidedBackprop(comp_model)
         elif method == 'cam':
-            cam = GradCAM(model=self.model, target_layers=[self.model.layer4[-1]], use_cuda=self.use_gpu)
-            cam_comp = GradCAM(model=self.model, target_layers=[self.model.layer4[-1]], use_cuda=self.use_gpu)
+            print(self.model)
+            cam = GradCAM(model=self.model, target_layers=[self.model.features[-1]], use_cuda=self.use_gpu)
+            cam_comp = GradCAM(model=comp_model, target_layers=[comp_model.features[-1]], use_cuda=self.use_gpu)
         i, n_img = 0, 0
         for x in mc:
             jac_dic[list(classes[0])[x]] = []
