@@ -1500,9 +1500,15 @@ class OptWBoundEignVal(object):
                                 fig.suptitle(lab + ', Jac={:.3f}\n'.format(jac) + tit)
                                 ax[0].imshow(inputs[j].detach().cpu().numpy().transpose(1, 2, 0))
                                 ax[0].axis('off')
-                                ax[1].imshow(saliency[j] > np.quantile(saliency[j].numpy(), thresh), cmap='hot')
+                                if thresh_type == 'fixed':
+                                    ax[1].imshow(saliency[j] > thresh, cmap='hot')
+                                elif thresh_type == 'quantile':
+                                    ax[1].imshow(saliency[j] > np.quantile(saliency[j].numpy(), thresh), cmap='hot')
                                 ax[1].axis('off')
-                                ax[2].imshow(sal_comp[j] > np.quantile(sal_comp[j].numpy(), thresh), cmap='hot')
+                                if thresh_type == 'fixed':
+                                    ax[2].imshow(sal_comp[j] > thresh, cmap='hot')
+                                elif thresh_type == 'quantile':
+                                    ax[2].imshow(sal_comp[j] > np.quantile(sal_comp[j].numpy(), thresh), cmap='hot')
                                 ax[2].axis('off')
                                 #fig.tight_layout()
                                 p = str(data['pid'][j].item())
