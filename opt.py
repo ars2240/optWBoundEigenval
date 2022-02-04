@@ -1444,7 +1444,9 @@ class OptWBoundEignVal(object):
                     sal_comp, _ = torch.max(sal_comp, dim=1)
                 elif method == 'cam':
                     saliency = cam(input_tensor=inputs)
+                    saliency = torch.from_numpy(saliency)
                     sal_comp = cam_comp(input_tensor=inputs)
+                    sal_comp = torch.from_numpy(sal_comp)
                     # print(saliency.shape)
                     # raise Exception('Stop')
                 else:
