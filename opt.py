@@ -1498,18 +1498,26 @@ class OptWBoundEignVal(object):
                                 lab = list(classes[0])[mc[x]]
                                 fig, ax = plt.subplots(1, 3)
                                 fig.suptitle(lab + ', Jac={:.3f}\n'.format(jac) + tit)
-                                ax[0].imshow(inputs[j].detach().cpu().numpy().transpose(1, 2, 0))
+                                rgb_img = inputs[j].detach().cpu().numpy().transpose(1, 2, 0)
+                                ax[0].imshow(rbg_img, cmap='gray', vmin=0, vmax=255)
                                 ax[0].axis('off')
-                                if thresh_type == 'fixed':
+                                ax[0].set_title('XRay')
+                                if method == 'cam':
+                                    ax[1].imshow(show_cam_on_image(rgb_img, saliency[j].numpy(), use_rgb=True))
+                                elif thresh_type == 'fixed':
                                     ax[1].imshow(saliency[j] > thresh, cmap='hot')
                                 elif thresh_type == 'quantile':
                                     ax[1].imshow(saliency[j] > np.quantile(saliency[j].numpy(), thresh), cmap='hot')
                                 ax[1].axis('off')
-                                if thresh_type == 'fixed':
+                                ax[1].set_title('Model')
+                                if method == 'cam':
+                                    ax[2].imshow(show_cam_on_image(rgb_img, sal_comp[j].numpy(), use_rgb=True))
+                                elif thresh_type == 'fixed':
                                     ax[2].imshow(sal_comp[j] > thresh, cmap='hot')
                                 elif thresh_type == 'quantile':
                                     ax[2].imshow(sal_comp[j] > np.quantile(sal_comp[j].numpy(), thresh), cmap='hot')
                                 ax[2].axis('off')
+                                ax[2].set_title('Comp')
                                 #fig.tight_layout()
                                 p = str(data['pid'][j].item())
                                 plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + lab + '_' + str(i) + '_' +
