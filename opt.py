@@ -28,6 +28,7 @@ import torch
 from torch.autograd import Variable
 import torch.utils.data as utils_data
 import torch.nn.functional as F
+from torchvision import transforms
 from kfac import KFACOptimizer
 from guided_backprop import GuidedBackprop
 import warnings
