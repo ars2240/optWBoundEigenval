@@ -1524,7 +1524,8 @@ class OptWBoundEignVal(object):
                                 ax[2].axis('off')
                                 ax[2].set_title('Comp')
                                 #fig.tight_layout()
-                                p = str(data['name'][j].item())
+                                p = str(data['name'][j])
+                                print(p)
                                 plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + lab + '_' + str(i) + '_' +
                                             p + tail + '.png')
                                 plt.clf()
