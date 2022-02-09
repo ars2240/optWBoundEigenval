@@ -1502,7 +1502,7 @@ class OptWBoundEignVal(object):
                                 lab = list(classes[0])[mc[x]]
                                 fig, ax = plt.subplots(1, 3)
                                 fig.suptitle(lab + ', Jac={:.3f}\n'.format(jac) + tit)
-                                rgb_img = invTrans(inputs[j].detach().cpu().numpy().transpose(1, 2, 0))
+                                rgb_img = invTrans(inputs[j]).detach().cpu().numpy().transpose(1, 2, 0)
                                 ax[0].imshow(rgb_img, cmap='gray', vmin=0, vmax=1)
                                 ax[0].axis('off')
                                 ax[0].set_title('XRay')
