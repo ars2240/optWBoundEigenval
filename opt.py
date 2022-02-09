@@ -1527,7 +1527,7 @@ class OptWBoundEignVal(object):
                                 p = str(data['name'][j])
                                 print(p)
                                 plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + lab + '_' + str(i) + '_' +
-                                            p + tail + '.png')
+                                            p + tail)
                                 plt.clf()
                                 plt.close()
                                 n_img += 1
