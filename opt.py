@@ -1288,6 +1288,10 @@ class OptWBoundEignVal(object):
         # thresh_type = fixed or quantile
         # compute jaccard intersection of saliency maps
 
+        # inverse transform
+        invTrans = transforms.Compose([transforms.Normalize(mean=[0., 0., 0.], std=[1 / 0.229, 1 / 0.224, 1 / 0.225]),
+                                       transforms.Normalize(mean=[-0.485, -0.456, -0.406], std=[1., 1., 1.]),])
+
         # load comparison model
         comp_model = copy.deepcopy(self.model)
         state = self.load_state(fname)
@@ -1498,8 +1502,7 @@ class OptWBoundEignVal(object):
                                 lab = list(classes[0])[mc[x]]
                                 fig, ax = plt.subplots(1, 3)
                                 fig.suptitle(lab + ', Jac={:.3f}\n'.format(jac) + tit)
-                                rgb_img = inputs[j].detach().float().cpu().numpy().transpose(1, 2, 0)
-                                print(rgb_img.max())
+                                rgb_img = invTrans(inputs[j].detach().cpu().numpy().transpose(1, 2, 0))
                                 ax[0].imshow(rgb_img, cmap='gray', vmin=0, vmax=1)
                                 ax[0].axis('off')
                                 ax[0].set_title('XRay')
