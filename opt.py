@@ -1284,7 +1284,7 @@ class OptWBoundEignVal(object):
             k += 1
 
     def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.01, tail='', method='cam',
-                thresh_type='quantile', max_img=20):
+                thresh_type='quantile', max_img=25):
         # method = saliency, backprop, or cam
         # thresh_type = fixed or quantile
         # compute jaccard intersection of saliency maps
