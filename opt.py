@@ -1283,7 +1283,7 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.85, tail='', method='cam',
+    def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.01, tail='', method='cam',
                 thresh_type='quantile', max_img=20):
         # method = saliency, backprop, or cam
         # thresh_type = fixed or quantile
@@ -1525,7 +1525,6 @@ class OptWBoundEignVal(object):
                                 ax[2].set_title('Comp')
                                 #fig.tight_layout()
                                 p = str(data['name'][j])
-                                print(p)
                                 plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + lab + '_' + str(i) + '_' +
                                             p + tail)
                                 plt.clf()
