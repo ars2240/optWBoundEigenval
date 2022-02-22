@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import os
 from pytorch_grad_cam import GradCAM
-from pytorch_grad_cam.utils.image import show_cam_on_image
+from cam_on_image import show_cam_on_image
 import shutil
 import sys
 from scipy.stats import skewnorm
@@ -1497,9 +1497,10 @@ class OptWBoundEignVal(object):
                             """
                             jac_dic[list(classes[0])[mc[x]]].append(jac)
                             tit = 'Model Incorrect, ' if output[j, x] < cut2[x] else 'Model Correct, '
-                            tit += 'Comp Incorrect' if comp_out[j, x] < comp_cut2[x] else 'Comp Correct'
+                            tit += 'Baseline Incorrect' if comp_out[j, x] < comp_cut2[x] else 'Baseline Correct'
 
-                            if 0 < jac < jac_thresh and n_img < max_img:
+                            if 0 < jac < jac_thresh and n_img < max_img and\
+                                    output[j, x] > cut2[x] and comp_out[j, x] < comp_cut2[x]:
                                 lab = list(classes[0])[mc[x]]
                                 fig, ax = plt.subplots(1, 3)
                                 fig.suptitle(lab + ', Jac={:.3f}\n'.format(jac) + tit)
@@ -1508,7 +1509,7 @@ class OptWBoundEignVal(object):
                                 ax[0].axis('off')
                                 ax[0].set_title('XRay')
                                 if method == 'cam':
-                                    ax[1].imshow(show_cam_on_image(rgb_img, saliency[j].numpy()))
+                                    ax[1].imshow(show_cam_on_image(rgb_img, saliency[j].numpy(), alpha=0.5))
                                 elif thresh_type == 'fixed':
                                     ax[1].imshow(saliency[j] > thresh, cmap='hot')
                                 elif thresh_type == 'quantile':
@@ -1516,13 +1517,13 @@ class OptWBoundEignVal(object):
                                 ax[1].axis('off')
                                 ax[1].set_title('Model')
                                 if method == 'cam':
-                                    ax[2].imshow(show_cam_on_image(rgb_img, sal_comp[j].numpy()))
+                                    ax[2].imshow(show_cam_on_image(rgb_img, sal_comp[j].numpy(), alpha=0.5))
                                 elif thresh_type == 'fixed':
                                     ax[2].imshow(sal_comp[j] > thresh, cmap='hot')
                                 elif thresh_type == 'quantile':
                                     ax[2].imshow(sal_comp[j] > np.quantile(sal_comp[j].numpy(), thresh), cmap='hot')
                                 ax[2].axis('off')
-                                ax[2].set_title('Comp')
+                                ax[2].set_title('Baseline')
                                 #fig.tight_layout()
                                 p = str(data['name'][j])
                                 plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + lab + '_' + str(i) + '_' +
