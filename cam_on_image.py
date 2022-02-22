@@ -2,6 +2,7 @@
 # Modified from: https://github.com/jacobgil/pytorch-grad-cam/blob/master/pytorch_grad_cam/utils/image.py
 
 import cv2
+import numpy as np
 
 
 def show_cam_on_image(img: np.ndarray,
