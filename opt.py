@@ -1509,7 +1509,7 @@ class OptWBoundEignVal(object):
                                 ax[0].axis('off')
                                 ax[0].set_title('XRay')
                                 if method == 'cam':
-                                    ax[1].imshow(show_cam_on_image(rgb_img, saliency[j].numpy(), alpha=0.5))
+                                    ax[1].imshow(show_cam_on_image(rgb_img, saliency[j].numpy(), alpha=0.5, use_rgb=True))
                                 elif thresh_type == 'fixed':
                                     ax[1].imshow(saliency[j] > thresh, cmap='hot')
                                 elif thresh_type == 'quantile':
@@ -1517,7 +1517,7 @@ class OptWBoundEignVal(object):
                                 ax[1].axis('off')
                                 ax[1].set_title('Model')
                                 if method == 'cam':
-                                    ax[2].imshow(show_cam_on_image(rgb_img, sal_comp[j].numpy(), alpha=0.5))
+                                    ax[2].imshow(show_cam_on_image(rgb_img, sal_comp[j].numpy(), alpha=0.5, use_rgb=True))
                                 elif thresh_type == 'fixed':
                                     ax[2].imshow(sal_comp[j] > thresh, cmap='hot')
                                 elif thresh_type == 'quantile':
