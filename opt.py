@@ -278,7 +278,7 @@ class OptWBoundEignVal(object):
             mname = str(mu)
         # log files
         self.header = header  # header to files
-        self.header2 = header + "_" + name + "_btch" + batch_size + "_mu" + mname + "_K" + str(K)
+        self.header2 = header + "_" + name + "_btch" + str(batch_size) + "_mu" + mname + "_K" + str(K)
         self.header2 += '_Kmin' + str(Kmin) if Kmin > 0 else ''
         self.log_file = "./logs/" + self.header2 + ".log"
         self.verbose_log_file = "./logs/" + self.header2 + "_verbose.log"
