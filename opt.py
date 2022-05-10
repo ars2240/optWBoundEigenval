@@ -415,7 +415,7 @@ class OptWBoundEignVal(object):
         pstart = time.time()  # start timer
         for i in range(0, np.min([self.ndim, self.max_pow_iter])):
 
-            c
+            start = time.time()  # start timer
             v_new = self.hvp_op.Hv(v, storedGrad=True)  # compute H*v
             # v_new = self.kfac(v)
             hvTime += time.time() - start
