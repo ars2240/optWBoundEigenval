@@ -224,7 +224,8 @@ class OptWBoundEignVal(object):
     def __init__(self, model, loss, optimizer, scheduler=None, mu=0, Kmin=0, K=0, eps=-1, pow_iter_eps=1e-3,
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, pow_iter=True,
                  max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header='', num_workers=0,
-                 test_func='maxacc', lobpcg=False, pow_iter_alpha=1, kfac_batch=1, kfac_rand=True, best_h=False):
+                 test_func='maxacc', lobpcg=False, pow_iter_alpha=1, kfac_batch=1, kfac_rand=True, best_h=False,
+                 btch_h=False):
 
         # set default device
         if use_gpu and torch.cuda.is_available():
@@ -278,7 +279,9 @@ class OptWBoundEignVal(object):
             mname = str(mu)
         # log files
         self.header = header  # header to files
-        self.header2 = header + "_" + name + "_btch" + str(batch_size) + "_mu" + mname + "_K" + str(K)
+        self.header2 = header + "_" + name
+        self.header2 += "_btch" + str(batch_size) if btch_h else ''
+        self.header2 += "_mu" + mname + "_K" + str(K)
         self.header2 += '_Kmin' + str(Kmin) if Kmin > 0 else ''
         self.log_file = "./logs/" + self.header2 + ".log"
         self.verbose_log_file = "./logs/" + self.header2 + "_verbose.log"

@@ -31,6 +31,11 @@ aug_trans = [transforms.Compose([
             transforms.ToTensor(),
             normalize])]
 
+mnist_trans = transforms.Compose([
+    transforms.ToTensor(),
+    transforms.Resize((16, 16)),
+    normalize])
+
 
 def get_train_valid_loader(data_dir='./data', batch_size=1, augment=False, random_seed=1226, valid_size=1/7,
                            shuffle=False, show_sample=False, num_workers=0, pin_memory=False):
@@ -172,8 +177,7 @@ def get_test_loader(data_dir='./data', batch_size=1, augment=False, random_seed=
     return data_loader
 
 
-def get_mnist_loader(data_dir='./data', batch_size=1, augment=False, random_seed=1226, shuffle=False, num_workers=0,
-                    pin_memory=True):
+def get_mnist_loader(data_dir='./data', batch_size=1, random_seed=1226, shuffle=False, num_workers=0, pin_memory=True):
     """
     Utility function for loading and returning a multi-process
     test iterator over the MNIST dataset.
@@ -192,10 +196,7 @@ def get_mnist_loader(data_dir='./data', batch_size=1, augment=False, random_seed
     """
 
     # define transform
-    if augment:
-        transform = aug_trans
-    else:
-        transform = trans
+    transform = mnist_trans
 
     torch.manual_seed(random_seed)
 

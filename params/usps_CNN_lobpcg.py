@@ -14,7 +14,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 # import scipy.io as sio
-from usps_data import get_train_valid_loader, get_test_loader, CNN
+from usps_data import *
 
 
 def options():
@@ -30,7 +30,9 @@ def options():
 
     # Load the dataset
     opt['train_loader'], opt['valid_loader'] = get_train_valid_loader(batch_size=batch_size, augment=False)
-    opt['test_loader'] = get_test_loader(batch_size=batch_size)
+    opt['test_loader'] = []
+    opt['test_loader'].append(get_test_loader(batch_size=batch_size))
+    opt['test_loader'].append(get_mnist_loader(batch_size=batch_size))
     opt['test_loader_aug'] = get_test_loader(batch_size=batch_size, augment=True)
 
     # learning rate
@@ -45,16 +47,21 @@ def options():
     opt['header'] = 'USPS_LOBPCG4_8_Pre'
     opt['max_iter'] = 100
     opt['use_gpu'] = False
-    opt['train'] = True
     opt['lobpcg'] = True
-    opt['verbose'] = True
+    opt['verbose'] = False
     opt['pow_iter_alpha'] = alpha
     opt['mem_track'] = False
     opt['ignore_bad_vals'] = True
     opt['fname'] = './models/USPS_E-3_KFACOptimizer_mu0_K0_trained_model_best.pt'
+    opt['train'] = False
+    opt['btch_h'] = False
 
-    opt['aug_test'] = True
-    opt['rho_test'] = True
+    opt['test'] = False
+    opt['comp_test'] = True
+    opt['aug_test'] = False
+    opt['rho_test'] = False
+    opt['ignore_bad_vals'] = False
+
     opt['kfac_rand'] = False
     opt['kfac_batch'] = 8
 

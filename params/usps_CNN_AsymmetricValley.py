@@ -15,7 +15,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 # import scipy.io as sio
-from usps_data import get_train_valid_loader, get_test_loader, CNN
+from usps_data import *
 
 
 def options():
@@ -31,20 +31,24 @@ def options():
 
     # Load the dataset
     opt['train_loader'], opt['valid_loader'] = get_train_valid_loader(batch_size=batch_size, augment=False)
-    opt['test_loader'] = get_test_loader(batch_size=batch_size)
+    opt['test_loader'] = []
+    opt['test_loader'].append(get_test_loader(batch_size=batch_size))
+    opt['test_loader'].append(get_mnist_loader(batch_size=batch_size))
     opt['test_loader_aug'] = get_test_loader(batch_size=batch_size, augment=True)
 
     # Training Setup
     opt['model'] = CNN()
     opt['loss'] = nn.CrossEntropyLoss()
-    opt['optimizer'] = torch.optim.SGD(opt['model'].parameters(), lr=0.5)
-    # opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(options['optimizer'], lr_lambda=alpha)
-    opt['header'] = 'USPS'
-    opt['train'] = False
-    opt['pow_iter'] = False
+    opt['optimizer'] = torch.optim.Adam(opt['model'].parameters())
+    opt['header'] = 'USPS_AsymValley'
+    opt['train'] = True
+    opt['btch_h'] = False
     opt['asymmetric_valley'] = True
 
+    opt['test'] = False
+    opt['comp_test'] = True
     opt['aug_test'] = False
-    opt['rho_test'] = True
+    opt['rho_test'] = False
+    opt['ignore_bad_vals'] = False
 
     return opt
