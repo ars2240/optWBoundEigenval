@@ -35,13 +35,13 @@ def options():
     # Training Setup
     opt['model'] = Net()
     opt['loss'] = nn.CrossEntropyLoss()
-    opt['optimizer'] = torch.optim.SGD(opt['model'].parameters(), lr=0.5)
+    opt['optimizer'] = torch.optim.SGD(opt['model'].parameters(), lr=.5)
     opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(opt['optimizer'], lr_lambda=beta)
     opt['header'] = 'Cov'
     opt['use_gpu'] = False
-    opt['train'] = False
+    opt['train'] = True
     opt['lobpcg'] = False
-    opt['verbose'] = True
+    opt['verbose'] = False
     opt['rho_test'] = True
     opt['ignore_bad_vals'] = False
 

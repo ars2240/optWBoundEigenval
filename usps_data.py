@@ -172,6 +172,69 @@ def get_test_loader(data_dir='./data', batch_size=1, augment=False, random_seed=
     return data_loader
 
 
+def get_mnist_loader(data_dir='./data', batch_size=1, augment=False, random_seed=1226, shuffle=False, num_workers=0,
+                    pin_memory=True):
+    """
+    Utility function for loading and returning a multi-process
+    test iterator over the MNIST dataset.
+    If using CUDA, num_workers should be set to 1 and pin_memory to True.
+    Params
+    ------
+    - data_dir: path directory to the dataset.
+    - batch_size: how many samples per batch to load.
+    - shuffle: whether to shuffle the dataset after every epoch.
+    - num_workers: number of subprocesses to use when loading the dataset.
+    - pin_memory: whether to copy tensors into CUDA pinned memory. Set it to
+      True if using GPU.
+    Returns
+    -------
+    - data_loader: test set iterator.
+    """
+
+    # define transform
+    if augment:
+        transform = aug_trans
+    else:
+        transform = trans
+
+    torch.manual_seed(random_seed)
+
+    if type(transform) is list:
+        data_loader = []
+        for t in transform:
+            dataset1 = datasets.MNIST(
+                root=data_dir, train=True,
+                download=True, transform=t)
+
+            dataset2 = datasets.MNIST(
+                root=data_dir, train=False,
+                download=True, transform=t)
+
+            # combine train & test datasets
+            dataset = torch.utils.data.ConcatDataset([dataset1, dataset2])
+
+            data_loader.append(torch.utils.data.DataLoader(
+                dataset, batch_size=batch_size, shuffle=shuffle,
+                num_workers=num_workers, pin_memory=pin_memory))
+    else:
+        dataset1 = datasets.MNIST(
+            root=data_dir, train=True,
+            download=True, transform=transform)
+
+        dataset2 = datasets.MNIST(
+            root=data_dir, train=False,
+            download=True, transform=transform)
+
+        # combine train & test datasets
+        dataset = torch.utils.data.ConcatDataset([dataset1, dataset2])
+
+        data_loader = torch.utils.data.DataLoader(
+            dataset, batch_size=batch_size, shuffle=shuffle,
+            num_workers=num_workers, pin_memory=pin_memory)
+
+    return data_loader
+
+
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()

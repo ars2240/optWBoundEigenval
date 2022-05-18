@@ -10,8 +10,8 @@ acc = acc[-10,]; f1 = f1[-10,]
 
 perterbs = colSums(abs(indices))
 
-nmods = 10
-mode = 10 #comparison mode
+nmods = 14
+mode = 0 #comparison mode
 acc_ben = acc[1:(nmods-1),]
 for (j in 1:nmods){
   if (mode>=1 && mode<=nmods){
@@ -22,6 +22,6 @@ for (j in 1:nmods){
 }
 for (j in 1:nmods){
   if (j != mode){
-    print(summary(lm(as.numeric(acc_ben[j, ])~perterbs))$r.squared)#$coefficients[2,4])
+    print(summary(lm(as.numeric(acc_ben[j, ])~perterbs)))#$r.squared)#$coefficients[2,4])
   }
 }

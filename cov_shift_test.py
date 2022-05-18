@@ -104,15 +104,28 @@ mu = 0.003
 K = 1
 opt10 = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
                          max_pow_iter=10000, verbose=False, header='Forest_LOBPCG4')
-"""
+
 
 mu = 0.0028
 K = 1
 opt11 = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
                          max_pow_iter=10000, verbose=False, header='Forest_LOBPCG4')
+"""
 
-models = [opt11]
+mu = 0.01
+K = 0
+opt12 = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=32, eps=-1, mu=mu, K=K, max_iter=100,
+                         max_pow_iter=10000, verbose=False, header='Cov')
+opt13 = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=64, eps=-1, mu=mu, K=K, max_iter=100,
+                         max_pow_iter=10000, verbose=False, header='Cov')
+opt14 = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=256, eps=-1, mu=mu, K=K, max_iter=100,
+                         max_pow_iter=10000, verbose=False, header='Cov')
+opt15 = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=512, eps=-1, mu=mu, K=K, max_iter=100,
+                         max_pow_iter=10000, verbose=False, header='Cov')
+
+models = [opt12, opt13, opt14, opt15]
 # models = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9]
+
 
 cov_shift_tester(models, x=dic['inputs_test'], y=dic['target_test'], iters=1000, bad_modes=[28],
                  header=header, mult=.05, mean_diff=1, indices=indices, append=True)
