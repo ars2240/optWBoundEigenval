@@ -34,6 +34,7 @@ def options():
     opt['test_loader'] = []
     opt['test_loader'].append(get_test_loader(batch_size=batch_size))
     opt['test_loader'].append(get_mnist_loader(batch_size=batch_size))
+    opt['test_loader'].append(get_gan_loader(batch_size=batch_size))
     opt['test_loader_aug'] = get_test_loader(batch_size=batch_size, augment=True)
 
     # Training Setup
@@ -41,7 +42,7 @@ def options():
     opt['loss'] = nn.CrossEntropyLoss()
     opt['optimizer'] = torch.optim.Adam(opt['model'].parameters())
     opt['header'] = 'USPS_AsymValley'
-    opt['train'] = True
+    opt['train'] = False
     opt['btch_h'] = False
     opt['asymmetric_valley'] = True
 
