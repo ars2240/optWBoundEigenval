@@ -236,6 +236,34 @@ def get_mnist_loader(data_dir='./data', batch_size=1, random_seed=1226, shuffle=
     return data_loader
 
 
+def get_gan_loader(data_dir='./data', batch_size=1, random_seed=1226, shuffle=False, num_workers=0, pin_memory=True):
+    """
+    Utility function for loading and returning a multi-process
+    test iterator over the GAN-generated dataset.
+    If using CUDA, num_workers should be set to 1 and pin_memory to True.
+    Params
+    ------
+    - data_dir: path directory to the dataset.
+    - batch_size: how many samples per batch to load.
+    - shuffle: whether to shuffle the dataset after every epoch.
+    - num_workers: number of subprocesses to use when loading the dataset.
+    - pin_memory: whether to copy tensors into CUDA pinned memory. Set it to
+      True if using GPU.
+    Returns
+    -------
+    - data_loader: test set iterator.
+    """
+
+    torch.manual_seed(random_seed)
+
+    dataset = torch.load(data_dir + '/gan_usps.pt')
+    data_loader = torch.utils.data.DataLoader(
+        dataset, batch_size=batch_size, shuffle=shuffle,
+        num_workers=num_workers, pin_memory=pin_memory)
+
+    return data_loader
+
+
 class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
