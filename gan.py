@@ -24,7 +24,7 @@ os.makedirs("models", exist_ok=True)
 parser = argparse.ArgumentParser()
 parser.add_argument("--n_epochs", type=int, default=200, help="number of epochs of training")
 parser.add_argument("--batch_size", type=int, default=64, help="size of the batches")
-parser.add_argument("--lr", type=float, default=0.0002, help="adam: learning rate")
+parser.add_argument("--lr", type=float, default=1e-4, help="adam: learning rate")
 parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
@@ -34,6 +34,12 @@ parser.add_argument("--img_size", type=int, default=16, help="size of each image
 parser.add_argument("--channels", type=int, default=1, help="number of image channels")
 parser.add_argument("--sample_interval", type=int, default=400, help="interval betwen image samples")
 parser.add_argument("--gen_images", type=int, default=10000, help="number of generated images")
+parser.add_argument("--train", type=int, default=True, help="whether or not to train model")
+parser.add_argument("--scheduler", type=int, default=True, help="whether or not to use learning rate scheduler")
+parser.add_argument("--cos", type=int, default=True, help="whether or not to use cosine annealing lr")
+parser.add_argument("--rand", type=float, default=0.3, help="amount to randomly fudge labels")
+parser.add_argument("--swap", type=float, default=0.01, help="probability of swapping labels")
+parser.add_argument("--d_iter", type=int, default=1, help="number of discriminator iterations per generator")
 opt = parser.parse_args()
 print(opt)
 
@@ -88,6 +94,7 @@ class Discriminator(nn.Module):
             nn.Dropout(0.4),
             nn.LeakyReLU(0.2, inplace=True),
             nn.Linear(512, 1),
+            nn.Sigmoid()
         )
 
     def forward(self, img, labels):
@@ -98,7 +105,7 @@ class Discriminator(nn.Module):
 
 
 # Loss functions
-adversarial_loss = torch.nn.MSELoss()
+adversarial_loss = torch.nn.BCELoss()
 
 # Initialize generator and discriminator
 generator = Generator()
@@ -110,24 +117,28 @@ if cuda:
     adversarial_loss.cuda()
 
 # Configure data loader
+trans = transforms.Compose([transforms.Resize(opt.img_size), transforms.ToTensor(), transforms.Normalize(
+    mean=[0.24510024090766908], std=[0.29806136205673217],)])
 dataloader = torch.utils.data.DataLoader(
-    datasets.USPS(
-        "./data",
-        train=True,
-        download=True,
-        transform=transforms.Compose(
-            [transforms.Resize(opt.img_size), transforms.ToTensor(), transforms.Normalize(
-                mean=[0.24510024090766908],
-                std=[0.29806136205673217],)]
-        ),
-    ),
-    batch_size=opt.batch_size,
-    shuffle=True,
-)
+    datasets.USPS("./data", train=True, download=True, transform=trans),
+    batch_size=opt.batch_size, shuffle=True)
+testloader = torch.utils.data.DataLoader(
+    datasets.USPS("./data", train=False, download=True, transform=trans),
+    batch_size=opt.batch_size, shuffle=True)
 
 # Optimizers
 optimizer_G = torch.optim.Adam(generator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
 optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
+
+# learning rate scheduler
+if opt.cos:
+    scheduler_G = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_G, T_max=opt.n_epochs)
+    scheduler_D = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer_D, T_max=opt.n_epochs)
+else:
+    def beta(k):
+        return 1/(k+1)
+    scheduler_G = torch.optim.lr_scheduler.LambdaLR(optimizer_G, lr_lambda=beta)
+    scheduler_D = torch.optim.lr_scheduler.LambdaLR(optimizer_G, lr_lambda=beta)
 
 FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 LongTensor = torch.cuda.LongTensor if cuda else torch.LongTensor
@@ -148,70 +159,126 @@ def sample_image(n_row, batches_done):
 #  Training
 # ----------
 
-for epoch in range(opt.n_epochs):
-    for i, (imgs, labels) in enumerate(dataloader):
+if opt.train:
+    print('Epoch\tD loss\tG loss')
+    for epoch in range(opt.n_epochs):
+        g_loss_list, d_loss_list, size = [], [], []
+        for i, (imgs, labels) in enumerate(dataloader):
 
-        batch_size = imgs.shape[0]
+            batch_size = imgs.shape[0]
 
-        # Adversarial ground truths
-        valid = Variable(FloatTensor(batch_size, 1).fill_(1.0), requires_grad=False)
-        fake = Variable(FloatTensor(batch_size, 1).fill_(0.0), requires_grad=False)
+            # Adversarial ground truths
+            # """
+            if opt.rand > 0:
+                valid = Variable(torch.from_numpy(np.random.uniform(1.0 - opt.rand, 1.0, size=(batch_size, 1))).float(),
+                                 requires_grad=False)
+                fake = Variable(torch.from_numpy(np.random.uniform(0.0, opt.rand, size=(batch_size, 1))).float(),
+                                requires_grad=False)
+            else:
+                valid = Variable(FloatTensor(batch_size, 1).fill_(1), requires_grad=False)
+                fake = Variable(FloatTensor(batch_size, 1).fill_(0), requires_grad=False)
 
-        # Configure input
-        real_imgs = Variable(imgs.type(FloatTensor))
-        labels = Variable(labels.type(LongTensor))
+            if opt.swap > np.random.uniform():
+                valid, fake = fake, valid
 
-        # -----------------
-        #  Train Generator
-        # -----------------
+            # Configure input
+            real_imgs = Variable(imgs.type(FloatTensor))
+            labels = Variable(labels.type(LongTensor))
 
-        optimizer_G.zero_grad()
+            # -----------------
+            #  Train Generator
+            # -----------------
 
-        # Sample noise and labels as generator input
-        z = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, opt.latent_dim))))
-        gen_labels = Variable(LongTensor(np.random.randint(0, opt.n_classes, batch_size)))
+            optimizer_G.zero_grad()
 
-        # Generate a batch of images
-        gen_imgs = generator(z, gen_labels)
+            # Sample noise and labels as generator input
+            z = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, opt.latent_dim))))
+            gen_labels = Variable(LongTensor(np.random.randint(0, opt.n_classes, batch_size)))
 
-        # Loss measures generator's ability to fool the discriminator
-        validity = discriminator(gen_imgs, gen_labels)
-        g_loss = adversarial_loss(validity, valid)
+            # Generate a batch of images
+            gen_imgs = generator(z, gen_labels)
 
-        g_loss.backward()
-        optimizer_G.step()
+            # Loss measures generator's ability to fool the discriminator
+            validity = discriminator(gen_imgs, gen_labels)
+            g_loss = adversarial_loss(validity, valid)
 
-        # ---------------------
-        #  Train Discriminator
-        # ---------------------
+            g_loss.backward()
+            optimizer_G.step()
 
-        optimizer_D.zero_grad()
+            # ---------------------
+            #  Train Discriminator
+            # ---------------------
 
-        # Loss for real images
-        validity_real = discriminator(real_imgs, labels)
-        d_real_loss = adversarial_loss(validity_real, valid)
+            for _ in range(opt.d_iter):
+                optimizer_D.zero_grad()
 
-        # Loss for fake images
-        validity_fake = discriminator(gen_imgs.detach(), gen_labels)
-        d_fake_loss = adversarial_loss(validity_fake, fake)
+                # Loss for real images
+                validity_real = discriminator(real_imgs, labels)
+                d_real_loss = adversarial_loss(validity_real, valid)
 
-        # Total discriminator loss
-        d_loss = (d_real_loss + d_fake_loss) / 2
+                # Loss for fake images
+                validity_fake = discriminator(gen_imgs.detach(), gen_labels)
+                d_fake_loss = adversarial_loss(validity_fake, fake)
 
-        d_loss.backward()
-        optimizer_D.step()
+                # Total discriminator loss
+                d_loss = (d_real_loss + d_fake_loss) / 2
 
-        print(
-            "[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f]"
-            % (epoch, opt.n_epochs, i, len(dataloader), d_loss.item(), g_loss.item())
-        )
+                d_loss.backward()
+                optimizer_D.step()
 
-        batches_done = epoch * len(dataloader) + i
-        if batches_done % opt.sample_interval == 0:
-            sample_image(n_row=10, batches_done=batches_done)
+            g_loss_list.append(g_loss.item())
+            d_loss_list.append(d_loss.item())
+            size.append(batch_size)
 
-torch.save(generator.state_dict(), './models/gan_generator.pt')
-torch.save(discriminator.state_dict(), './models/gan_discriminator.pt')
+            batches_done = epoch * len(dataloader) + i
+            if batches_done % opt.sample_interval == 0:
+                sample_image(n_row=10, batches_done=batches_done)
+
+        print("%d\t%f\t%f" % (epoch, np.average(d_loss_list, weights=size), np.average(g_loss_list, weights=size)))
+
+        # step learning rate schedulers
+        if opt.scheduler:
+            scheduler_G.step()
+            scheduler_D.step()
+
+    torch.save(generator.state_dict(), './models/gan_generator.pt')
+    torch.save(discriminator.state_dict(), './models/gan_discriminator.pt')
+else:
+    generator.load_state_dict(torch.load('./models/gan_generator.pt'))
+    discriminator.load_state_dict(torch.load('./models/gan_discriminator.pt'))
+
+# compute test accuracy
+size, real_correct, fake_correct = 0, 0, 0
+for i, (imgs, labels) in enumerate(testloader):
+
+    batch_size = imgs.shape[0]
+
+    # Adversarial ground truths
+    valid = Variable(FloatTensor(batch_size, 1).fill_(1.0), requires_grad=False)
+    fake = Variable(FloatTensor(batch_size, 1).fill_(0.0), requires_grad=False)
+
+    # Configure input
+    real_imgs = Variable(imgs.type(FloatTensor))
+    labels = Variable(labels.type(LongTensor))
+
+    # Sample noise and labels as generator input
+    z = Variable(FloatTensor(np.random.normal(0, 1, (batch_size, opt.latent_dim))))
+    gen_labels = Variable(LongTensor(np.random.randint(0, opt.n_classes, batch_size)))
+
+    # Generate a batch of images
+    gen_imgs = generator(z, gen_labels)
+
+    # Loss measures generator's ability to fool the discriminator
+    validity_real = discriminator(real_imgs.detach(), labels)
+    validity_fake = discriminator(gen_imgs.detach(), gen_labels)
+
+    real_correct += (validity_real > .5).sum()
+    fake_correct += (validity_fake < .5).sum()
+    size += batch_size
+
+print('Test Accuracy: %f' % ((real_correct+fake_correct)/(2*size)))
+print('Real Accuracy: %f' % (real_correct/size))
+print('Fake Accuracy: %f' % (fake_correct/size))
 
 # Generate Images
 
