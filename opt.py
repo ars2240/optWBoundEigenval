@@ -22,7 +22,7 @@ import shutil
 import sys
 from scipy.stats import skewnorm
 from scipy.stats import norm
-from sklearn.metrics import f1_score, roc_auc_score, precision_recall_curve, jaccard_score
+from sklearn.metrics import f1_score, roc_auc_score, precision_recall_curve, jaccard_score, confusion_matrix
 import time
 import torch
 from torch.autograd import Variable
@@ -962,6 +962,9 @@ class OptWBoundEignVal(object):
                 if 'auc' in self.test_func:
                     outputs.append(ops.data)
                     labels.append(target)
+                elif 'conf' in self.test_func:
+                    outputs.append(predicted)
+                    labels.append(target)
                 else:
                     f1 = f1_score(target, predicted, average='micro')
                     f1_list.append(f1)
@@ -971,11 +974,9 @@ class OptWBoundEignVal(object):
                 print(np.asarray((unique, counts)))
 
             if 'auc' in self.test_func:
-                labels = torch.cat(labels)
-                outputs = torch.cat(outputs)
+                labels, outputs = torch.cat(labels), torch.cat(outputs)
                 classes = outputs.size()[1]
-                roc = np.zeros(classes)
-                f1 = np.zeros(classes)
+                roc, f1 = np.zeros(classes), np.zeros(classes)
                 for i in range(classes):
                     # remove NaN labels
                     outputs2 = outputs[:, i]
@@ -999,6 +1000,11 @@ class OptWBoundEignVal(object):
                 test_acc = roc.mean()  # mean AUCs
                 # weighted mean of f1 scores
                 test_f1 = f1.mean()  # mean AUCs
+            elif 'conf' in self.test_func:
+                labels, outputs = torch.cat(labels), torch.cat(outputs)
+                conf = confusion_matrix(labels, outputs)
+                np.savetxt("./logs/" + self.header2 + "_conf_matrix.csv", conf, delimiter=",")
+                test_acc, test_f1 = None, None
             else:
                 test_acc = np.average(acc_list, weights=size)  # weighted mean of accuracy
                 test_f1 = np.average(f1_list, weights=size)  # weighted mean of f1 scores

@@ -33,7 +33,7 @@ def options():
     opt['train_loader'], opt['valid_loader'] = get_train_valid_loader(batch_size=batch_size, augment=False)
     opt['test_loader'] = []
     opt['test_loader'].append(get_test_loader(batch_size=batch_size))
-    opt['test_loader'].append(get_mnist_loader(batch_size=batch_size))
+    # opt['test_loader'].append(get_mnist_loader(batch_size=batch_size))
     opt['test_loader'].append(get_gan_loader(batch_size=batch_size))
     opt['test_loader_aug'] = get_test_loader(batch_size=batch_size, augment=True)
 
@@ -44,6 +44,7 @@ def options():
     opt['header'] = 'USPS'
     opt['train'] = False
     opt['btch_h'] = False
+    opt['test_func'] = 'max conf'
 
     opt['test'] = False
     opt['comp_test'] = True
