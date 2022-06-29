@@ -10,6 +10,7 @@ import numpy as np
 
 from torchvision import datasets
 from torchvision import transforms
+from torch.utils.data import Dataset
 from torch.utils.data.sampler import SubsetRandomSampler
 
 normalize = transforms.Normalize(
@@ -35,6 +36,34 @@ mnist_trans = transforms.Compose([
     transforms.ToTensor(),
     transforms.Resize((16, 16)),
     normalize])
+
+gan_trans = transforms.Compose([
+    transforms.ToPILImage(),
+    transforms.Resize((16, 16)),
+    transforms.ToTensor(),
+    normalize])
+
+
+class CustomTensorDataset(Dataset):
+    """TensorDataset with support of transforms.
+    """
+    def __init__(self, tensors, transform=None):
+        assert all(tensors[0].size(0) == tensor.size(0) for tensor in tensors)
+        self.tensors = tensors
+        self.transform = transform
+
+    def __getitem__(self, index):
+        x = self.tensors[0][index]
+
+        if self.transform:
+            x = self.transform(x)
+
+        y = self.tensors[1][index]
+
+        return x, y
+
+    def __len__(self):
+        return self.tensors[0].size(0)
 
 
 def get_train_valid_loader(data_dir='./data', batch_size=1, augment=False, random_seed=1226, valid_size=1/7,
@@ -256,7 +285,7 @@ def get_gan_loader(data_dir='./data', batch_size=1, random_seed=1226, shuffle=Fa
 
     torch.manual_seed(random_seed)
 
-    dataset = torch.load(data_dir + '/gan_usps.pt')
+    dataset = torch.load(data_dir + '/cgan_usps.pt')
     data_loader = torch.utils.data.DataLoader(
         dataset, batch_size=batch_size, shuffle=shuffle,
         num_workers=num_workers, pin_memory=pin_memory)

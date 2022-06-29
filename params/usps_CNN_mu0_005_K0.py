@@ -44,7 +44,7 @@ def options():
     opt['header'] = 'USPS'
     opt['train'] = False
     opt['btch_h'] = False
-    opt['test_func'] = 'max conf'
+    # opt['test_func'] = 'max conf'
 
     opt['test'] = False
     opt['comp_test'] = True

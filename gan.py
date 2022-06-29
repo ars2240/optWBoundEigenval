@@ -27,6 +27,7 @@ parser.add_argument("--batch_size", type=int, default=64, help="size of the batc
 parser.add_argument("--lr", type=float, default=1e-4, help="adam: learning rate")
 parser.add_argument("--b1", type=float, default=0.5, help="adam: decay of first order momentum of gradient")
 parser.add_argument("--b2", type=float, default=0.999, help="adam: decay of first order momentum of gradient")
+parser.add_argument("--weight_decay", type=float, default=2e-5, help="adam: weight decay")
 parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads to use during batch generation")
 parser.add_argument("--latent_dim", type=int, default=100, help="dimensionality of the latent space")
 parser.add_argument("--n_classes", type=int, default=10, help="number of classes for dataset")
@@ -34,6 +35,7 @@ parser.add_argument("--img_size", type=int, default=16, help="size of each image
 parser.add_argument("--channels", type=int, default=1, help="number of image channels")
 parser.add_argument("--sample_interval", type=int, default=400, help="interval betwen image samples")
 parser.add_argument("--gen_images", type=int, default=10000, help="number of generated images")
+parser.add_argument("--nodes", type=int, default=32, help="number of nodes in the 1st layer of the network")
 parser.add_argument("--train", type=int, default=True, help="whether or not to train model")
 parser.add_argument("--scheduler", type=int, default=True, help="whether or not to use learning rate scheduler")
 parser.add_argument("--cos", type=int, default=True, help="whether or not to use cosine annealing lr")
@@ -49,7 +51,7 @@ cuda = True if torch.cuda.is_available() else False
 
 
 class Generator(nn.Module):
-    def __init__(self):
+    def __init__(self, n=128):
         super(Generator, self).__init__()
 
         self.label_emb = nn.Embedding(opt.n_classes, opt.n_classes)
@@ -62,11 +64,11 @@ class Generator(nn.Module):
             return layers
 
         self.model = nn.Sequential(
-            *block(opt.latent_dim + opt.n_classes, 128, normalize=False),
-            *block(128, 256),
-            *block(256, 512),
-            *block(512, 1024),
-            nn.Linear(1024, int(np.prod(img_shape))),
+            *block(opt.latent_dim + opt.n_classes, n, normalize=False),
+            *block(n, n*2),
+            *block(n*2, n*4),
+            *block(n*4, n*8),
+            nn.Linear(n*8, int(np.prod(img_shape))),
             nn.Tanh()
         )
 
@@ -79,21 +81,21 @@ class Generator(nn.Module):
 
 
 class Discriminator(nn.Module):
-    def __init__(self):
+    def __init__(self, n=128):
         super(Discriminator, self).__init__()
 
         self.label_embedding = nn.Embedding(opt.n_classes, opt.n_classes)
 
         self.model = nn.Sequential(
-            nn.Linear(opt.n_classes + int(np.prod(img_shape)), 512),
+            nn.Linear(opt.n_classes + int(np.prod(img_shape)), n*4),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(512, 512),
+            nn.Linear(n*4, n*4),
             nn.Dropout(0.4),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(512, 512),
+            nn.Linear(n*4, n*4),
             nn.Dropout(0.4),
             nn.LeakyReLU(0.2, inplace=True),
-            nn.Linear(512, 1),
+            nn.Linear(n*4, 1),
             nn.Sigmoid()
         )
 
@@ -108,8 +110,8 @@ class Discriminator(nn.Module):
 adversarial_loss = torch.nn.BCELoss()
 
 # Initialize generator and discriminator
-generator = Generator()
-discriminator = Discriminator()
+generator = Generator(n=opt.nodes)
+discriminator = Discriminator(n=opt.nodes)
 
 if cuda:
     generator.cuda()
@@ -127,8 +129,8 @@ testloader = torch.utils.data.DataLoader(
     batch_size=opt.batch_size, shuffle=True)
 
 # Optimizers
-optimizer_G = torch.optim.Adam(generator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
-optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
+optimizer_G = torch.optim.Adam(generator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2), weight_decay=opt.weight_decay)
+optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2), weight_decay=opt.weight_decay)
 
 # learning rate scheduler
 if opt.cos:
