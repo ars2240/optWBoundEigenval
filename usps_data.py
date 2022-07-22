@@ -265,7 +265,8 @@ def get_mnist_loader(data_dir='./data', batch_size=1, random_seed=1226, shuffle=
     return data_loader
 
 
-def get_gan_loader(data_dir='./data', batch_size=1, random_seed=1226, shuffle=False, num_workers=0, pin_memory=True):
+def get_gan_loader(data_dir='./data', file='cgan_usps.pt', batch_size=1, random_seed=1226, shuffle=False, num_workers=0,
+                   pin_memory=True):
     """
     Utility function for loading and returning a multi-process
     test iterator over the GAN-generated dataset.
@@ -285,7 +286,7 @@ def get_gan_loader(data_dir='./data', batch_size=1, random_seed=1226, shuffle=Fa
 
     torch.manual_seed(random_seed)
 
-    dataset = torch.load(data_dir + '/cgan_usps.pt')
+    dataset = torch.load(data_dir + '/' + file)
     data_loader = torch.utils.data.DataLoader(
         dataset, batch_size=batch_size, shuffle=shuffle,
         num_workers=num_workers, pin_memory=pin_memory)
