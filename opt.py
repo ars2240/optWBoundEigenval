@@ -331,13 +331,6 @@ class OptWBoundEignVal(object):
     def init_kfac(self, data=None):
         # initializes KFAC on batch
 
-        old_stdout = sys.stdout  # save old output
-        log_file = open(os.devnull, 'w')  # open log file
-        sys.stdout = log_file  # write to log file
-
-        log_file.close()  # close log file
-        sys.stdout = old_stdout  # reset output
-
         if data is None:
             data = iter(self.dataloader).next()
         # for testing purposes
