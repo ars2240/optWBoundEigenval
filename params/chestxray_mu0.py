@@ -21,10 +21,10 @@ from dcnn import *
 def options():
     # create options dictionary and some parameters
     opt = {'seed': 1226, 'tol': 0.001, 'mu': 0, 'K': 0}
-    enc = 'alex'  # model type
+    enc = 'dens121'  # model type
 
     # batch size
-    batch_size = 16
+    batch_size = 4
     opt['batch_size'] = batch_size
 
     # set number of threads
@@ -71,6 +71,8 @@ def options():
         model = MyResNet50(14)
     elif enc == 'vgg16bn':
         model = MyVggNet16_bn(14)
+    elif enc == 'dens121':
+        model = DenseNet121(14)
     elif enc == 'dens161':
         model = MyDensNet161(14)
     elif enc == 'dens201':
@@ -84,14 +86,15 @@ def options():
     opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-5)
     opt['header'] = 'chestxray_' + enc
     opt['use_gpu'] = True
-    opt['pow_iter'] = False
+    opt['pow_iter'] = True
     opt['test_func'] = 'accauc sigmoid'
-    opt['max_iter'] = 10
-    opt['max_pow_iter'] = 1000
+    opt['max_iter'] = 5
+    opt['max_pow_iter'] = 100
     opt['pow_iter_eps'] = 0.1
     opt['verbose'] = True
-    opt['train'] = False
-    opt['test'] = False
+    opt['train'] = True
+    opt['test'] = True
     opt['comp_test'] = True
+    opt['rho_test'] = False
 
     return opt
