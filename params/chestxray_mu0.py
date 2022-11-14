@@ -86,7 +86,7 @@ def options():
     opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-5)
     opt['header'] = 'chestxray_' + enc
     opt['use_gpu'] = True
-    opt['pow_iter'] = True
+    opt['pow_iter'] = False
     opt['test_func'] = 'accauc sigmoid'
     opt['max_iter'] = 5
     opt['max_pow_iter'] = 100
@@ -95,6 +95,6 @@ def options():
     opt['train'] = True
     opt['test'] = True
     opt['comp_test'] = True
-    opt['rho_test'] = False
+    opt['rho_test'] = True
 
     return opt
