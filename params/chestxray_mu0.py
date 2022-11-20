@@ -83,8 +83,8 @@ def options():
     # Training Setup
     opt['model'] = model
     opt['loss'] = W_BCEWithLogitsLoss()
-    opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-5)
-    opt['header'] = 'chestxray_' + enc
+    opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-4)
+    opt['header'] = 'chestxray_E-4_' + enc
     opt['use_gpu'] = True
     opt['pow_iter'] = False
     opt['test_func'] = 'accauc sigmoid'
