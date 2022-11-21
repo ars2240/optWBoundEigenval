@@ -84,7 +84,7 @@ def options():
     opt['model'] = model
     opt['loss'] = W_BCEWithLogitsLoss()
     opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-4, weight_decay=1e-5)
-    opt['scheduler'] = torch.optim.lr_scheduler.ReduceLROnPlateau(opt['optimizer'], factor=0.1, patience=5, mode='min')
+    opt['scheduler'] = torch.optim.lr_scheduler.ReduceLROnPlateau(opt['optimizer'], patience=5)
     opt['header'] = 'chestxray_CheXNet_' + enc
     opt['use_gpu'] = True
     opt['pow_iter'] = False
