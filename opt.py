@@ -254,7 +254,6 @@ class OptWBoundEignVal(object):
         self.loss = loss  # loss function (from torch)
         self.optimizer = optimizer  # optimizer function, optional (from torch)
         self.scheduler = scheduler  # learning rate scheduler, optional (from torch)
-        print(self.scheduler.__class__.__name__)
         self.use_gpu = use_gpu  # whether or not cuda GPUs used
         self.min_iter = min_iter  # minimum number of iterations
         self.max_iter = max_iter  # maximum number of iterations
