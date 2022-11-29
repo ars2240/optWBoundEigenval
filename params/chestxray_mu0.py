@@ -89,7 +89,7 @@ def options():
     opt['use_gpu'] = True
     opt['pow_iter'] = False
     opt['test_func'] = 'accauc sigmoid'
-    opt['max_iter'] = 10
+    opt['max_iter'] = 100
     opt['max_pow_iter'] = 100
     opt['pow_iter_eps'] = 0.1
     opt['verbose'] = True
