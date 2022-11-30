@@ -24,7 +24,7 @@ def options():
     enc = 'dens121'  # model type
 
     # batch size
-    batch_size = 8
+    batch_size = 16
     opt['batch_size'] = batch_size
 
     # set number of threads
@@ -89,7 +89,7 @@ def options():
     opt['use_gpu'] = True
     opt['pow_iter'] = False
     opt['test_func'] = 'accauc sigmoid'
-    opt['max_iter'] = 100
+    opt['max_iter'] = 10
     opt['max_pow_iter'] = 100
     opt['pow_iter_eps'] = 0.1
     opt['verbose'] = True
