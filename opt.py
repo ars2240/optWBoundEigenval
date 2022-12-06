@@ -319,7 +319,7 @@ class OptWBoundEignVal(object):
         opt.acc_stats = True
         if self.kfac_rand:
             with torch.no_grad():
-                if self.loss.__class__.__name__ == 'W_BCEWithLogitsLoss':
+                if self.loss.__class__.__name__ == 'W_BCEWithLogitsLoss' or self.loss.__class__.__name__ == 'BCELoss':
                     target = torch.bernoulli(output.cpu().data).squeeze().to(self.device)
                 else:
                     target = torch.multinomial(F.softmax(output.cpu().data, dim=1), 1).squeeze().to(self.device)
@@ -649,11 +649,10 @@ class OptWBoundEignVal(object):
             if self.optimizer.__class__.__name__ == "EntropySGD":
                 from optim import accuracy
 
-                b = self.loss.__class__.__name__ == 'W_BCEWithLogitsLoss'
-
                 def helper():
                     def feval():
-                        if b:
+                        if self.loss.__class__.__name__ == 'W_BCEWithLogitsLoss' \
+                                or self.loss.__class__.__name__ == 'BCELoss':
                             predicted = (output.data > 0.5).float()
                             prec1 = torch.mean((predicted == target).float()) * 100
                         else:
@@ -738,7 +737,7 @@ class OptWBoundEignVal(object):
         if self.scheduler is not None and self.scheduler.__class__.__name__ == "ReduceLROnPlateau":
             self.scheduler.step(self.f)
         elif self.scheduler is not None:
-            self.scheduler.step
+            self.scheduler.step()
 
     def save(self, tail='_trained_model.pt'):
         # Save model weights
