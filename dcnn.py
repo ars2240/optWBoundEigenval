@@ -24,8 +24,8 @@ class ChestXray_Dataset(Dataset):
     """ChestXray dataset."""
     path = '/home/hddraid/shared_data/chest_xray8/'
 
-    def __init__(self, csv_labelfile=join(path, 'Data_Entry_2017.csv'), csv_bboxfile=join(path, 'BBox_list_2017.csv'),
-                 root_dir=join(path, 'images/cropedimages'), use='train', transform=None):
+    def __init__(self, csv_labelfile='Data_Entry_2017.csv', csv_bboxfile='BBox_list_2017.csv',
+                 root_dir='images/cropedimages', use='train', transform=None):
         """
         Args:
             csv_labelfile (string): Path to the csv file with labels.
@@ -35,6 +35,11 @@ class ChestXray_Dataset(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
+        csv_labelfile = join(path, csv_labelfile)
+        csv_bboxfile = join(path, csv_bboxfile)
+        root_dir = join(path, root_dir)
+
+
         label_df = pd.read_csv(csv_labelfile)
         te = pd.read_csv(join(self.path, 'test_list.txt'), header=None)[0]
         tr_val = pd.read_csv(join(self.path, 'train_val_list.txt'), header=None)[0]
