@@ -746,7 +746,7 @@ class OptWBoundEignVal(object):
         self.model.to(self.device)
 
     def train(self, inputs=None, target=None, inputs_valid=None, target_valid=None, train_loader=None,
-              valid_loader=None, train_loader_na=None):
+              valid_loader=None, train_loader_na=None, crops=False):
 
         start = time.time()  # start timer
 
@@ -794,7 +794,7 @@ class OptWBoundEignVal(object):
                 print('%d\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm))
             else:
                 with torch.no_grad():
-                    _, self.val_acc, val_f1 = self.test_model(inputs_valid, target_valid, valid_loader)
+                    _, self.val_acc, val_f1 = self.test_model(inputs_valid, target_valid, valid_loader, crops)
                 if self.h > self.best_h and self.best_h_val:
                     self.best_h = self.h
                     self.best_rho = self.rho
@@ -886,7 +886,8 @@ class OptWBoundEignVal(object):
         print(*np.average(np.array(stats, dtype='float'), axis=0, weights=size)[1:], sep='\t')
         np.savetxt("./logs/" + self.header2 + "_rho_test.csv", stats, delimiter=",")
 
-    def test_model(self, x=None, y=None, loader=None, classes=None, model_classes=None, other_classes=None):
+    def test_model(self, x=None, y=None, loader=None, classes=None, model_classes=None, other_classes=None,
+                   crops=False):
         # Computes the loss and accuracy of model on given dataset
 
         self.model.eval()  # set model to evaluation mode
@@ -919,6 +920,10 @@ class OptWBoundEignVal(object):
                     inputs, target = Variable(data['image']), Variable(data['label'])
                 else:
                     raise Exception('Data type not supported')
+
+                if crops:
+                    _, _, c, h, w = inputs.size()
+                    inputs = inputs.view(-1, c, h, w)
 
                 # compute loss
                 f, ops = self.comp_f(inputs, target, classes, model_classes)
@@ -1036,18 +1041,20 @@ class OptWBoundEignVal(object):
         self.model.load_state_dict(state)
         self.model.to(self.device)
 
-    def test_model_best(self, x=None, y=None, loader=None, classes=None, model_classes=None, other_classes=None, fname=None):
+    def test_model_best(self, x=None, y=None, loader=None, classes=None, model_classes=None, other_classes=None,
+                        fname=None, crops=False):
         # tests best model, loaded from file
 
         self.model_load(fname)
-        return self.test_model(x, y, loader, classes, model_classes, other_classes)
+        return self.test_model(x, y, loader, classes, model_classes, other_classes, crops)
 
-    def test_set(self, x=None, y=None, loader=None, classes=None, model_classes=None, other_classes=None, fname=None, label="Train"):
+    def test_set(self, x=None, y=None, loader=None, classes=None, model_classes=None, other_classes=None, fname=None,
+                 label="Train", crops=False):
         old_stdout = sys.stdout  # save old output
         log_file = open(self.log_file, "a")  # open log file
         sys.stdout = log_file  # write to log file
 
-        loss, acc, f1 = self.test_model_best(x, y, loader, classes, model_classes, other_classes, fname)  # test best model
+        loss, acc, f1 = self.test_model_best(x, y, loader, classes, model_classes, other_classes, fname, crops)  # test best model
 
         print(label, 'Loss:', loss)
         print(label, 'Accuracy:', acc)
@@ -1723,7 +1730,7 @@ def main(pfile):
         opt.train(inputs=options['inputs'], target=options['target'], inputs_valid=options['inputs_valid'],
                   target_valid=options['target_valid'], train_loader=assert_dl(options['train_loader'], bs, nw),
                   valid_loader=assert_dl(options['valid_loader'], bs, nw),
-                  train_loader_na=assert_dl(options['train_loader_na'], bs, nw))
+                  train_loader_na=assert_dl(options['train_loader_na'], bs, nw), crops=options['crops'])
     """
     try:
         opt.train(inputs=options['inputs'], target=options['target'], inputs_valid=options['inputs_valid'],
@@ -1771,12 +1778,12 @@ def main(pfile):
         if type(options['test_loader_aug']) is list:
             for i in range(len(options['test_loader_aug'])):
                 _, acc, f1 = opt.test_model_best(loader=options['test_loader_aug'][i], fname=options['fname'],
-                                                 other_classes=options['other_classes'])
+                                                 other_classes=options['other_classes'], crops=options['crops'])
                 print('Aug_Test_{0}\tAug_Test_F1'.format(i))
                 print(str(acc) + '\t' + str(f1))
         else:
             _, acc, f1 = opt.test_model_best(loader=options['test_loader_aug'], fname=options['fname'],
-                                             other_classes=options['other_classes'])
+                                             other_classes=options['other_classes'], crops=options['crops'])
             print('Aug_Test_Acc\tAug_Test_F1')
             print(str(acc) + '\t' + str(f1))
 
