@@ -22,6 +22,7 @@ from dnet import densenet121
 
 class ChestXray_Dataset(Dataset):
     """ChestXray dataset."""
+    path = '/home/hddraid/shared_data/chest_xray8/'
 
     def __init__(self, csv_labelfile='Data_Entry_2017.csv', csv_bboxfile='BBox_list_2017.csv',
                  root_dir='images/cropedimages', use='train', transform=None):
@@ -34,10 +35,9 @@ class ChestXray_Dataset(Dataset):
             transform (callable, optional): Optional transform to be applied
                 on a sample.
         """
-        path = '/home/hddraid/shared_data/chest_xray8/'
-        csv_labelfile = join(path, csv_labelfile)
-        csv_bboxfile = join(path, csv_bboxfile)
-        root_dir = join(path, root_dir)
+        csv_labelfile = join(self.path, csv_labelfile)
+        csv_bboxfile = join(self.path, csv_bboxfile)
+        root_dir = join(self.path, root_dir)
 
 
         label_df = pd.read_csv(csv_labelfile)
