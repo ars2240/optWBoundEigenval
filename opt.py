@@ -922,6 +922,7 @@ class OptWBoundEignVal(object):
                     raise Exception('Data type not supported')
 
                 if crops:
+                    print('Crops')
                     _, _, c, h, w = inputs.size()
                     inputs = inputs.view(-1, c, h, w)
 
