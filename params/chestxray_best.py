@@ -110,6 +110,7 @@ def options():
     opt['test'] = True
     opt['comp_test'] = False
     opt['rho_test'] = False
+    opt['crops'] = True
     opt['fname'] = './models/m-25012018-123527.pth.tar'
 
     return opt
