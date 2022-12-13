@@ -843,9 +843,9 @@ class OptWBoundEignVal(object):
 
         # compute loss & accuracy on training set
         if train_loader_na is not None:
-            self.test_set(inputs, target, train_loader_na)
+            self.test_set(inputs, target, train_loader_na, crops=crops)
         else:
-            self.test_set(inputs, target, train_loader)
+            self.test_set(inputs, target, train_loader, crops=crops)
 
     def to_loader(self, inputs, target):
         data = utils_data.TensorDataset(inputs, target)
@@ -1206,10 +1206,10 @@ class OptWBoundEignVal(object):
             if len(classes) > 1:
                 c = [list(classes[i]).index(x) for x in overlap]
                 self.test_set(loader=assert_dl(loader, self.batch_size, self.num_workers), classes=c, model_classes=mc,
-                              fname=fname, label="Test", other_classes=other_classes)
+                              fname=fname, label="Test", other_classes=other_classes, crops=crops)
             else:
                 self.test_set(loader=assert_dl(loader, self.batch_size, self.num_workers), fname=fname, label="Test",
-                              other_classes=other_classes)
+                              other_classes=other_classes, crops=crops)
             i += 1
 
     def parse(self):
@@ -1707,7 +1707,6 @@ def main(pfile):
     # load params file and options
     params = __import__(pfile)
     options = params.options()
-    print(options)
 
     # get missing options and initialize class
     if 'asymmetric_valley' in options.keys() and options['asymmetric_valley']:
@@ -1725,7 +1724,6 @@ def main(pfile):
     options = missing_params(opt.test_set, options, replace={'loader': 'test_loader'})
     bs = options['batch_size']
     nw = options['num_workers']
-    print(options)
 
     # Train model
     if ('train' in options.keys() and options['train']) or 'train' not in options.keys():
@@ -1755,9 +1753,11 @@ def main(pfile):
                 loader = options['train_loader_na']
             opt.test_set(options['inputs'], options['target'], loader, fname=options['fname'])
             if options['valid_loader'] is not None:
-                opt.test_set(loader=assert_dl(options['valid_loader'], bs, nw), fname=options['fname'], label="Valid")
+                opt.test_set(loader=assert_dl(options['valid_loader'], bs, nw), fname=options['fname'], label="Valid",
+                             crops=options['crops'])
             elif 'inputs_valid' in options.keys() and 'target_valid' in options.keys():
-                opt.test_set(x=options['inputs_valid'], y=options['target_valid'], fname=options['fname'], label="Test")
+                opt.test_set(x=options['inputs_valid'], y=options['target_valid'], fname=options['fname'], label="Test",
+                             crops=options['crops'])
             if loader is None:
                 loader = opt.to_loader(options['inputs'], options['target'])
             data = iter(loader).next()
@@ -1769,9 +1769,10 @@ def main(pfile):
             else:
                 loader = options['test_loader']
             # test model on test set
-            opt.test_set(loader=assert_dl(loader, bs, nw), fname=options['fname'], label="Test")
+            opt.test_set(loader=assert_dl(loader, bs, nw), fname=options['fname'], label="Test", crops=options['crops'])
         elif 'inputs_test' in options.keys() and 'target_test' in options.keys():
-            opt.test_set(x=options['inputs_test'], y=options['target_test'], fname=options['fname'], label="Test")
+            opt.test_set(x=options['inputs_test'], y=options['target_test'], fname=options['fname'], label="Test",
+                         crops=options['crops'])
 
     # Parse log file
     if (('train' in options.keys() and options['train']) or 'train' not in options.keys()) and\
