@@ -922,10 +922,8 @@ class OptWBoundEignVal(object):
                     raise Exception('Data type not supported')
 
                 if crops:
-                    print(inputs.size())
                     _, _, c, h, w = inputs.size()
                     inputs = inputs.view(-1, c, h, w)
-                    print(inputs.size())
 
                 # compute loss
                 f, ops = self.comp_f(inputs, target, classes, model_classes)
@@ -1048,7 +1046,6 @@ class OptWBoundEignVal(object):
         # tests best model, loaded from file
 
         self.model_load(fname)
-        print(crops)
         return self.test_model(x, y, loader, classes, model_classes, other_classes, crops)
 
     def test_set(self, x=None, y=None, loader=None, classes=None, model_classes=None, other_classes=None, fname=None,
