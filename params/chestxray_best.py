@@ -24,7 +24,7 @@ def options():
     enc = 'dens121'  # model type
 
     # batch size
-    batch_size = 4
+    batch_size = 16
     opt['batch_size'] = batch_size
 
     # set number of threads
@@ -49,11 +49,18 @@ def options():
     transformList.append(normalize)
     train_transform = transforms.Compose(transformList)
 
+    """
     transformList = []
     transformList.append(transforms.Resize(256))
     transformList.append(transforms.TenCrop(224))
     transformList.append(transforms.Lambda(lambda crops: torch.stack([transforms.ToTensor()(crop) for crop in crops])))
     transformList.append(transforms.Lambda(lambda crops: torch.stack([normalize(crop) for crop in crops])))
+    test_transform = transforms.Compose(transformList)
+    """
+
+    transformList = []
+    transformList.append(transforms.Resize(256))
+    transformList.append(transforms.CenterCrop(224))
     test_transform = transforms.Compose(transformList)
 
     # Load the dataset
