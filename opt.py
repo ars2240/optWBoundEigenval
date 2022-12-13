@@ -1048,6 +1048,7 @@ class OptWBoundEignVal(object):
         # tests best model, loaded from file
 
         self.model_load(fname)
+        print(crops)
         return self.test_model(x, y, loader, classes, model_classes, other_classes, crops)
 
     def test_set(self, x=None, y=None, loader=None, classes=None, model_classes=None, other_classes=None, fname=None,
@@ -1706,6 +1707,7 @@ def main(pfile):
     # load params file and options
     params = __import__(pfile)
     options = params.options()
+    print(options)
 
     # get missing options and initialize class
     if 'asymmetric_valley' in options.keys() and options['asymmetric_valley']:
@@ -1723,6 +1725,7 @@ def main(pfile):
     options = missing_params(opt.test_set, options, replace={'loader': 'test_loader'})
     bs = options['batch_size']
     nw = options['num_workers']
+    print(options)
 
     # Train model
     if ('train' in options.keys() and options['train']) or 'train' not in options.keys():
