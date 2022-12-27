@@ -925,7 +925,7 @@ class OptWBoundEignVal(object):
                     _, nc, c, h, w = inputs.size()
                     inputs = inputs.view(-1, c, h, w)
                     # target = torch.repeat_interleave(target, nc, dim=0)
-                    target = target.repeat(nc, dim=0)
+                    target = target.repeat(nc, 1)
 
                 # compute loss
                 f, ops = self.comp_f(inputs, target, classes, model_classes)
