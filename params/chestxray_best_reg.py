@@ -36,26 +36,41 @@ def options():
     Pool(nthreads-1, main())
     """
 
-    # def mu(i):
-    #    return np.max([0.0, (i-50)/1000])
-
     # normalize images
-    transform = transforms.Compose([transforms.ToTensor(),
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+    normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
 
-    # Load the dataset
-    train_set = ChestXray_Dataset(use='train', transform=transform)
-    opt['train_loader'] = DataLoader(train_set, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=1)
-    valid_set = ChestXray_Dataset(use='validation', transform=transform)
-    opt['valid_loader'] = DataLoader(valid_set, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=1)
-    opt['test_loader'] = []
-    test_set = ChestXray_Dataset(use='test', transform=transform)
-    opt['test_loader'].append(test_set)
+    transformList = []
+    transformList.append(transforms.RandomResizedCrop(224))
+    transformList.append(transforms.RandomHorizontalFlip())
+    transformList.append(transforms.ToTensor())
+    transformList.append(normalize)
+    train_transform = transforms.Compose(transformList)
 
     # """
+    transformList = []
+    transformList.append(transforms.Resize(256))
+    transformList.append(transforms.TenCrop(224))
+    transformList.append(transforms.Lambda(lambda crops: torch.stack([transforms.ToTensor()(crop) for crop in crops])))
+    transformList.append(transforms.Lambda(lambda crops: torch.stack([normalize(crop) for crop in crops])))
+    test_transform = transforms.Compose(transformList)
+    """
+    transformList = []
+    transformList.append(transforms.Resize(256))
+    transformList.append(transforms.CenterCrop(224))
+    test_transform = transforms.Compose(transformList)
+    """
+
+    # Load the dataset
+    train_set = ChestXray_Dataset(use='train', transform=train_transform, root_dir='images/images')
+    opt['train_loader'] = DataLoader(train_set, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=1)
+    valid_set = ChestXray_Dataset(use='validation', transform=train_transform, root_dir='images/images')
+    opt['valid_loader'] = DataLoader(valid_set, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=1)
+    opt['test_loader'] = []
+    test_set = ChestXray_Dataset(use='test', transform=test_transform, root_dir='images/images')
+    opt['test_loader'].append(test_set)
+
     transform = transforms.Compose([transforms.Resize((256, 256)), transforms.CenterCrop((224, 224)),
-                                    transforms.ToTensor(),
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+                                    transforms.ToTensor(), normalize])
     test_set = CheXpert_Dataset(use='validation', transform=transform)
     opt['test_loader'].append(test_set)
     # """
@@ -89,28 +104,31 @@ def options():
 
     # Training Setup
     opt['model'] = model
-    opt['loss'] = W_BCEWithLogitsLoss()
-    opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-5)
-    opt['header'] = 'chestxray_E-6_' + enc
+    # opt['loss'] = W_BCEWithLogitsLoss()
+    opt['loss'] = torch.nn.BCELoss(size_average=True)
+    opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-4, weight_decay=1e-5)
+    opt['scheduler'] = torch.optim.lr_scheduler.ReduceLROnPlateau(opt['optimizer'], patience=5)
+    opt['header'] = 'chestxray2_' + enc
     opt['use_gpu'] = True
     opt['pow_iter'] = True
     opt['test_func'] = 'accauc sigmoid'
     opt['max_iter'] = 1
-    # opt['max_pow_iter'] = 100
+    opt['max_pow_iter'] = 100
     opt['ignore_bad_vals'] = False
-    # opt['pow_iter_eps'] = 0.1
+    opt['pow_iter_eps'] = 0.1
     # opt['pow_iter_alpha'] = alpha
     opt['verbose'] = False
     opt['mem_track'] = False
-    opt['train'] = False
-    opt['test'] = False
-    opt['comp_test'] = False
+    opt['train'] = True
+    opt['test'] = True
+    opt['comp_test'] = True
     opt['rho_test'] = True
     # opt['other_classes'] = list(range(1, 7))
     opt['saliency'] = 0
     opt['jaccard'] = False
     opt['comp_fname'] = './models/m-25012018-123527.pth.tar'
     # opt['fname'] = './models/m-25012018-123527.pth.tar'
+    opt['fname'] = '/home/ars411/chexnet/models/m-13122022-174431.pth.tar'
     # opt['fname'] = './models/chestxray_dens121_Adam_mu' + str(opt['mu']) + '_K' + str(opt['K']) + '_trained_model_best.pt'
 
     return opt

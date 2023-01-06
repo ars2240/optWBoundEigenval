@@ -24,7 +24,7 @@ def options():
     enc = 'dens121'  # model type
 
     # batch size
-    batch_size = 16
+    batch_size = 4
     opt['batch_size'] = batch_size
 
     # set number of threads
@@ -115,9 +115,10 @@ def options():
     opt['verbose'] = True
     opt['train'] = False
     opt['test'] = True
-    opt['comp_test'] = False
-    opt['rho_test'] = False
+    opt['comp_test'] = True
+    opt['rho_test'] = True
     opt['crops'] = True
-    opt['fname'] = './models/m-25012018-123527.pth.tar'
+    # opt['fname'] = './models/m-25012018-123527.pth.tar'
+    opt['fname'] = '/home/ars411/chexnet/models/m-13122022-174431.pth.tar'
 
     return opt
