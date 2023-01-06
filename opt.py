@@ -1173,7 +1173,7 @@ class OptWBoundEignVal(object):
         print('Max-weight:', max_weight)
 
     # comparison test (requires list of data loaders)
-    def comp_test(self, loaders, fname=None, other_classes=None):
+    def comp_test(self, loaders, fname=None, other_classes=None, crops=False):
         # test loader for model must be 0 index in list
         classes = [loader.classes.keys() for loader in loaders if not isinstance(loader, utils_data.DataLoader)]
         if len(classes) > 1:
