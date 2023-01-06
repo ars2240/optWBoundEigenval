@@ -1761,7 +1761,7 @@ def main(pfile):
                 loader = opt.to_loader(options['inputs'], options['target'])
             data = iter(loader).next()
             opt.comp_rho(data, p=True)
-            options['fname'] = None
+            # options['fname'] = None
         if 'test_loader' in options.keys() and options['test_loader'] is not None:
             if type(options['test_loader']) is list:
                 loader = options['test_loader'][0]
