@@ -1204,11 +1204,19 @@ class OptWBoundEignVal(object):
             # test model
             if len(classes) > 1:
                 c = [list(classes[i]).index(x) for x in overlap]
-                self.test_set(loader=assert_dl(loader, self.batch_size, self.num_workers), classes=c, model_classes=mc,
-                              fname=fname, label="Test", other_classes=other_classes, crops=crops)
+                if i==0:
+                    self.test_set(loader=assert_dl(loader, self.batch_size, self.num_workers), classes=c,
+                                  model_classes=mc, fname=fname, label="Test", other_classes=other_classes, crops=crops)
+                else:
+                    self.test_set(loader=assert_dl(loader, self.batch_size, self.num_workers), classes=c,
+                                  model_classes=mc, fname=fname, label="Test", other_classes=other_classes)
             else:
-                self.test_set(loader=assert_dl(loader, self.batch_size, self.num_workers), fname=fname, label="Test",
-                              other_classes=other_classes, crops=crops)
+                if i==0:
+                    self.test_set(loader=assert_dl(loader, self.batch_size, self.num_workers), fname=fname,
+                                  label="Test", other_classes=other_classes, crops=crops)
+                else:
+                    self.test_set(loader=assert_dl(loader, self.batch_size, self.num_workers), fname=fname,
+                                  label="Test", other_classes=other_classes)
             i += 1
 
     def parse(self):
@@ -1794,7 +1802,8 @@ def main(pfile):
 
     # Comparison Test (requires data loader)
     if 'comp_test' in options.keys() and options['comp_test'] and type(options['test_loader']) is list:
-        opt.comp_test(options['test_loader'], fname=options['fname'], other_classes=options['other_classes'])
+        opt.comp_test(options['test_loader'], fname=options['fname'], other_classes=options['other_classes'],
+                      crops=options['crops'])
 
     if 'rho_test' in options.keys() and options['rho_test']:
         opt.rho_test(options['inputs'], options['target'], options['train_loader'], fname=options['fname'])
