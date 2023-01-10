@@ -118,7 +118,7 @@ def options():
     opt['pow_iter_eps'] = 0.1
     # opt['pow_iter_alpha'] = alpha
     opt['verbose'] = True
-    opt['mem_track'] = True
+    opt['mem_track'] = False
     opt['train'] = True
     opt['test'] = True
     opt['comp_test'] = True
