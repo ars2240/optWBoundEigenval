@@ -110,13 +110,13 @@ def options():
     opt['pow_iter'] = True
     opt['test_func'] = 'accauc sigmoid'
     opt['max_iter'] = 5
-    opt['max_pow_iter'] = 1000
+    opt['max_pow_iter'] = 100
     opt['pow_iter_eps'] = 0.1
     opt['verbose'] = True
     opt['train'] = False
     opt['test'] = True
-    opt['comp_test'] = True
-    opt['rho_test'] = True
+    opt['comp_test'] = False
+    opt['rho_test'] = False
     opt['crops'] = True
     # opt['fname'] = './models/m-25012018-123527.pth.tar'
     opt['fname'] = '/home/ars411/chexnet/models/m-13122022-174431.pth.tar'
