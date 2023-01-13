@@ -120,6 +120,6 @@ def options():
     opt['crops'] = True
     # opt['fname'] = './models/m-25012018-123527.pth.tar'
     # opt['fname'] = '/home/ars411/chexnet/models/m-13122022-174431.pth.tar'
-    opt['fname'] = '/home/ars411/chexnet/m-10012023-100132.pth.tar'
+    opt['fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'
 
     return opt

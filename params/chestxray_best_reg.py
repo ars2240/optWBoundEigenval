@@ -126,9 +126,9 @@ def options():
     # opt['other_classes'] = list(range(1, 7))
     opt['saliency'] = 0
     opt['jaccard'] = False
-    opt['comp_fname'] = './models/m-25012018-123527.pth.tar'
+    # opt['comp_fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'
     # opt['fname'] = './models/m-25012018-123527.pth.tar'
-    opt['fname'] = '/home/ars411/chexnet/models/m-13122022-174431.pth.tar'
+    opt['fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'
     # opt['fname'] = './models/chestxray_dens121_Adam_mu' + str(opt['mu']) + '_K' + str(opt['K']) + '_trained_model_best.pt'
 
     return opt
