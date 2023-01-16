@@ -989,6 +989,7 @@ class OptWBoundEignVal(object):
                         labels2 = labels2[ll]
 
                     good = labels2 == labels2
+                    print(sum(good))
                     outputs2 = outputs2[good]
                     labels2 = labels2[good]
 
