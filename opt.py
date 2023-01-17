@@ -922,14 +922,16 @@ class OptWBoundEignVal(object):
                     raise Exception('Data type not supported')
 
                 if crops and len(inputs.size()) == 5:
-                    _, nc, c, h, w = inputs.size()
+                    bc, nc, c, h, w = inputs.size()
                     inputs = inputs.view(-1, c, h, w)
                     # target = torch.repeat_interleave(target, nc, dim=0)
-                    target = target.repeat(nc, 1)
 
                 # compute loss
                 f, ops = self.comp_f(inputs, target, classes, model_classes)
                 f_list.append(f)
+
+                if crops and len(inputs.size()) == 5:
+                    ops = ops.view(bs, nc, -1).mean(1)
 
                 if other_classes is not None:
                     oc.extend(np.nansum(target[:, [i for i in range(target.shape[1]) if i not in classes]], axis=1))
@@ -989,7 +991,6 @@ class OptWBoundEignVal(object):
                         labels2 = labels2[ll]
 
                     good = labels2 == labels2
-                    print(sum(good))
                     outputs2 = outputs2[good]
                     labels2 = labels2[good]
 
