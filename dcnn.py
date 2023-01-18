@@ -369,7 +369,7 @@ class W_BCEWithLogitsLoss(nn.Module):
         classes = input.size()[1]
         f = torch.zeros(classes)
 
-        if len(target) == 10 * input.size()[0]:
+        if 10 * len(target) == input.size()[0]:
             target = target.repeat(10, 1)
 
         target2 = target[target == target]
