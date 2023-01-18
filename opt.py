@@ -957,7 +957,8 @@ class OptWBoundEignVal(object):
                     predicted = (ops.data > 0.5).float()
                 target = target.to(self.device)
                 if 'acc' in self.test_func:
-                    acc = torch.mean((predicted == target).float()).item() * 100
+                    target2 = target.repeat(10, 1) if crops else target
+                    acc = torch.mean((predicted == target2).float()).item() * 100
                     acc_list.append(acc)
 
                 target = target.to('cpu')
