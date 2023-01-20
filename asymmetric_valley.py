@@ -156,7 +156,7 @@ class AsymmetricValley(OptWBoundEignVal):
             plt.savefig(os.path.join('./plots/', 'asymmetric_valley_test_acc_results.png'))
 
     def train(self, inputs=None, target=None, inputs_valid=None, target_valid=None, train_loader=None,
-              valid_loader=None, train_loader_na=None):
+              valid_loader=None, train_loader_na=None, crops=False):
 
         start = time.time()  # start timer
 
@@ -215,7 +215,7 @@ class AsymmetricValley(OptWBoundEignVal):
                 print('%d\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm))
             else:
                 with torch.no_grad():
-                    _, self.val_acc, val_f1 = self.test_model(inputs_valid, target_valid, valid_loader)
+                    _, self.val_acc, val_f1 = self.test_model(inputs_valid, target_valid, valid_loader, crops)
                 if self.val_acc > self.best_val_acc:
                     self.best_val_acc = self.val_acc
                     self.best_rho = self.rho
@@ -258,9 +258,9 @@ class AsymmetricValley(OptWBoundEignVal):
 
         # compute loss & accuracy on training set
         if train_loader_na is not None:
-            self.test_set(inputs, target, train_loader_na)
+            self.test_set(inputs, target, train_loader_na, crops=crops)
         else:
-            self.test_set(inputs, target, train_loader)
+            self.test_set(inputs, target, train_loader, crops=crops)
 
     def train_epoch(self, loader, model):
         loss_sum = 0.0
