@@ -912,6 +912,7 @@ class OptWBoundEignVal(object):
             outputs = []
             labels = []
             oc = []
+            crp = False
             for _, data in enumerate(dataloader):
 
                 if type(data) == list:
@@ -922,6 +923,7 @@ class OptWBoundEignVal(object):
                     raise Exception('Data type not supported')
 
                 if crops and len(inputs.size()) == 5:
+                    crp = True
                     bc, nc, c, h, w = inputs.size()
                     inputs = inputs.view(-1, c, h, w)
                     # target = torch.repeat_interleave(target, nc, dim=0)
@@ -931,7 +933,7 @@ class OptWBoundEignVal(object):
                 f, ops = self.comp_f(inputs, target, classes, model_classes)
                 f_list.append(f)
 
-                if crops and len(inputs.size()) == 5:
+                if crops and crp:
                     ops = ops.view(bs, nc, -1).mean(1)
 
                 if other_classes is not None:
@@ -957,8 +959,8 @@ class OptWBoundEignVal(object):
                     predicted = (ops.data > 0.5).float()
                 target = target.to(self.device)
                 if 'acc' in self.test_func:
-                    # target2 = target.repeat(10, 1) if crops else target
-                    acc = torch.mean((predicted == target).float()).item() * 100
+                    target2 = target.repeat(10, 1) if crops and crp else target
+                    acc = torch.mean((predicted == target2).float()).item() * 100
                     acc_list.append(acc)
 
                 target = target.to('cpu')
