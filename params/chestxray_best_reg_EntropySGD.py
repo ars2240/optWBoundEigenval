@@ -37,33 +37,51 @@ def options():
     Pool(nthreads-1, main())
     """
 
-    # def mu(i):
-    #    return np.max([0.0, (i-50)/1000])
-
     # normalize images
-    transform = transforms.Compose([transforms.ToTensor(),
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+    normalize = transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+
+    transformList = []
+    transformList.append(transforms.RandomResizedCrop(224))
+    transformList.append(transforms.RandomHorizontalFlip())
+    transformList.append(transforms.ToTensor())
+    transformList.append(normalize)
+    train_transform = transforms.Compose(transformList)
+
+    # """
+    transformList = []
+    transformList.append(transforms.Resize(256))
+    transformList.append(transforms.TenCrop(224))
+    transformList.append(transforms.Lambda(lambda crops: torch.stack([transforms.ToTensor()(crop) for crop in crops])))
+    transformList.append(transforms.Lambda(lambda crops: torch.stack([normalize(crop) for crop in crops])))
+    test_transform = transforms.Compose(transformList)
+    """
+    transformList = []
+    transformList.append(transforms.Resize(256))
+    transformList.append(transforms.CenterCrop(224))
+    test_transform = transforms.Compose(transformList)
+    """
 
     # Load the dataset
-    train_set = ChestXray_Dataset(use='train', transform=transform)
+    train_set = ChestXray_Dataset(use='train', transform=train_transform, root_dir='images/images')
     opt['train_loader'] = DataLoader(train_set, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=1)
-    valid_set = ChestXray_Dataset(use='validation', transform=transform)
+    valid_set = ChestXray_Dataset(use='validation', transform=train_transform, root_dir='images/images')
     opt['valid_loader'] = DataLoader(valid_set, batch_size=batch_size, shuffle=False, pin_memory=True, num_workers=1)
     opt['test_loader'] = []
-    test_set = ChestXray_Dataset(use='test', transform=transform)
+    test_set = ChestXray_Dataset(use='test', transform=test_transform, root_dir='images/images')
     opt['test_loader'].append(test_set)
 
     transform = transforms.Compose([transforms.Resize((256, 256)), transforms.CenterCrop((224, 224)),
-                                    transforms.ToTensor(),
-                                    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+                                    transforms.ToTensor(), normalize])
     test_set = CheXpert_Dataset(use='validation', transform=transform)
     opt['test_loader'].append(test_set)
+    # """
     test_set = MIMICCXR_Dataset(use='validation', transform=transform)
     opt['test_loader'].append(test_set)
     test_set = CheXpert_Dataset(use='train', transform=transform)
     opt['test_loader'].append(test_set)
     test_set = MIMICCXR_Dataset(use='train', transform=transform)
     opt['test_loader'].append(test_set)
+    # """
 
     # Create neural network
     if enc == 'alex':
