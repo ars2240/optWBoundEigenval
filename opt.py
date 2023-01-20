@@ -934,7 +934,7 @@ class OptWBoundEignVal(object):
                 f_list.append(f)
 
                 if crops and crp:
-                    ops = ops.view(bs, nc, -1).mean(1)
+                    ops = ops.view(bc, nc, -1).mean(1)
 
                 if other_classes is not None:
                     oc.extend(np.nansum(target[:, [i for i in range(target.shape[1]) if i not in classes]], axis=1))
