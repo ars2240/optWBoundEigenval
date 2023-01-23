@@ -794,7 +794,7 @@ class OptWBoundEignVal(object):
                 print('%d\t %f\t %f\t %f\t %f' % (self.i, self.f, self.rho, self.h, self.norm))
             else:
                 with torch.no_grad():
-                    _, self.val_acc, val_f1 = self.test_model(inputs_valid, target_valid, valid_loader, crops)
+                    _, self.val_acc, val_f1 = self.test_model(inputs_valid, target_valid, valid_loader)
                 if self.h > self.best_h and self.best_h_val:
                     self.best_h = self.h
                     self.best_rho = self.rho
