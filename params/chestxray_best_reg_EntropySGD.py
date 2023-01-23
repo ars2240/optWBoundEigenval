@@ -121,6 +121,7 @@ def options():
     # opt['other_classes'] = list(range(1, 7))
     opt['saliency'] = 0
     opt['jaccard'] = False
+    opt['crops'] = True
     # opt['comp_fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'
     # opt['fname'] = './models/m-25012018-123527.pth.tar'
     opt['fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'
