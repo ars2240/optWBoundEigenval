@@ -226,9 +226,9 @@ class AsymmetricValley(OptWBoundEignVal):
 
             # add function value to history log
             # check if h is tensor
-            if torch.is_tensor(self.h):
-                self.h = self.h.item()
-            f_hist.append(self.h)
+            if torch.is_tensor(self.f):
+                self.f = self.f.item()
+            f_hist.append(self.f)
 
             # check if convergence criteria met
             if self.i >= (self.min_iter - 1):
@@ -299,6 +299,8 @@ class AsymmetricValley(OptWBoundEignVal):
                 pred = output.data.max(1, keepdim=True)[1]
                 correct += pred.eq(target_var.data.view_as(pred)).sum().item()
             # print('len(loader.dataset)', len(loader.sampler))
+
+        self.f = loss_sum / len(loader.dataset)
 
         return {
             'loss': loss_sum / len(loader.dataset),
