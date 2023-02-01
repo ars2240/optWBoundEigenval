@@ -679,6 +679,8 @@ class OptWBoundEignVal(object):
                 output = self.model(inputs)
                 if torch.isnan(output).any():
                     self.model_load('./models/' + self.header2 + '_trained_model.pt')
+                else:
+                    self.save()
 
             # if verbose, add values to file
             if self.verbose:
