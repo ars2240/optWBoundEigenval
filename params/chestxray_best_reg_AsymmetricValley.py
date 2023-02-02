@@ -115,9 +115,9 @@ def options():
     opt['pow_iter_eps'] = 0.1
     opt['verbose'] = True
     opt['mem_track'] = False
-    opt['train'] = True
-    opt['test'] = True
-    opt['comp_test'] = True
+    opt['train'] = False
+    opt['test'] = False
+    opt['comp_test'] = False
     opt['rho_test'] = True
     # opt['other_classes'] = list(range(1, 7))
     opt['saliency'] = 0
@@ -125,7 +125,7 @@ def options():
     opt['crops'] = True
     # opt['comp_fname'] = './models/m-25012018-123527.pth.tar'
     # opt['fname'] = './models/m-25012018-123527.pth.tar'
-    opt['fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'
+    # opt['fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'
     opt['asymmetric_valley'] = True
     opt['swa_start'] = 1
     opt['sgd_start'] = 40
