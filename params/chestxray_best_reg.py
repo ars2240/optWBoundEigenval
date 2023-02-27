@@ -115,7 +115,7 @@ def options():
     opt['max_iter'] = 1
     opt['max_pow_iter'] = 100
     opt['ignore_bad_vals'] = False
-    opt['pow_iter_eps'] = 0.1
+    opt['pow_iter_eps'] = 0.01
     opt['pow_iter_alpha'] = 0.01
     opt['verbose'] = True
     opt['mem_track'] = False
