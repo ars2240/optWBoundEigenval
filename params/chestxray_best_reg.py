@@ -108,7 +108,7 @@ def options():
     # opt['loss'] = torch.nn.BCELoss(size_average=True)
     opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-4, weight_decay=1e-5)
     opt['scheduler'] = torch.optim.lr_scheduler.ReduceLROnPlateau(opt['optimizer'], patience=5)
-    opt['header'] = 'chestxray2_alpha0.01_' + enc
+    opt['header'] = 'chestxray2_' + enc
     opt['use_gpu'] = True
     opt['pow_iter'] = True
     opt['test_func'] = 'accauc sigmoid'
@@ -116,7 +116,7 @@ def options():
     opt['max_pow_iter'] = 100
     opt['ignore_bad_vals'] = False
     opt['pow_iter_eps'] = 0.01
-    opt['pow_iter_alpha'] = 0.01
+    # opt['pow_iter_alpha'] = 0.01
     opt['verbose'] = True
     opt['mem_track'] = False
     opt['train'] = True
