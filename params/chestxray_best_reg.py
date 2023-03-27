@@ -20,7 +20,7 @@ from dcnn import *
 
 def options():
     # create options dictionary and some parameters
-    opt = {'seed': 1226, 'tol': 0.001, 'mu': 10, 'K': 0}
+    opt = {'seed': 1226, 'tol': 0.001, 'mu': 1, 'K': 0}
     enc = 'dens121'  # model type
 
     # batch size
