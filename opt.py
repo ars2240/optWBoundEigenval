@@ -1006,7 +1006,7 @@ class OptWBoundEignVal(object):
                         print(e)
                         roc[i] = np.nan
                     f1[i] = f1_score(labels2, (outputs2 > 0.5).float(), average='micro')
-                print(roc)
+                # print(roc)
                 test_acc = roc.mean()  # mean AUCs
                 # weighted mean of f1 scores
                 test_f1 = f1.mean()  # mean AUCs
