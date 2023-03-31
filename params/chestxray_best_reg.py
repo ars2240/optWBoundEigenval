@@ -20,7 +20,7 @@ from dcnn import *
 
 def options():
     # create options dictionary and some parameters
-    opt = {'seed': 1226, 'tol': 0.001, 'mu': .1, 'K': 0}
+    opt = {'seed': 1226, 'tol': 0.001, 'mu': 1, 'K': 0}
     enc = 'dens121'  # model type
 
     # batch size
@@ -108,7 +108,7 @@ def options():
     # opt['loss'] = torch.nn.BCELoss(size_average=True)
     opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-5, weight_decay=1e-5)
     opt['scheduler'] = torch.optim.lr_scheduler.ReduceLROnPlateau(opt['optimizer'], patience=5)
-    opt['header'] = 'chestxray2_LRE-5_epsE-3_' + enc
+    opt['header'] = 'chestxray2_LRE-5_epsE-3_randInit_' + enc
     opt['use_gpu'] = True
     opt['pow_iter'] = True
     opt['test_func'] = 'accauc sigmoid'
@@ -127,6 +127,7 @@ def options():
     opt['saliency'] = 0
     opt['jaccard'] = False
     opt['crops'] = True
+    opt['rand_init'] = True
     # opt['comp_fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'
     # opt['fname'] = './models/m-25012018-123527.pth.tar'
     opt['fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'

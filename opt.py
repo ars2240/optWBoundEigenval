@@ -225,7 +225,7 @@ class OptWBoundEignVal(object):
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, pow_iter=True,
                  max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header='', num_workers=0,
                  test_func='maxacc', lobpcg=False, pow_iter_alpha=1, kfac_batch=1, kfac_rand=True, best_h=False,
-                 btch_h=False):
+                 btch_h=False, rand_init=False):
 
         # set default device
         if use_gpu and torch.cuda.is_available():
@@ -296,6 +296,7 @@ class OptWBoundEignVal(object):
         self.kfac_batch = kfac_batch  # how frequently the KFAC matrix is updated
         self.kfac_iter = kfac_batch  # counter on KFAC batches
         self.kfac_rand = kfac_rand  # if randomizer used for kfac
+        self.rand_init = rand_init  # if power iteration vector is randomly initiated each time
 
     def mem_check(self):
         # checks & prints max memory used
@@ -394,7 +395,7 @@ class OptWBoundEignVal(object):
         elif self.lobpcg:
             self.kfac_iter += 1
 
-        v = self.v  # initial guess for eigenvector (prior eigenvector)
+        v = self.random_v() if self.rand_init else self.v  # initial guess for eigenvector (random or prior eigenvector)
         v_old = None
 
         # initialize lambda and the norm
