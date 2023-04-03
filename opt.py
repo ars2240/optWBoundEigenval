@@ -225,7 +225,7 @@ class OptWBoundEignVal(object):
                  use_gpu=False, batch_size=128, min_iter=10, max_iter=100, max_pow_iter=1000, pow_iter=True,
                  max_samples=512, ignore_bad_vals=True, verbose=False, mem_track=False, header='', num_workers=0,
                  test_func='maxacc', lobpcg=False, pow_iter_alpha=1, kfac_batch=1, kfac_rand=True, best_h=False,
-                 btch_h=False, rand_init=False):
+                 btch_h=False, rand_init=False, gradg_clip=None):
 
         # set default device
         if use_gpu and torch.cuda.is_available():
@@ -285,8 +285,8 @@ class OptWBoundEignVal(object):
         self.header2 += '_Kmin' + str(Kmin) if Kmin > 0 else ''
         self.log_file = "./logs/" + self.header2 + ".log"
         self.verbose_log_file = "./logs/" + self.header2 + "_verbose.log"
-        self.ignore_bad_vals = ignore_bad_vals  # whether or not to ignore bad power iteration values
-        self.mem_track = mem_track  # whether or not maximum memory usage is tracked
+        self.ignore_bad_vals = ignore_bad_vals  # if to ignore bad power iteration values
+        self.mem_track = mem_track  # if maximum memory usage is tracked
         self.mem_max = 0  # running maximum memory usage
         self.num_workers = num_workers  # number of GPUs
         self.test_func = test_func  # test function
@@ -297,6 +297,7 @@ class OptWBoundEignVal(object):
         self.kfac_iter = kfac_batch  # counter on KFAC batches
         self.kfac_rand = kfac_rand  # if randomizer used for kfac
         self.rand_init = rand_init  # if power iteration vector is randomly initiated each time
+        self.gradg_clip = gradg_clip  # norm of maximum rho gradient size (None to ignore)
 
     def mem_check(self):
         # checks & prints max memory used
@@ -502,6 +503,10 @@ class OptWBoundEignVal(object):
         # computes grad rho
 
         self.gradrho = self.hvp_op.vGHv(self.v, storedGrad=True)  # compute v*gradH*v
+        if self.gradg_clip is not None:
+            grn = torch.norm(self.gradrho)
+            if grn > self.gradg_clip:
+                self.gradrho *= self.gradg_clip/grn
 
     def comp_f(self, inputs, target, classes=None, model_classes=None):
         # computes f
