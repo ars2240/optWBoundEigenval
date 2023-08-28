@@ -19,7 +19,7 @@ from usps_data import *
 
 def options():
     # create options dictionary and some parameters
-    opt = {'seed': 1226, 'tol': 0.001, 'mu': .001, 'K': 20, 'Kmin': 20}
+    opt = {'seed': 1226, 'tol': 0.001, 'mu': .005, 'K': 0}
 
     # batch size
     batch_size = 128
@@ -31,8 +31,9 @@ def options():
     # Load the dataset
     opt['train_loader'], opt['valid_loader'] = get_train_valid_loader(batch_size=batch_size, augment=False)
     opt['test_loader'] = []
-    # opt['test_loader'].append(get_test_loader(batch_size=batch_size))
-    # opt['test_loader'].append(get_mnist_loader(batch_size=batch_size))
+    opt['test_loader'].append(get_test_loader(batch_size=batch_size))
+    opt['test_loader'].append(get_mnist_loader(batch_size=batch_size))
+    opt['test_loader'].append(get_gan_loader(batch_size=batch_size, file='constructed2.pt'))
     opt['test_loader'].append(get_gan_loader(batch_size=batch_size, file='constructed6.pt'))
     opt['test_loader_aug'] = get_test_loader(batch_size=batch_size, augment=True)
 
@@ -45,7 +46,7 @@ def options():
     opt['loss'] = nn.CrossEntropyLoss()
     opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-4)
     # opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(options['optimizer'], lr_lambda=alpha)
-    opt['header'] = 'USPS_LOBPCG4_8_Pre'
+    opt['header'] = 'USPS_LOBPCG4'
     opt['max_iter'] = 100
     opt['use_gpu'] = False
     opt['lobpcg'] = True
@@ -53,7 +54,6 @@ def options():
     opt['pow_iter_alpha'] = alpha
     opt['mem_track'] = False
     opt['ignore_bad_vals'] = True
-    opt['fname'] = './models/USPS_E-3_KFACOptimizer_mu0_K0_trained_model_best.pt'
     opt['train'] = False
     opt['btch_h'] = False
 
@@ -64,6 +64,6 @@ def options():
     opt['ignore_bad_vals'] = False
 
     opt['kfac_rand'] = False
-    opt['kfac_batch'] = 8
+    opt['kfac_batch'] = 4
 
     return opt
