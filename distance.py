@@ -10,8 +10,8 @@ from sklearn.metrics.pairwise import cosine_similarity
 from usps_data import *
 
 batch_size = 10**9
-dist = 'cosine'
-data = 'Aug1'
+dist = 'euclid'
+data = 'Aug2'
 
 # get data loaders
 loader1 = get_test_loader(batch_size=batch_size)
@@ -52,11 +52,13 @@ else:
 # histogram
 # plt.hist(dmm, bins=20)
 if dist == 'euclid':
-    plt.hist(dmm, bins=range(19))
+    plt.hist(dmm, bins=range(19), density=True)
     plt.xlabel('Distance')
+    plt.ylim(0, .3)
 elif dist == 'cosine':
-    plt.hist(dmm, bins=np.linspace(0.5, 1, 21))
+    plt.hist(dmm, bins=np.linspace(0.5, 1, 21), density=True)
     plt.xlabel('Cosine Similarity')
+    plt.ylim(0, 15)
 plt.ylabel('Frequency')
 plt.savefig('./plots/distance_' + dist + '_' + data + '_test.png')
 plt.clf()
