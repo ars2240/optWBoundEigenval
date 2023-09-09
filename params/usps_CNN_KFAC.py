@@ -44,11 +44,11 @@ def options():
     opt['optimizer'] = KFACOptimizer(opt['model'], lr=1e-3)
     opt['header'] = 'USPS_E-3'
     opt['use_gpu'] = False
-    opt['train'] = False
+    opt['train'] = True
     opt['btch_h'] = False
 
     opt['test'] = False
-    opt['comp_test'] = True
+    opt['comp_test'] = False
     opt['aug_test'] = False
     opt['rho_test'] = False
     opt['ignore_bad_vals'] = False

@@ -42,7 +42,7 @@ def options():
     opt['optimizer'] = torch.optim.SGD(opt['model'].parameters(), lr=0.5)
     opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(opt['optimizer'], lr_lambda=beta)
     opt['header'] = 'Forest_LOBPCG4_8'
-    opt['use_gpu'] = True
+    opt['use_gpu'] = False
     opt['train'] = True
     opt['lobpcg'] = True
     opt['verbose'] = True
@@ -50,6 +50,6 @@ def options():
 
     opt['kfac_rand'] = False
     opt['kfac_batch'] = 8
-    opt['rho_test'] = True
+    opt['rho_test'] = False
 
     return opt

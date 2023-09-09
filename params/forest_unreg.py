@@ -26,21 +26,23 @@ def options():
     batch_size = 128
     opt['batch_size'] = batch_size
 
-    # def mu(i):
-    #    return np.max([0.0, (i-50)/1000])
-
     # Load the dataset
     opt.update(get_data())
+
+    def beta(k):
+        return 1/(1+k)
 
     # Training Setup
     opt['model'] = Net()
     opt['loss'] = nn.CrossEntropyLoss()
-    opt['optimizer'] = torch.optim.SGD(opt['model'].parameters(), lr=0.5)
-    # opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(options['optimizer'], lr_lambda=alpha)
-    opt['header'] = 'Forest_AsymValley'
+    opt['optimizer'] = torch.optim.SGD(opt['model'].parameters(), lr=.5)
+    opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(opt['optimizer'], lr_lambda=beta)
+    opt['header'] = 'Cov'
+    opt['use_gpu'] = False
     opt['train'] = True
+    opt['lobpcg'] = False
+    opt['verbose'] = False
     opt['pow_iter'] = False
-    opt['asymmetric_valley'] = True
     opt['rho_test'] = False
     opt['ignore_bad_vals'] = False
 

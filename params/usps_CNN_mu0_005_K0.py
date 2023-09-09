@@ -23,7 +23,7 @@ def options():
     opt = {'seed': 1226, 'tol': 0.001, 'mu': 0.005, 'K': 0}
 
     # batch size
-    batch_size = 128
+    batch_size = 512
     opt['batch_size'] = batch_size
 
     # def mu(i):
@@ -47,9 +47,9 @@ def options():
     # opt['test_func'] = 'max conf'
 
     opt['test'] = False
-    opt['comp_test'] = True
+    opt['comp_test'] = False
     opt['aug_test'] = False
-    opt['rho_test'] = False
+    opt['rho_test'] = True
     opt['ignore_bad_vals'] = False
 
     return opt

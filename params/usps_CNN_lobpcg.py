@@ -54,11 +54,11 @@ def options():
     opt['pow_iter_alpha'] = alpha
     opt['mem_track'] = False
     opt['ignore_bad_vals'] = True
-    opt['train'] = False
+    opt['train'] = True
     opt['btch_h'] = False
 
     opt['test'] = False
-    opt['comp_test'] = True
+    opt['comp_test'] = False
     opt['aug_test'] = False
     opt['rho_test'] = False
     opt['ignore_bad_vals'] = False

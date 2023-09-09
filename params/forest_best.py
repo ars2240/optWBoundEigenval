@@ -42,7 +42,7 @@ def options():
     opt['train'] = True
     opt['lobpcg'] = False
     opt['verbose'] = False
-    opt['rho_test'] = True
+    opt['rho_test'] = False
     opt['ignore_bad_vals'] = False
 
     return opt
