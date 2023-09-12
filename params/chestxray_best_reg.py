@@ -106,9 +106,9 @@ def options():
     opt['model'] = model
     opt['loss'] = W_BCEWithLogitsLoss()
     # opt['loss'] = torch.nn.BCELoss(size_average=True)
-    opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-4, weight_decay=1e-5)
+    opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-5, weight_decay=1e-5)
     opt['scheduler'] = torch.optim.lr_scheduler.ReduceLROnPlateau(opt['optimizer'], patience=5)
-    opt['header'] = 'chestxray2_LRE-4_ggclip10_randInit_' + enc
+    opt['header'] = 'chestxray2_LRE-5_ggclip100_randInit_' + enc
     opt['use_gpu'] = True
     opt['pow_iter'] = True
     opt['test_func'] = 'accauc sigmoid'
@@ -119,19 +119,19 @@ def options():
     # opt['pow_iter_alpha'] = 0.01
     opt['verbose'] = True
     opt['mem_track'] = False
-    opt['train'] = True
-    opt['test'] = True
-    opt['comp_test'] = True
-    opt['rho_test'] = True
+    opt['train'] = False
+    opt['test'] = False
+    opt['comp_test'] = False
+    opt['rho_test'] = False
     # opt['other_classes'] = list(range(1, 7))
     opt['saliency'] = 0
-    opt['jaccard'] = False
+    opt['jaccard'] = True
     opt['crops'] = True
     opt['rand_init'] = True
-    opt['gradg_clip'] = 10
-    # opt['comp_fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'
+    opt['gradg_clip'] = 100
+    opt['comp_fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'
     # opt['fname'] = './models/m-25012018-123527.pth.tar'
-    opt['fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'
+    # opt['fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'
     # opt['fname'] = './models/chestxray_dens121_Adam_mu' + str(opt['mu']) + '_K' + str(opt['K']) + '_trained_model_best.pt'
 
     return opt
