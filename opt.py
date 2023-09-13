@@ -36,7 +36,8 @@ try:
     from pytorch_grad_cam.utils.image import show_cam_on_image
     # from cam_on_image import show_cam_on_image
 except ImportError:
-    warnings.warn('GradCam not available', ImportWarning)
+    print('GradCam not available.')
+    warnings.warn('GradCam not available.', ImportWarning)
 
 warnings.simplefilter(action='ignore', category=UserWarning)
 
