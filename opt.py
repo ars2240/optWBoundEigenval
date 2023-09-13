@@ -16,8 +16,6 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 import os
-# from pytorch_grad_cam import GradCAM
-# from cam_on_image import show_cam_on_image
 import shutil
 import sys
 from scipy.stats import skewnorm
@@ -32,6 +30,15 @@ from torchvision import transforms
 from kfac import KFACOptimizer
 from guided_backprop import GuidedBackprop
 import warnings
+
+try:
+    from pytorch_grad_cam import GradCAM
+except ImportError:
+    warnings.warn('GradCam not available', ImportWarning)
+try:
+    from cam_on_image import show_cam_on_image
+except ImportError:
+    warnings.warn('show_cam_on_image not available', ImportWarning)
 
 warnings.simplefilter(action='ignore', category=UserWarning)
 
