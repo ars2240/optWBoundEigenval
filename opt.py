@@ -1436,6 +1436,7 @@ class OptWBoundEignVal(object):
                     inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
                 else:
                     raise Exception('Data type not supported')
+                print(inputs.shape())
 
                 # subset classes
                 if c is not None:
