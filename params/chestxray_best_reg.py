@@ -109,7 +109,7 @@ def options():
     opt['optimizer'] = torch.optim.Adam(opt['model'].parameters(), lr=1e-5, weight_decay=1e-5)
     opt['scheduler'] = torch.optim.lr_scheduler.ReduceLROnPlateau(opt['optimizer'], patience=5)
     opt['header'] = 'chestxray2_LRE-5_ggclip100_randInit_' + enc
-    opt['use_gpu'] = True
+    opt['use_gpu'] = False
     opt['pow_iter'] = True
     opt['test_func'] = 'accauc sigmoid'
     opt['max_iter'] = 1
