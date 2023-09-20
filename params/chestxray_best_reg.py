@@ -46,7 +46,7 @@ def options():
     transformList.append(normalize)
     train_transform = transforms.Compose(transformList)
 
-    # """
+    """
     transformList = []
     transformList.append(transforms.Resize(256))
     transformList.append(transforms.TenCrop(224))
@@ -58,7 +58,7 @@ def options():
     transformList.append(transforms.Resize(256))
     transformList.append(transforms.CenterCrop(224))
     test_transform = transforms.Compose(transformList)
-    """
+    # """
 
     # Load the dataset
     train_set = ChestXray_Dataset(use='train', transform=train_transform, root_dir='images/images')
