@@ -57,6 +57,7 @@ def options():
     transformList = []
     transformList.append(transforms.Resize(256))
     transformList.append(transforms.CenterCrop(224))
+    transformList.append(transforms.ToTensor())
     test_transform = transforms.Compose(transformList)
     # """
 
