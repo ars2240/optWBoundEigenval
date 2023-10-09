@@ -1060,6 +1060,8 @@ class OptWBoundEignVal(object):
         if fname is None:
             fname = './models/' + self.header2 + '_trained_model_best.pt'
 
+        print('Loading model from: {0}'.format(fname))
+
         state = self.load_state(fname)
         self.model.load_state_dict(state)
         self.model.to(self.device)
