@@ -1332,7 +1332,7 @@ class OptWBoundEignVal(object):
 
         # inverse transform
         invTrans = transforms.Compose([transforms.Normalize(mean=[0., 0., 0.], std=[1 / 0.229, 1 / 0.224, 1 / 0.225]),
-                                       transforms.Normalize(mean=[-0.485, -0.456, -0.406], std=[1., 1., 1.]),])
+                                       transforms.Normalize(mean=[-0.485, -0.456, -0.406], std=[1., 1., 1.])])
 
         # load comparison model
         comp_model = copy.deepcopy(self.model)
@@ -1762,6 +1762,11 @@ def main(pfile):
                   target_valid=options['target_valid'], train_loader=assert_dl(options['train_loader'], bs, nw),
                   valid_loader=assert_dl(options['valid_loader'], bs, nw),
                   train_loader_na=assert_dl(options['train_loader_na'], bs, nw), crops=options['crops'])
+    elif 'fname' in options and options['fname'] is not None:
+        opt.model_load(options['fname'])
+    else:
+        opt.model_load()
+
     """
     try:
         opt.train(inputs=options['inputs'], target=options['target'], inputs_valid=options['inputs_valid'],
