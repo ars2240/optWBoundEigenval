@@ -1542,8 +1542,8 @@ class OptWBoundEignVal(object):
                             tit = 'Model Incorrect, ' if output[j, x] < cut2[x] else 'Model Correct, '
                             tit += 'Baseline Incorrect' if comp_out[j, x] < comp_cut2[x] else 'Baseline Correct'
 
-                            if 0 < jac < jac_thresh and n_img < max_img and\
-                                    output[j, x] > cut2[x] and comp_out[j, x] < comp_cut2[x]:
+                            if 0 < jac < jac_thresh and n_img < max_img:  # and\
+                                    # output[j, x] > cut2[x] and comp_out[j, x] < comp_cut2[x]:
                                 lab = list(classes[0])[mc[x]]
                                 fig, ax = plt.subplots(1, 3)
                                 fig.suptitle(lab + ', Jac={:.3f}\n'.format(jac) + tit)
