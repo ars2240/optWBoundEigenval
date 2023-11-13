@@ -1326,8 +1326,8 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.05, tail='', method='cam',
-                thresh_type='quantile', max_img=100):
+    def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.01, tail='', method='cam',
+                thresh_type='quantile', max_img=25):
         # method = saliency, backprop, or cam
         # thresh_type = fixed or quantile
         # compute jaccard intersection of saliency maps
@@ -1420,8 +1420,8 @@ class OptWBoundEignVal(object):
         i, n_img = 0, 0
         for x in mc:
             jac_dic[list(classes[0])[x]] = []
-        for loader in loaders[1:]:
-            sal_mean, sal_comp_mean = 0, 0
+        for loader in loaders:
+            sal_mean, cov_mean, sal_comp_mean, cov_comp_mean = 0, 0, 0, 0
             b, n = 0, 0
             loader = assert_dl(loader, self.batch_size, self.num_workers)
             cut2 = cut[mc]
@@ -1515,16 +1515,17 @@ class OptWBoundEignVal(object):
 
                 for j in range(inputs.shape[0]):
                     if thresh_type == 'fixed':
-                        jac = jaccard_score(saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh)
+                        sal_cov, sal_comp_cov = saliency[j].flatten() > thresh, sal_comp[j].flatten() > thresh
                     elif thresh_type == 'quantile':
-                        jac = jaccard_score(saliency[j].flatten() > np.quantile(saliency[j].numpy(), thresh),
-                                            sal_comp[j].flatten() > np.quantile(sal_comp[j].numpy(), thresh))
+                        sal_cov = saliency[j].flatten() > np.quantile(saliency[j].numpy(), thresh)
+                        sal_comp_cov = sal_comp[j].flatten() > np.quantile(sal_comp[j].numpy(), thresh)
                     else:
                         raise Exception('Bad thresh_type.')
-                    # sal_mean.append(np.quantile(saliency[j].numpy(), .9))
-                    # sal_comp_mean.append(np.quantile(sal_comp[j].numpy(), .9))
-                    sal_mean = sal_mean * n/(n+1) + torch.mean(saliency[j]).item()/(n+1)
-                    sal_comp_mean = sal_comp_mean * n/(n+1) + torch.mean(sal_comp[j]).item()/(n+1)
+                    jac = jaccard_score(sal_cov, sal_comp_cov)
+                    sal_mean = sal_mean * n / (n + 1) + torch.mean(saliency[j]).item() / (n + 1)
+                    cov_mean = cov_mean * n / (n + 1) + torch.mean(sal_cov).item() / (n + 1)
+                    sal_comp_mean = sal_comp_mean * n / (n + 1) + torch.mean(sal_comp[j]).item() / (n + 1)
+                    cov_comp_mean = cov_comp_mean * n / (n + 1) + torch.mean(sal_comp_cov).item() / (n + 1)
                     n += 1
                     for x in range(len(mc)):
                         """
@@ -1586,7 +1587,8 @@ class OptWBoundEignVal(object):
                 # timeHMS(stop, 'Batch ' + str(b) + ' ')
                 b += 1
 
-            print('%f\t%f' % (sal_mean, sal_comp_mean))
+            print('Saliency: %f\t%f' % (sal_mean, sal_comp_mean))
+            print('Coverage: %f\t%f' % (cov_mean, cov_comp_mean))
             # print(jac_dic)
             plt.rcdefaults()
             for x in range(len(mc)):
