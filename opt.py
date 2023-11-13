@@ -1326,8 +1326,8 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.01, tail='', method='cam',
-                thresh_type='quantile', max_img=25):
+    def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.05, tail='', method='cam',
+                thresh_type='quantile', max_img=100):
         # method = saliency, backprop, or cam
         # thresh_type = fixed or quantile
         # compute jaccard intersection of saliency maps
@@ -1420,7 +1420,7 @@ class OptWBoundEignVal(object):
         i, n_img = 0, 0
         for x in mc:
             jac_dic[list(classes[0])[x]] = []
-        for loader in loaders:
+        for loader in loaders[1:]:
             sal_mean, sal_comp_mean = 0, 0
             b, n = 0, 0
             loader = assert_dl(loader, self.batch_size, self.num_workers)
@@ -1591,7 +1591,7 @@ class OptWBoundEignVal(object):
             plt.rcdefaults()
             for x in range(len(mc)):
                 lab = list(classes[0])[mc[x]]
-                plt.hist(jac_dic[lab], bins=20, range=(0, 1))
+                plt.hist(jac_dic[lab], bins=20, range=(0, 1), density=True)
                 plt.title(lab)
                 plt.savefig('./plots/' + self.header2 + '_jaccard_hist_' + lab + '_' + str(i) + tail + '.png')
                 plt.clf()
