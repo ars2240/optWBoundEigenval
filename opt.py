@@ -1523,9 +1523,9 @@ class OptWBoundEignVal(object):
                         raise Exception('Bad thresh_type.')
                     jac = jaccard_score(sal_cov, sal_comp_cov)
                     sal_mean = sal_mean * n / (n + 1) + torch.mean(saliency[j]).item() / (n + 1)
-                    cov_mean = cov_mean * n / (n + 1) + torch.mean(sal_cov).item() / (n + 1)
+                    cov_mean = cov_mean * n / (n + 1) + torch.mean(sal_cov.float()).item() / (n + 1)
                     sal_comp_mean = sal_comp_mean * n / (n + 1) + torch.mean(sal_comp[j]).item() / (n + 1)
-                    cov_comp_mean = cov_comp_mean * n / (n + 1) + torch.mean(sal_comp_cov).item() / (n + 1)
+                    cov_comp_mean = cov_comp_mean * n / (n + 1) + torch.mean(sal_comp_cov.float()).item() / (n + 1)
                     n += 1
                     for x in range(len(mc)):
                         """
