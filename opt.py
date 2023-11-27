@@ -1420,7 +1420,7 @@ class OptWBoundEignVal(object):
         i, n_img = 0, 0
         for x in mc:
             jac_dic[list(classes[0])[x]] = []
-        for loader in loaders:
+        for loader in loaders[1:]:
             sal_mean, cov_mean, sal_comp_mean, cov_comp_mean = 0, 0, 0, 0
             b, n = 0, 0
             loader = assert_dl(loader, self.batch_size, self.num_workers)
@@ -1543,8 +1543,9 @@ class OptWBoundEignVal(object):
                             tit = 'Model Incorrect, ' if output[j, x] < cut2[x] else 'Model Correct, '
                             tit += 'Baseline Incorrect' if comp_out[j, x] < comp_cut2[x] else 'Baseline Correct'
 
-                            if 0 < jac < jac_thresh and n_img < max_img and \
-                                    output[j, x] < cut2[x] and comp_out[j, x] > comp_cut2[x]:
+                            if True:
+                            # if 0 < jac < jac_thresh and n_img < max_img and \
+                                    # output[j, x] < cut2[x] and comp_out[j, x] > comp_cut2[x]:
                                 lab = list(classes[0])[mc[x]]
                                 fig, ax = plt.subplots(1, 3)
                                 fig.suptitle(lab + ', Jac={:.3f}\n'.format(jac) + tit)
