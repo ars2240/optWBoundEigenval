@@ -1327,7 +1327,7 @@ class OptWBoundEignVal(object):
             k += 1
 
     def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.01, tail='', method='cam',
-                thresh_type='quantile', max_img=25):
+                thresh_type='quantile', max_img=100):
         # method = saliency, backprop, or cam
         # thresh_type = fixed or quantile
         # compute jaccard intersection of saliency maps
@@ -1417,12 +1417,12 @@ class OptWBoundEignVal(object):
         elif method == 'cam':
             cam = GradCAM(model=self.model, target_layers=[self.model.densenet121.features[-1]], use_cuda=self.use_gpu)
             cam_comp = GradCAM(model=comp_model, target_layers=[comp_model.densenet121.features[-1]], use_cuda=self.use_gpu)
-        i, n_img = 0, 0
+        i = 0
         for x in mc:
             jac_dic[list(classes[0])[x]] = []
-        for loader in loaders[1:]:
+        for loader in loaders:
             sal_mean, cov_mean, sal_comp_mean, cov_comp_mean = 0, 0, 0, 0
-            b, n = 0, 0
+            n_img, b, n = 0, 0, 0
             loader = assert_dl(loader, self.batch_size, self.num_workers)
             cut2 = cut[mc]
             comp_cut2 = comp_cut[mc]
@@ -1543,8 +1543,7 @@ class OptWBoundEignVal(object):
                             tit = 'Model Incorrect, ' if output[j, x] < cut2[x] else 'Model Correct, '
                             tit += 'Baseline Incorrect' if comp_out[j, x] < comp_cut2[x] else 'Baseline Correct'
 
-                            if True:
-                            # if 0 < jac < jac_thresh and n_img < max_img and \
+                            if 0 < jac < jac_thresh and n_img < max_img:  # and \
                                     # output[j, x] < cut2[x] and comp_out[j, x] > comp_cut2[x]:
                                 lab = list(classes[0])[mc[x]]
                                 fig, ax = plt.subplots(1, 3)
