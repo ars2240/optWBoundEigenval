@@ -1545,6 +1545,7 @@ class OptWBoundEignVal(object):
 
                             if 0 < jac < jac_thresh and n_img < max_img:  # and \
                                     # output[j, x] < cut2[x] and comp_out[j, x] > comp_cut2[x]:
+                                print('Dataset {0} Hit #{1}! Jaccard: {2}'.format(i, n_img, jac))
                                 lab = list(classes[0])[mc[x]]
                                 fig, ax = plt.subplots(1, 3)
                                 fig.suptitle(lab + ', Jac={:.3f}\n'.format(jac) + tit)
@@ -1568,7 +1569,7 @@ class OptWBoundEignVal(object):
                                     ax[2].imshow(sal_comp[j] > np.quantile(sal_comp[j].numpy(), thresh), cmap='hot')
                                 ax[2].axis('off')
                                 ax[2].set_title('Baseline')
-                                #fig.tight_layout()
+                                # fig.tight_layout()
                                 p = str(data['name'][j])
                                 plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + lab + '_' + str(i) + '_' +
                                             p + tail)
