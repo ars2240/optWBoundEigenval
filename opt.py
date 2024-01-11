@@ -1570,7 +1570,8 @@ class OptWBoundEignVal(object):
                                 ax[2].axis('off')
                                 ax[2].set_title('Baseline')
                                 # fig.tight_layout()
-                                p = str(data['name'][j])
+                                print('Patient {0}, Image {1}'.format(data['pid'], data['name'][j]))
+                                p = str(data['pid'])
                                 plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + lab + '_' + str(i) + '_' +
                                             p + tail)
                                 plt.clf()
