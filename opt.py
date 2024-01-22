@@ -1571,9 +1571,9 @@ class OptWBoundEignVal(object):
                                 ax[2].set_title('Baseline')
                                 # fig.tight_layout()
                                 print('Patient {0}, Image {1}'.format(data['pid'][j], data['name'][j]))
-                                p = str(data['pid'][j])
+                                p = str(data['pid'][j].item())
                                 plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + lab + '_' + str(i) + '_' +
-                                            p + tail)
+                                            p + tail + '.png')
                                 plt.clf()
                                 plt.close()
                                 n_img += 1
