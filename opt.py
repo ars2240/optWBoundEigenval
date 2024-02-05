@@ -1327,7 +1327,7 @@ class OptWBoundEignVal(object):
             k += 1
 
     def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.01, tail='', method='cam',
-                thresh_type='quantile', max_img=100):
+                thresh_type='quantile', max_img=100, load=None):
         # method = saliency, backprop, or cam
         # thresh_type = fixed or quantile
         # compute jaccard intersection of saliency maps
@@ -1342,62 +1342,6 @@ class OptWBoundEignVal(object):
         comp_model.load_state_dict(state)
         comp_model.to(self.device)
 
-        # get max f1 cutoffs, using training set
-        outputs = []
-        comp_outs = []
-        labels = []
-        for _, data in enumerate(train_loader):
-            if type(data) == list:
-                inputs, target = data
-                inputs = inputs.to(self.device)
-                target = target.to(self.device)
-            elif type(data) == dict:
-                inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
-            else:
-                raise Exception('Data type not supported')
-
-            output = self.model(inputs)  # compute prediction
-            comp_out = comp_model(inputs)
-
-            output = output.to('cpu')
-            comp_out = comp_out.to('cpu')
-            target = target.to('cpu')
-            outputs.append(output.data)
-            comp_outs.append(comp_out.data)
-            labels.append(target)
-
-        labels = torch.cat(labels)
-        outputs = torch.cat(outputs)
-        comp_outs = torch.cat(comp_outs)
-        classes = outputs.size()[1]
-        cut = np.zeros(classes)
-        comp_cut = np.zeros(classes)
-        for i in range(classes):
-            # remove NaN labels
-            outputs2 = outputs[:, i]
-            comp_outs2 = comp_outs[:, i]
-            labels2 = labels[:, i]
-
-            good = labels2 == labels2
-            outputs2 = outputs2[good]
-            comp_outs2 = comp_outs2[good]
-            labels2 = labels2[good]
-
-            np.seterr(invalid='ignore')
-
-            precision, recall, thresholds = precision_recall_curve(labels2, outputs2)
-            f1 = np.divide(2 * precision * recall, precision + recall)
-            cut[i] = thresholds[np.nanargmax(f1)]
-            # print(f1[np.nanargmax(f1)])
-
-            precision, recall, thresholds = precision_recall_curve(labels2, comp_outs2)
-            f1 = np.divide(2 * precision * recall, precision + recall)
-            comp_cut[i] = thresholds[np.nanargmax(f1)]
-            # print(f1[np.nanargmax(f1)])
-
-        print(cut)
-        print(comp_cut)
-
         # get class overlap
         classes = [loader.classes.keys() for loader in loaders if not isinstance(loader, utils_data.DataLoader)]
         if len(classes) > 1:
@@ -1409,6 +1353,81 @@ class OptWBoundEignVal(object):
             mc = [x for x in range(len(classes[0])) if list(classes[0])[x] in overlap]
         else:
             raise Exception('Insufficient Classes')
+
+        # get max f1 cutoffs, using training set
+        if load is None:
+
+            outputs = []
+            comp_outs = []
+            labels = []
+            for _, data in enumerate(train_loader):
+                if type(data) == list:
+                    inputs, target = data
+                    inputs = inputs.to(self.device)
+                    target = target.to(self.device)
+                elif type(data) == dict:
+                    inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
+                else:
+                    raise Exception('Data type not supported')
+
+                output = self.model(inputs)  # compute prediction
+                comp_out = comp_model(inputs)
+
+                output = output.to('cpu')
+                comp_out = comp_out.to('cpu')
+                target = target.to('cpu')
+                outputs.append(output.data)
+                comp_outs.append(comp_out.data)
+                labels.append(target)
+
+            labels = torch.cat(labels)
+            outputs = torch.cat(outputs)
+            comp_outs = torch.cat(comp_outs)
+            nc = outputs.size()[1]
+            cut = np.zeros(nc)
+            comp_cut = np.zeros(nc)
+            for i in range(nc):
+                # remove NaN labels
+                outputs2 = outputs[:, i]
+                comp_outs2 = comp_outs[:, i]
+                labels2 = labels[:, i]
+
+                good = labels2 == labels2
+                outputs2 = outputs2[good]
+                comp_outs2 = comp_outs2[good]
+                labels2 = labels2[good]
+
+                np.seterr(invalid='ignore')
+
+                precision, recall, thresholds = precision_recall_curve(labels2, outputs2)
+                f1 = np.divide(2 * precision * recall, precision + recall)
+                cut[i] = thresholds[np.nanargmax(f1)]
+                # print(f1[np.nanargmax(f1)])
+
+                precision, recall, thresholds = precision_recall_curve(labels2, comp_outs2)
+                f1 = np.divide(2 * precision * recall, precision + recall)
+                comp_cut[i] = thresholds[np.nanargmax(f1)]
+                # print(f1[np.nanargmax(f1)])
+
+                # logit histograms
+                lab = list(classes[0])[i]
+                plt.hist(outputs2, bins=20, range=(0, 1), density=True)
+                plt.title(lab + ' Baseline')
+                plt.savefig('./plots/' + self.header2 + '_logit_hist_' + lab + '_baseline' + tail + '.png')
+                plt.clf()
+                plt.close()
+
+                plt.hist(comp_outs2, bins=20, range=(0, 1), density=True)
+                plt.title(lab + ' Model')
+                plt.savefig('./plots/' + self.header2 + '_logit_hist_' + lab + '_comp' + tail + '.png')
+                plt.clf()
+                plt.close()
+
+            np.savetxt("./logs/" + self.header2 + "_cut.csv", cut, delimiter=",")
+            np.savetxt("./logs/" + self.header2 + "_comp_cut.csv", comp_cut, delimiter=",")
+        else:
+            cut = np.genfromtxt("./logs/" + self.header2 + "_cut.csv", delimiter=",")
+            comp_cut = np.genfromtxt("./logs/" + self.header2 + "_comp_cut.csv", delimiter=",")
 
         jac_dic = {}
         if method == 'backprop':
@@ -1546,6 +1565,10 @@ class OptWBoundEignVal(object):
                             if 0 < jac < jac_thresh and n_img < max_img:  # and \
                                     # output[j, x] < cut2[x] and comp_out[j, x] > comp_cut2[x]:
                                 print('Dataset {0} Hit #{1}! Jaccard: {2}'.format(i, n_img, jac))
+                                print('Model Range: {0} to {1}'.format(np.min(saliency[j].numpy()),
+                                                                       np.max(saliency[j].numpy())))
+                                print('Baseline Range: {0} to {1}'.format(np.min(sal_comp[j].numpy()),
+                                                                          np.max(sal_comp[j].numpy())))
                                 lab = list(classes[0])[mc[x]]
                                 fig, ax = plt.subplots(1, 3)
                                 fig.suptitle(lab + ', Jac={:.3f}\n'.format(jac) + tit)
