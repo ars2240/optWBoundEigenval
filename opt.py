@@ -1411,15 +1411,12 @@ class OptWBoundEignVal(object):
 
                 # logit histograms
                 lab = list(classes[0])[i]
-                plt.hist(outputs2, bins=20, range=(0, 1), density=True)
-                plt.title(lab + ' Baseline')
-                plt.savefig('./plots/' + self.header2 + '_logit_hist_' + lab + '_baseline' + tail + '.png')
-                plt.clf()
-                plt.close()
-
-                plt.hist(comp_outs2, bins=20, range=(0, 1), density=True)
-                plt.title(lab + ' Model')
-                plt.savefig('./plots/' + self.header2 + '_logit_hist_' + lab + '_comp' + tail + '.png')
+                plt.hist(outputs2, bins=20, range=(0, 1), density=True, alpha=0.5, label='Model')
+                plt.hist(comp_outs2, bins=20, range=(0, 1), density=True, alpha=0.5,  label='Baseline')
+                plt.ylim(0, 20)
+                plt.title(lab)
+                pyplot.legend(loc='upper right')
+                plt.savefig('./plots/' + self.header2 + '_logit_hist_' + lab + tail + '.png')
                 plt.clf()
                 plt.close()
 
@@ -1619,6 +1616,7 @@ class OptWBoundEignVal(object):
             for x in range(len(mc)):
                 lab = list(classes[0])[mc[x]]
                 plt.hist(jac_dic[lab], bins=20, range=(0, 1), density=True)
+                plt.ylim(0, 20)
                 plt.title(lab)
                 plt.savefig('./plots/' + self.header2 + '_jaccard_hist_' + lab + '_' + str(i) + tail + '.png')
                 plt.clf()
