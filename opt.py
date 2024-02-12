@@ -1415,7 +1415,7 @@ class OptWBoundEignVal(object):
                 plt.hist(comp_outs2, bins=20, range=(0, 1), density=True, alpha=0.5,  label='Baseline')
                 plt.ylim(0, 20)
                 plt.title(lab)
-                pyplot.legend(loc='upper right')
+                plt.legend(loc='upper right')
                 plt.savefig('./plots/' + self.header2 + '_logit_hist_' + lab + tail + '.png')
                 plt.clf()
                 plt.close()
