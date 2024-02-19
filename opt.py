@@ -1557,7 +1557,9 @@ class OptWBoundEignVal(object):
                             """
                             jac_dic[list(classes[0])[mc[x]]].append(jac)
                             tit = 'Model Incorrect, ' if output[j, x] < cut2[x] else 'Model Correct, '
+                            tit += ' ({:.3f})'.format(output[j, x])
                             tit += 'Baseline Incorrect' if comp_out[j, x] < comp_cut2[x] else 'Baseline Correct'
+                            tit += ' ({:.3f})'.format(comp_out[j, x])
 
                             if 0 < jac < jac_thresh and n_img < max_img:  # and \
                                     # output[j, x] < cut2[x] and comp_out[j, x] > comp_cut2[x]:
@@ -1594,6 +1596,18 @@ class OptWBoundEignVal(object):
                                 p = str(data['pid'][j].item())
                                 plt.savefig('./plots/' + self.header2 + '_saliency_jac_' + lab + '_' + str(i) + '_' +
                                             p + tail + '.png')
+                                plt.clf()
+                                plt.close()
+
+                                # Grad-CAM Hist
+                                plt.hist(saliency[j].numpy().flatten(), bins=20, range=(0, 1), density=True, alpha=0.5,
+                                         label='Model')
+                                plt.hist(sal_comp[j].numpy().flatten(), bins=20, range=(0, 1), density=True, alpha=0.5,
+                                         label='Baseline')
+                                plt.ylim(0, 20)
+                                plt.title(lab)
+                                plt.legend(loc='upper right')
+                                plt.savefig('./plots/' + self.header2 + '_saliency_hist_' + lab + tail + '.png')
                                 plt.clf()
                                 plt.close()
                                 n_img += 1
