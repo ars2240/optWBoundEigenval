@@ -1327,7 +1327,7 @@ class OptWBoundEignVal(object):
             k += 1
 
     def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.01, tail='', method='cam',
-                thresh_type='quantile', max_img=100, load=True):
+                thresh_type='quantile', max_img=100, load=None):
         # method = saliency, backprop, or cam
         # thresh_type = fixed or quantile
         # compute jaccard intersection of saliency maps
@@ -1422,9 +1422,13 @@ class OptWBoundEignVal(object):
 
             np.savetxt("./logs/" + self.header2 + "_cut.csv", cut, delimiter=",")
             np.savetxt("./logs/" + self.header2 + "_comp_cut.csv", comp_cut, delimiter=",")
+            d = {'outputs': outputs, 'labels': labels}
+            torch.save(d, "./logs/" + self.header2 + "_outputs.pt")
         else:
             cut = np.genfromtxt("./logs/" + self.header2 + "_cut.csv", delimiter=",")
             comp_cut = np.genfromtxt("./logs/" + self.header2 + "_comp_cut.csv", delimiter=",")
+            d = torch.load("./logs/" + self.header2 + "_outputs.pt")
+            outputs, labels = d['outputs'], d['labels']
 
         jac_dic = {}
         if method == 'backprop':
