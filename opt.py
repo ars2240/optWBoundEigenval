@@ -1327,7 +1327,7 @@ class OptWBoundEignVal(object):
             k += 1
 
     def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.01, tail='', method='cam',
-                thresh_type='quantile', max_img=100):
+                thresh_type='quantile', max_img=100, load=False, save=True):
         # method = saliency, backprop, or cam
         # thresh_type = fixed or quantile
         # compute jaccard intersection of saliency maps
@@ -1355,70 +1355,81 @@ class OptWBoundEignVal(object):
             raise Exception('Insufficient Classes')
 
         # get max f1 cutoffs, using training set
-        outputs = []
-        comp_outs = []
-        labels = []
-        for _, data in enumerate(train_loader):
-            if type(data) == list:
-                inputs, target = data
-                inputs = inputs.to(self.device)
-                target = target.to(self.device)
-            elif type(data) == dict:
-                inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
-            else:
-                raise Exception('Data type not supported')
+        if load:
+            cut = np.genfromtxt("./logs/" + self.header2 + "_cut.csv", delimiter=",")
+            comp_cut = np.genfromtxt("./logs/" + self.header2 + "_comp_cut.csv", delimiter=",")
+            # d = torch.load("./logs/" + self.header2 + "_outputs.pt")
+            # outputs, comp_outs, labels = d['outputs'], d['comp_outs'], d['labels']
+        else:
+            outputs = []
+            comp_outs = []
+            labels = []
+            for _, data in enumerate(train_loader):
+                if type(data) == list:
+                    inputs, target = data
+                    inputs = inputs.to(self.device)
+                    target = target.to(self.device)
+                elif type(data) == dict:
+                    inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
+                else:
+                    raise Exception('Data type not supported')
 
-            output = self.model(inputs)  # compute prediction
-            comp_out = comp_model(inputs)
+                output = self.model(inputs)  # compute prediction
+                comp_out = comp_model(inputs)
 
-            output = output.to('cpu')
-            comp_out = comp_out.to('cpu')
-            target = target.to('cpu')
-            outputs.append(output.data)
-            comp_outs.append(comp_out.data)
-            labels.append(target)
+                output = output.to('cpu')
+                comp_out = comp_out.to('cpu')
+                target = target.to('cpu')
+                outputs.append(output.data)
+                comp_outs.append(comp_out.data)
+                labels.append(target)
 
-        labels = torch.cat(labels)
-        outputs = torch.cat(outputs)
-        comp_outs = torch.cat(comp_outs)
-        nc = outputs.size()[1]
-        cut = np.zeros(nc)
-        comp_cut = np.zeros(nc)
-        for i in range(nc):
-            # remove NaN labels
-            outputs2 = outputs[:, i]
-            comp_outs2 = comp_outs[:, i]
-            labels2 = labels[:, i]
+            labels = torch.cat(labels)
+            outputs = torch.cat(outputs)
+            comp_outs = torch.cat(comp_outs)
+            nc = outputs.size()[1]
+            cut = np.zeros(nc)
+            comp_cut = np.zeros(nc)
+            for i in range(nc):
+                # remove NaN labels
+                outputs2 = outputs[:, i]
+                comp_outs2 = comp_outs[:, i]
+                labels2 = labels[:, i]
 
-            good = labels2 == labels2
-            outputs2 = outputs2[good]
-            comp_outs2 = comp_outs2[good]
-            labels2 = labels2[good]
+                good = labels2 == labels2
+                outputs2 = outputs2[good]
+                comp_outs2 = comp_outs2[good]
+                labels2 = labels2[good]
 
-            np.seterr(invalid='ignore')
+                np.seterr(invalid='ignore')
 
-            precision, recall, thresholds = precision_recall_curve(labels2, outputs2)
-            f1 = np.divide(2 * precision * recall, precision + recall)
-            cut[i] = thresholds[np.nanargmax(f1)]
-            # print(f1[np.nanargmax(f1)])
+                precision, recall, thresholds = precision_recall_curve(labels2, outputs2)
+                f1 = np.divide(2 * precision * recall, precision + recall)
+                cut[i] = thresholds[np.nanargmax(f1)]
+                # print(f1[np.nanargmax(f1)])
 
-            precision, recall, thresholds = precision_recall_curve(labels2, comp_outs2)
-            f1 = np.divide(2 * precision * recall, precision + recall)
-            comp_cut[i] = thresholds[np.nanargmax(f1)]
-            # print(f1[np.nanargmax(f1)])
+                precision, recall, thresholds = precision_recall_curve(labels2, comp_outs2)
+                f1 = np.divide(2 * precision * recall, precision + recall)
+                comp_cut[i] = thresholds[np.nanargmax(f1)]
+                # print(f1[np.nanargmax(f1)])
 
-            # logit histograms
-            lab = list(classes[0])[i]
-            plt.hist(outputs2, bins=20, range=(0, 1), density=True, alpha=0.5, label='Model')
-            plt.hist(comp_outs2, bins=20, range=(0, 1), density=True, alpha=0.5,  label='Baseline')
-            plt.ylim(0, 20)
-            plt.title(lab)
-            plt.legend(loc='upper right')
-            plt.savefig('./plots/' + self.header2 + '_logit_hist_' + lab + tail + '.png')
-            plt.clf()
-            plt.close()
+                # logit histograms
+                lab = list(classes[0])[i]
+                plt.hist(outputs2, bins=20, range=(0, 1), density=True, alpha=0.5, label='Model')
+                plt.hist(comp_outs2, bins=20, range=(0, 1), density=True, alpha=0.5,  label='Baseline')
+                plt.ylim(0, 20)
+                plt.title(lab)
+                plt.legend(loc='upper right')
+                plt.savefig('./plots/' + self.header2 + '_logit_hist_' + lab + tail + '.png')
+                plt.clf()
+                plt.close()
 
-        jac_dic = {}
+            if save:
+                np.savetxt("./logs/" + self.header2 + "_cut.csv", cut, delimiter=",")
+                np.savetxt("./logs/" + self.header2 + "_comp_cut.csv", comp_cut, delimiter=",")
+                # d = {'outputs': outputs, 'comp_outs': comp_outs, 'labels': labels}
+                # torch.save(d, "./logs/" + self.header2 + "_outputs.pt")
+
         if method == 'backprop':
             GBP = GuidedBackprop(self.model)
             GBP_comp = GuidedBackprop(comp_model)
@@ -1426,9 +1437,13 @@ class OptWBoundEignVal(object):
             cam = GradCAM(model=self.model, target_layers=[self.model.densenet121.features[-1]], use_cuda=self.use_gpu)
             cam_comp = GradCAM(model=comp_model, target_layers=[comp_model.densenet121.features[-1]], use_cuda=self.use_gpu)
         i = 0
-        for x in mc:
-            jac_dic[list(classes[0])[x]] = []
         for loader in loaders:
+            jac_dic, log = {}, {'conf_matrix': {'model': {}, 'baseline': {}}, 'jac': {}, 'cts': {}}
+            for x in mc:
+                lab = list(classes[0])[x]
+                log['conf_matrix']['model'][lab], log['conf_matrix']['baseline'][lab] = np.zeros(2, 2), np.zeros(2, 2)
+                log['jac'][lab], log['cts'][lab] = np.zeros(2, 2), np.zeros(2, 2)
+                jac_dic[lab] = []
             sal_mean, cov_mean, sal_comp_mean, cov_comp_mean = 0, 0, 0, 0
             n_img, b, n = 0, 0, 0
             loader = assert_dl(loader, self.batch_size, self.num_workers)
@@ -1461,7 +1476,7 @@ class OptWBoundEignVal(object):
                 # stop = time.time() - start
                 # timeHMS(stop, 'Part 1 ')
 
-                if method == 'saliency':
+                if method in ['saliency', 'cam']:
                     inputs.requires_grad_()
                     output = self.model(inputs)  # compute prediction
                     comp_out = comp_model(inputs)
@@ -1471,6 +1486,7 @@ class OptWBoundEignVal(object):
                             output = output[:, mc]
                             comp_out = comp_out[:, mc]
 
+                if method == 'saliency':
                     # compute loss
                     if self.loss.__class__.__name__ == 'KLDivLoss':
                         target_onehot = torch.zeros(output.shape)
@@ -1536,31 +1552,35 @@ class OptWBoundEignVal(object):
                     cov_comp_mean = cov_comp_mean * n / (n + 1) + torch.mean(sal_comp_cov.float()).item() / (n + 1)
                     n += 1
                     for x in range(len(mc)):
-                        """
-                        if target[j, x] > 0:
-                            print('%s\t%f\t%f\t%f\t%f' % (list(classes[0])[mc[x]], output[j, x], cut2[x],
-                                                          comp_out[j, x], comp_cut2[x]))
-                        """
-                        if target[j, x] > 0:  # and output[j, x] < cut2[x] and comp_out[j, x] < comp_cut2[x]:
+                        lab = list(classes[0])[mc[x]]
+                        truth = int(target[j, x] > 0)
+                        pred, comp_pred = int(output[j, x] > cut2[x]), int(comp_out[j, x] > comp_cut2[x])
+                        cor, comp_cor = int(truth == pred), int(truth == comp_pred)
+
+                        log['conf_matrix']['model'][lab][truth, pred] += 1
+                        log['conf_matrix']['baseline'][lab][truth, comp_pred] += 1
+                        c = log['cts'][lab][cor, comp_cor]
+                        log['jac'][lab][cor, comp_cor] = log['jac'][lab][cor, comp_cor] * c / (c + 1) + jac / (c + 1)
+                        log['cts'][lab][cor, comp_cor] += 1
+                        # print('%s\t%f\t%f\t%f\t%f' % (lab, output[j, x], cut2[x], comp_out[j, x], comp_cut2[x]))
+                        if truth > 0:
                             """
                             print('Hit!')
                             print('%f\t%f' % (torch.mean((saliency[j].flatten() > thresh).float()).item(),
                                               torch.mean((sal_comp[j].flatten() > thresh).float()).item()))
                             """
-                            jac_dic[list(classes[0])[mc[x]]].append(jac)
-                            tit = 'Model Incorrect, ' if output[j, x] < cut2[x] else 'Model Correct, '
-                            tit += ' ({:.3f})'.format(output[j, x])
-                            tit += 'Baseline Incorrect' if comp_out[j, x] < comp_cut2[x] else 'Baseline Correct'
+                            jac_dic[lab].append(jac)
+                            tit = 'Model Incorrect' if pred == 0 else 'Model Correct'
+                            tit += ' ({:.3f}), '.format(output[j, x])
+                            tit += 'Baseline Incorrect' if comp_pred == 0 else 'Baseline Correct'
                             tit += ' ({:.3f})'.format(comp_out[j, x])
 
-                            if 0 < jac < jac_thresh and n_img < max_img:  # and \
-                                    # output[j, x] < cut2[x] and comp_out[j, x] > comp_cut2[x]:
+                            if 0 < jac < jac_thresh and n_img < max_img:
                                 print('Dataset {0} Hit #{1}! Jaccard: {2}'.format(i, n_img, jac))
                                 print('Model Range: {0} to {1}'.format(np.min(saliency[j].numpy()),
                                                                        np.max(saliency[j].numpy())))
                                 print('Baseline Range: {0} to {1}'.format(np.min(sal_comp[j].numpy()),
                                                                           np.max(sal_comp[j].numpy())))
-                                lab = list(classes[0])[mc[x]]
                                 fig, ax = plt.subplots(1, 3)
                                 fig.suptitle(lab + ', Jac={:.3f}\n'.format(jac) + tit)
                                 rgb_img = invTrans(inputs[j]).detach().cpu().numpy().transpose(1, 2, 0)
@@ -1621,6 +1641,17 @@ class OptWBoundEignVal(object):
             plt.rcdefaults()
             for x in range(len(mc)):
                 lab = list(classes[0])[mc[x]]
+
+                np.savetxt('./logs/' + self.header2 + '_conf_matrix_model_' + lab + '_' + str(i) + tail + '.csv',
+                           log['conf_matrix']['model'][lab], delimiter=",")
+                np.savetxt('./logs/' + self.header2 + '_conf_matrix_baseline_' + lab + '_' + str(i) + tail + '.csv',
+                           log['conf_matrix']['baseline'][lab], delimiter=",")
+                np.savetxt('./logs/' + self.header2 + '_jaccard_' + lab + '_' + str(i) + tail + '.csv',
+                           log['jac'][lab], delimiter=",")
+                np.savetxt('./logs/' + self.header2 + '_counts_' + lab + '_' + str(i) + tail + '.csv',
+                           log['cts'][lab], delimiter=",")
+
+                # histogram
                 plt.hist(jac_dic[lab], bins=20, range=(0, 1), density=True)
                 plt.ylim(0, 20)
                 plt.title(lab)
