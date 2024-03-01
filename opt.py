@@ -1418,11 +1418,6 @@ class OptWBoundEignVal(object):
             plt.clf()
             plt.close()
 
-        np.savetxt("./logs/" + self.header2 + "_cut.csv", cut, delimiter=",")
-        np.savetxt("./logs/" + self.header2 + "_comp_cut.csv", comp_cut, delimiter=",")
-        d = {'outputs': outputs, 'labels': labels}
-        torch.save(d, "./logs/" + self.header2 + "_outputs.pt")
-
         jac_dic = {}
         if method == 'backprop':
             GBP = GuidedBackprop(self.model)
