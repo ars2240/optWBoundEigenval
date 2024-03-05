@@ -1441,8 +1441,8 @@ class OptWBoundEignVal(object):
             jac_dic, log = {}, {'conf_matrix': {'model': {}, 'baseline': {}}, 'jac': {}, 'cts': {}}
             for x in mc:
                 lab = list(classes[0])[x]
-                log['conf_matrix']['model'][lab], log['conf_matrix']['baseline'][lab] = np.zeros(2, 2), np.zeros(2, 2)
-                log['jac'][lab], log['cts'][lab] = np.zeros(2, 2), np.zeros(2, 2)
+                log['conf_matrix']['model'][lab], log['conf_matrix']['baseline'][lab] = np.zeros((2, 2)), np.zeros((2, 2))
+                log['jac'][lab], log['cts'][lab] = np.zeros((2, 2)), np.zeros((2, 2))
                 jac_dic[lab] = []
             sal_mean, cov_mean, sal_comp_mean, cov_comp_mean = 0, 0, 0, 0
             n_img, b, n = 0, 0, 0
