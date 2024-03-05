@@ -1559,8 +1559,8 @@ class OptWBoundEignVal(object):
 
                         log['conf_matrix']['model'][lab][truth, pred] += 1
                         log['conf_matrix']['baseline'][lab][truth, comp_pred] += 1
-                        c = log['cts'][lab][cor, comp_cor]
-                        log['jac'][lab][cor, comp_cor] = log['jac'][lab][cor, comp_cor] * c / (c + 1) + jac / (c + 1)
+                        m = log['cts'][lab][cor, comp_cor]
+                        log['jac'][lab][cor, comp_cor] = log['jac'][lab][cor, comp_cor] * m / (m + 1) + jac / (m + 1)
                         log['cts'][lab][cor, comp_cor] += 1
                         # print('%s\t%f\t%f\t%f\t%f' % (lab, output[j, x], cut2[x], comp_out[j, x], comp_cut2[x]))
                         if truth > 0:
