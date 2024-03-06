@@ -1577,10 +1577,12 @@ class OptWBoundEignVal(object):
 
                             if 0 < jac < jac_thresh and n_img < max_img:
                                 print('Dataset {0} Hit #{1}! Jaccard: {2}'.format(i, n_img, jac))
+                                """
                                 print('Model Range: {0} to {1}'.format(np.min(saliency[j].numpy()),
                                                                        np.max(saliency[j].numpy())))
                                 print('Baseline Range: {0} to {1}'.format(np.min(sal_comp[j].numpy()),
                                                                           np.max(sal_comp[j].numpy())))
+                                """
                                 fig, ax = plt.subplots(1, 3)
                                 fig.suptitle(lab + ', Jac={:.3f}\n'.format(jac) + tit)
                                 rgb_img = invTrans(inputs[j]).detach().cpu().numpy().transpose(1, 2, 0)
