@@ -1619,7 +1619,8 @@ class OptWBoundEignVal(object):
                                 plt.ylim(0, 20)
                                 plt.title(lab)
                                 plt.legend(loc='upper right')
-                                plt.savefig('./plots/' + self.header2 + '_saliency_hist_' + lab + tail + '.png')
+                                plt.savefig('./plots/' + self.header2 + '_saliency_hist_' + lab + '_' + str(i) + '_' +
+                                            p + tail + '.png')
                                 plt.clf()
                                 plt.close()
                                 n_img += 1
