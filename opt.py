@@ -1326,7 +1326,7 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.01, tail='', method='cam',
+    def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.01, tail='_AsymValley', method='cam',
                 thresh_type='quantile', max_img=100, load=True, save=False):
         # method = saliency, backprop, or cam
         # thresh_type = fixed or quantile
@@ -1355,12 +1355,15 @@ class OptWBoundEignVal(object):
             raise Exception('Insufficient Classes')
 
         # get max f1 cutoffs, using training set
-        if load:
-            cut = np.genfromtxt("./logs/" + self.header2 + "_cut.csv", delimiter=",")
-            comp_cut = np.genfromtxt("./logs/" + self.header2 + "_comp_cut.csv", delimiter=",")
+        h2 = "./logs/" + self.header2
+        if load and os.path.isfile(h2 + '_cut' + tail + '.csv') and os.path.isfile(h2 + '_comp_cut' + tail + '.csv'):
+            cut = np.genfromtxt(h2 + '_cut' + tail + '.csv', delimiter=",")
+            comp_cut = np.genfromtxt(h2 + '_comp_cut' + tail + '.csv', delimiter=",")
             # d = torch.load("./logs/" + self.header2 + "_outputs.pt")
             # outputs, comp_outs, labels = d['outputs'], d['comp_outs'], d['labels']
         else:
+            if load:
+                print('Load file does not exist. Generating instead.')
             outputs = []
             comp_outs = []
             labels = []
@@ -1405,6 +1408,7 @@ class OptWBoundEignVal(object):
 
                 precision, recall, thresholds = precision_recall_curve(labels2, outputs2)
                 f1 = np.divide(2 * precision * recall, precision + recall)
+                print('{0} cuts used'.format(len(f1)))
                 cut[i] = thresholds[np.nanargmax(f1)]
                 # print(f1[np.nanargmax(f1)])
 
