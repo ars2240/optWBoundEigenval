@@ -1363,7 +1363,7 @@ class OptWBoundEignVal(object):
             # outputs, comp_outs, labels = d['outputs'], d['comp_outs'], d['labels']
         else:
             if load:
-                print('Load file does not exist. Generating instead.')
+                print('Load cutoff files do not exist. Generating instead.')
             outputs = []
             comp_outs = []
             labels = []
