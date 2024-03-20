@@ -1326,7 +1326,7 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.01, tail='_AsymValley', method='cam',
+    def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.01, tail='_AsymValleyEnd', method='cam',
                 thresh_type='quantile', max_img=100, load=True, save=False):
         # method = saliency, backprop, or cam
         # thresh_type = fixed or quantile
