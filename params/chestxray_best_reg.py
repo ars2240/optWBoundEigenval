@@ -131,8 +131,8 @@ def options():
     opt['crops'] = True
     opt['rand_init'] = True
     opt['gradg_clip'] = 100
-    # opt['comp_fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'
-    opt['comp_fname'] = './models/chestxray2_AsymValley_dens121_SGD_mu0_K0_trained_model.pt'
+    opt['comp_fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'
+    # opt['comp_fname'] = './models/chestxray2_AsymValley_dens121_SGD_mu0_K0_trained_model.pt'
     # opt['fname'] = './models/m-25012018-123527.pth.tar'
     # opt['fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'
     # opt['fname'] = './models/chestxray_dens121_Adam_mu' + str(opt['mu']) + '_K' + str(opt['K']) + '_trained_model_best.pt'
