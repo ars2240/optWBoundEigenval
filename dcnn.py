@@ -329,6 +329,17 @@ class MyDensNet121(nn.Module):
         return x
 
 
+class LogisticRegression(torch.nn.Module):
+    # build the constructor
+    def __init__(self, n_inputs, n_outputs):
+        super().__init__()
+        self.linear = torch.nn.Linear(n_inputs, n_outputs)
+
+    # make predictions
+    def forward(self, x):
+        y_pred = torch.sigmoid(self.linear(x))
+        return y_pred
+
 class VAE(nn.Module):
     def __init__(self, encoder, znum=128, hnum=256, outnum=14):
         super(VAE, self).__init__()

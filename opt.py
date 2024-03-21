@@ -10,6 +10,7 @@
 #   Packages: requests, numpy, scipy, sklearn, torch
 
 import copy
+from dcnn import *
 import inspect
 import random
 import re
@@ -156,18 +157,24 @@ class HVPOperator(object):
             if p.grad is not None:
                 p.grad.data.zero_()
 
-    def prepare_grad(self):
-        # Compute gradient w.r.t loss over all parameters and vectorize
-        if type(self.data) == list:
-            inputs, target = self.data
-        elif type(self.data) == dict:
-            inputs, target = Variable(self.data['image']), Variable(self.data['label'])
+    def prep_data(self, data):
+
+        if type(data) == list:
+            inputs, target = data
+            inputs = inputs.to(self.device)
+            target = target.to(self.device)
+        elif type(data) == dict:
+            inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
         else:
             raise Exception('Data type not supported')
 
+        return inputs, target
+
+    def prepare_grad(self):
+        # Compute gradient w.r.t loss over all parameters and vectorize
+        inputs, target = self.prep_data(self.data)
+
         self.size = len(target)
-        inputs = inputs.to(self.device)
-        target = target.to(self.device)
 
         output = self.model(inputs)
         if self.criterion.__class__.__name__ == 'KLDivLoss':
@@ -343,14 +350,7 @@ class OptWBoundEignVal(object):
             data = iter(self.dataloader).next()
         # for testing purposes
         self.kfac_opt.zero_grad()  # zero gradient
-        if type(data) == list:
-            inputs, target = data
-            inputs = inputs.to(self.device)
-            target = target.to(self.device)
-        elif type(data) == dict:
-            inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
-        else:
-            raise Exception('Data type not supported')
+        inputs, target = self.prep_data(data)
         output = self.model(inputs)
 
         self.comp_fisher(self.kfac_opt, output, target)
@@ -618,15 +618,7 @@ class OptWBoundEignVal(object):
                 if self.optimizer.__class__.__name__ == "KFACOptimizer" and \
                         self.optimizer.steps % self.optimizer.TCov == 0:
                     self.optimizer.zero_grad()  # zero gradient
-                    if type(data) == list:
-                        inputs, target = data
-                        inputs = inputs.to(self.device)
-                        target = target.to(self.device)
-                    elif type(data) == dict:
-                        inputs, target = Variable(data['image'].to(self.device)), Variable(
-                            data['label'].to(self.device))
-                    else:
-                        raise Exception('Data type not supported')
+                    inputs, target = self.prep_data(data)
                     output = self.model(inputs)
                     self.comp_fisher(self.optimizer, output, target, retain_graph=True)
                     loss = self.loss(output, target)  # loss function
@@ -642,14 +634,7 @@ class OptWBoundEignVal(object):
             else:
                 # for testing purposes
                 self.optimizer.zero_grad()  # zero gradient
-                if type(data) == list:
-                    inputs, target = data
-                    inputs = inputs.to(self.device)
-                    target = target.to(self.device)
-                elif type(data) == dict:
-                    inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
-                else:
-                    raise Exception('Data type not supported')
+                inputs, target = self.prep_data(data)
                 output = self.model(inputs)
                 if self.optimizer.__class__.__name__ == "KFACOptimizer" and \
                         self.optimizer.steps % self.optimizer.TCov == 0:
@@ -681,13 +666,7 @@ class OptWBoundEignVal(object):
 
             if self.optimizer.__class__.__name__ == "KFACOptimizer":
                 if inputs is None:
-                    if type(data) == list:
-                        inputs, _ = data
-                        inputs = inputs.to(self.device)
-                    elif type(data) == dict:
-                        inputs = Variable(data['image'].to(self.device))
-                    else:
-                        raise Exception('Data type not supported')
+                    inputs, _ = self.prep_data(data)
                 output = self.model(inputs)
                 if torch.isnan(output).any():
                     self.model_load('./models/' + self.header2 + '_trained_model.pt')
@@ -719,12 +698,7 @@ class OptWBoundEignVal(object):
         start = time.time()   # start timer
         # compute f on each batch (to avoid memory issues)
         for _, data in enumerate(self.dataloader):
-            if type(data) == list:
-                inputs, target = data
-            elif type(data) == dict:
-                inputs, target = Variable(data['image']), Variable(data['label'])
-            else:
-                raise Exception('Data type not supported')
+            inputs, target = self.prep_data(data)
             size.append(len(target))
             f, _ = self.comp_f(inputs, target)
             f_list.append(f)  # compute f on each batch
@@ -929,12 +903,7 @@ class OptWBoundEignVal(object):
             crp = False
             for _, data in enumerate(dataloader):
 
-                if type(data) == list:
-                    inputs, target = data
-                elif type(data) == dict:
-                    inputs, target = Variable(data['image']), Variable(data['label'])
-                else:
-                    raise Exception('Data type not supported')
+                inputs, target = self.prep_data(data)
 
                 if crops and len(inputs.size()) == 5:
                     crp = True
@@ -1109,12 +1078,7 @@ class OptWBoundEignVal(object):
 
         for _, data in enumerate(dataloader):
 
-            if type(data) == list:
-                inputs, target = data
-            elif type(data) == dict:
-                inputs, target = Variable(data['image']), Variable(data['label'])
-            else:
-                raise Exception('Data type not supported')
+            inputs, target = self.prep_data(data)
 
             feats = inputs.shape[1]
             if len(test_mean) == 1:
@@ -1281,14 +1245,7 @@ class OptWBoundEignVal(object):
             it = iter(loader)
             for i in range(batches):
                 data = it.next()
-                if type(data) == list:
-                    inputs, target = data
-                    inputs = inputs.to(self.device)
-                    target = target.to(self.device)
-                elif type(data) == dict:
-                    inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
-                else:
-                    raise Exception('Data type not supported')
+                inputs, target = self.prep_data(data)
 
                 inputs.requires_grad_()
                 output = self.model(inputs)  # compute prediction
@@ -1326,8 +1283,74 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
+    def sub_classes(self, c, mc, target, output, comp_out):
+        # subset classes
+        if c is not None:
+            if mc is None:
+                mc = c
+            if target.shape[1] == 1:
+                warnings.warn('"Classes" argument only implemented for one-hot encoding')
+            else:
+                target = target[:, c]
+            if target.shape[1] != 1:
+                output = output[:, mc]
+                comp_out = comp_out[:, mc]
+        return target, output, comp_out
+
+    def get_saliency(self, method, mc, target, output, comp_out, cam, cam_comp):
+        if method == 'saliency':
+            # compute loss
+            if self.loss.__class__.__name__ == 'KLDivLoss':
+                target_onehot = torch.zeros(output.shape)
+                target_onehot.scatter_(1, target.view(-1, 1), 1)
+                f = self.loss(output.float(), target_onehot.float())
+                comp_f = self.loss(comp_out.float(), target_onehot.float())
+            else:
+                f = self.loss(output, target)
+                comp_f = self.loss(comp_out, target)
+
+            self.zero_grad()
+            f.backward()  # back prop
+            saliency = inputs.grad.data.abs()
+            saliency, _ = torch.max(saliency, dim=1)
+
+            self.zero_grad(comp_model)
+            comp_f.backward()  # back prop
+            sal_comp = inputs.grad.data.abs()
+            sal_comp, _ = torch.max(sal_comp, dim=1)
+        elif method == 'backprop':
+            saliency, output = GBP.generate_gradients(inputs, target, mc)
+            saliency = saliency.abs()
+            saliency, _ = torch.max(saliency, dim=1)
+
+            sal_comp, comp_out = GBP_comp.generate_gradients(inputs, target, mc)
+            sal_comp = sal_comp.abs()
+            sal_comp, _ = torch.max(sal_comp, dim=1)
+        elif method == 'cam':
+            saliency = cam(input_tensor=inputs)
+            saliency = torch.from_numpy(saliency)
+            sal_comp = cam_comp(input_tensor=inputs)
+            sal_comp = torch.from_numpy(sal_comp)
+        else:
+            raise Exception('Bad method.')
+
+        return saliency, sal_comp
+
+    def clean_labs(self, i, ouputs, comp_outs, labels):
+        # remove NaN labels
+        outputs2 = outputs[:, i]
+        comp_outs2 = comp_outs[:, i]
+        labels2 = labels[:, i]
+
+        good = labels2 == labels2
+        outputs2 = outputs2[good]
+        comp_outs2 = comp_outs2[good]
+        labels2 = labels2[good]
+
+        return ouputs2, comp_outs2, labels2
+
     def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.01, tail='_AsymValleyEnd', method='cam',
-                thresh_type='quantile', max_img=100, load=True, save=False):
+                thresh_type='quantile', max_img=100, load=True, save=False, classification=True, dims=224):
         # method = saliency, backprop, or cam
         # thresh_type = fixed or quantile
         # compute jaccard intersection of saliency maps
@@ -1342,6 +1365,14 @@ class OptWBoundEignVal(object):
         comp_model.load_state_dict(state)
         comp_model.to(self.device)
 
+        if method == 'backprop':
+            cam = GuidedBackprop(self.model)
+            cam_comp = GuidedBackprop(comp_model)
+        elif method == 'cam':
+            cam = GradCAM(model=self.model, target_layers=[self.model.densenet121.features[-1]], use_cuda=self.use_gpu)
+            cam_comp = GradCAM(model=comp_model, target_layers=[comp_model.densenet121.features[-1]],
+                               use_cuda=self.use_gpu)
+
         # get class overlap
         classes = [loader.classes.keys() for loader in loaders if not isinstance(loader, utils_data.DataLoader)]
         if len(classes) > 1:
@@ -1355,6 +1386,11 @@ class OptWBoundEignVal(object):
             raise Exception('Insufficient Classes')
 
         # get max f1 cutoffs, using training set
+        if classification:
+            load = False
+            hm_model, hm_loss = LogisticRegression(dims ** 2, len(mc)), W_BCEWithLogitsLoss()
+            hmc_model, hmc_loss = LogisticRegression(dims ** 2, len(mc)), W_BCEWithLogitsLoss()
+            hm_opt, hmc_opt = torch.optim.Adam(hm_model.parameters()), torch.optim.Adam(hmc_model.parameters())
         h2 = "./logs/" + self.header2
         if load and os.path.isfile(h2 + '_cut' + tail + '.csv') and os.path.isfile(h2 + '_comp_cut' + tail + '.csv'):
             cut = np.genfromtxt(h2 + '_cut' + tail + '.csv', delimiter=",")
@@ -1364,45 +1400,45 @@ class OptWBoundEignVal(object):
         else:
             if load:
                 print('Load cutoff files do not exist. Generating instead.')
-            outputs = []
-            comp_outs = []
-            labels = []
+            outputs, comp_outs, labels = [], [], []
             for _, data in enumerate(train_loader):
-                if type(data) == list:
-                    inputs, target = data
-                    inputs = inputs.to(self.device)
-                    target = target.to(self.device)
-                elif type(data) == dict:
-                    inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
-                else:
-                    raise Exception('Data type not supported')
+                inputs, target = self.prep_data(data)
 
+                if classification:
+                    inputs.requires_grad_()
                 output = self.model(inputs)  # compute prediction
                 comp_out = comp_model(inputs)
 
                 output = output.to('cpu')
                 comp_out = comp_out.to('cpu')
                 target = target.to('cpu')
-                outputs.append(output.data)
-                comp_outs.append(comp_out.data)
+                outputs.append(output.detach().data)
+                comp_outs.append(comp_out.detach().data)
                 labels.append(target)
 
-            labels = torch.cat(labels)
-            outputs = torch.cat(outputs)
-            comp_outs = torch.cat(comp_outs)
+                if classification:
+
+                    target, output, comp_out = self.sub_classes(c, mc, target, output, comp_out)
+                    saliency, sal_comp = self.get_saliency(method, mc, target, output, comp_out, cam, cam_comp)
+
+                    hm_opt.zero_grad()
+                    outputs = hm_model(saliency.view(-1, dims ** 2))
+                    loss = hm_loss(outputs, target)
+                    loss.backward()
+                    hm_opt.step()
+
+                    hmc_opt.zero_grad()
+                    outputs = hmc_model(sal_comp.view(-1, dims ** 2))
+                    loss = hmc_loss(outputs, target)
+                    loss.backward()
+                    hmc_opt.step()
+
+            outputs, comp_outs, labels = torch.cat(outputs), torch.cat(comp_outs), torch.cat(labels)
             nc = outputs.size()[1]
             cut = np.zeros(nc)
             comp_cut = np.zeros(nc)
             for i in range(nc):
-                # remove NaN labels
-                outputs2 = outputs[:, i]
-                comp_outs2 = comp_outs[:, i]
-                labels2 = labels[:, i]
-
-                good = labels2 == labels2
-                outputs2 = outputs2[good]
-                comp_outs2 = comp_outs2[good]
-                labels2 = labels2[good]
+                ouputs2, comp_outs2, labels2 = self.clean_labs(i, ouputs, comp_outs, labels)
 
                 np.seterr(invalid='ignore')
 
@@ -1434,12 +1470,37 @@ class OptWBoundEignVal(object):
                 # d = {'outputs': outputs, 'comp_outs': comp_outs, 'labels': labels}
                 # torch.save(d, "./logs/" + self.header2 + "_outputs.pt")
 
-        if method == 'backprop':
-            GBP = GuidedBackprop(self.model)
-            GBP_comp = GuidedBackprop(comp_model)
-        elif method == 'cam':
-            cam = GradCAM(model=self.model, target_layers=[self.model.densenet121.features[-1]], use_cuda=self.use_gpu)
-            cam_comp = GradCAM(model=comp_model, target_layers=[comp_model.densenet121.features[-1]], use_cuda=self.use_gpu)
+        if classification:
+            outputs, comp_outs, labels = [], [], []
+            for _, data in enumerate(train_loader):
+                inputs, target = self.prep_data(data)
+
+                inputs.requires_grad_()
+                output = self.model(inputs)  # compute prediction
+                comp_out = comp_model(inputs)
+                target, output, comp_out = self.sub_classes(c, mc, target, output, comp_out)
+                saliency, sal_comp = self.get_saliency(method, mc, target, output, comp_out, cam, cam_comp)
+
+                output = hm_model(saliency.view(-1, dims ** 2))
+                comp_outs = hmc_model(sal_comp.view(-1, dims ** 2))
+                outputs.append(output.data)
+                comp_outs.append(comp_out.data)
+                labels.append(target)
+
+            outputs, comp_outs, labels = torch.cat(outputs), torch.cat(comp_outs), torch.cat(labels)
+
+            roc, roc_comp = np.zeros(len(mc)), np.zeros(len(mc))
+            for i in range(len(mc)):
+                ouputs2, comp_outs2, labels2 = self.clean_labs(i, ouputs, comp_outs, labels)
+
+                try:
+                    roc[i] = roc_auc_score(labels2, outputs2, average=None)  # compute AUC of ROC curves
+                    roc_comp[i] = roc_auc_score(labels2, comp_outs2, average=None)
+                except ValueError as e:
+                    print(e)
+                    roc[i], roc_comp[i] = np.nan, np.nan
+            print('Baseline Training ROC: {0}. Comp Train ROC: {1}'.format(roc.mean(), roc_comp.mean()))  # mean AUCs
+
         i = 0
         for loader in loaders:
             jac_dic, log = {}, {'conf_matrix': {'model': {}, 'baseline': {}}, 'jac': {}, 'cts': {}}
@@ -1454,83 +1515,27 @@ class OptWBoundEignVal(object):
             cut2 = cut[mc]
             comp_cut2 = comp_cut[mc]
             c = [list(classes[i]).index(x) for x in overlap]
+            outputs, comp_outs, labels = [], [], []
             for _, data in enumerate(loader):
                 # start = time.time()
 
-                if type(data) == list:
-                    inputs, target = data
-                    inputs = inputs.to(self.device)
-                    target = target.to(self.device)
-                elif type(data) == dict:
-                    inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
-                else:
-                    raise Exception('Data type not supported')
+                inputs, target = self.prep_data(data)
 
-                # subset classes
-                if c is not None:
-                    if mc is None:
-                        mc = c
-                    if target.shape[1] == 1:
-                        warnings.warn('"Classes" argument only implemented for one-hot encoding')
-                    else:
-                        target = target[:, c]
-                        # output = output[:, mc]
-                        # comp_out = comp_out[:, mc]
-
-                # stop = time.time() - start
-                # timeHMS(stop, 'Part 1 ')
-
-                if method in ['saliency', 'cam']:
-                    inputs.requires_grad_()
-                    output = self.model(inputs)  # compute prediction
-                    comp_out = comp_model(inputs)
-
-                    if c is not None:
-                        if target.shape[1] != 1:
-                            output = output[:, mc]
-                            comp_out = comp_out[:, mc]
-
-                if method == 'saliency':
-                    # compute loss
-                    if self.loss.__class__.__name__ == 'KLDivLoss':
-                        target_onehot = torch.zeros(output.shape)
-                        target_onehot.scatter_(1, target.view(-1, 1), 1)
-                        f = self.loss(output.float(), target_onehot.float())
-                        comp_f = self.loss(comp_out.float(), target_onehot.float())
-                    else:
-                        f = self.loss(output, target)
-                        comp_f = self.loss(comp_out, target)
-
-                    self.zero_grad()
-                    f.backward()  # back prop
-                    saliency = inputs.grad.data.abs()
-                    saliency, _ = torch.max(saliency, dim=1)
-
-                    self.zero_grad(comp_model)
-                    comp_f.backward()  # back prop
-                    sal_comp = inputs.grad.data.abs()
-                    sal_comp, _ = torch.max(sal_comp, dim=1)
-                elif method == 'backprop':
-                    saliency, output = GBP.generate_gradients(inputs, target, mc)
-                    saliency = saliency.abs()
-                    saliency, _ = torch.max(saliency, dim=1)
-
-                    sal_comp, comp_out = GBP_comp.generate_gradients(inputs, target, mc)
-                    sal_comp = sal_comp.abs()
-                    sal_comp, _ = torch.max(sal_comp, dim=1)
-                elif method == 'cam':
-                    saliency = cam(input_tensor=inputs)
-                    saliency = torch.from_numpy(saliency)
-                    sal_comp = cam_comp(input_tensor=inputs)
-                    sal_comp = torch.from_numpy(sal_comp)
-                    # print(saliency.shape)
-                    # raise Exception('Stop')
-                else:
-                    raise Exception('Bad method.')
+                inputs.requires_grad_()
+                output = self.model(inputs)  # compute prediction
+                comp_out = comp_model(inputs)
+                target, output, comp_out = self.sub_classes(c, mc, target, output, comp_out)
+                saliency, sal_comp = self.get_saliency(method, mc, target, output, comp_out, cam, cam_comp)
 
                 saliency = saliency.to('cpu')
                 sal_comp = sal_comp.to('cpu')
 
+                if classification:
+                    output = hm_model(saliency.view(-1, dims ** 2))
+                    comp_outs = hmc_model(sal_comp.view(-1, dims ** 2))
+                    outputs.append(output.data)
+                    comp_outs.append(comp_out.data)
+                    labels.append(target)
                 # stop = time.time() - start
                 # timeHMS(stop, 'Part 2 ')
 
@@ -1667,6 +1672,21 @@ class OptWBoundEignVal(object):
                 plt.close()
             i += 1
             # break
+
+            if classification:
+                outputs, comp_outs, labels = torch.cat(outputs), torch.cat(comp_outs), torch.cat(labels)
+
+                roc, roc_comp = np.zeros(len(mc)), np.zeros(len(mc))
+                for i in range(len(mc)):
+                    ouputs2, comp_outs2, labels2 = self.clean_labs(i, ouputs, comp_outs, labels)
+
+                    try:
+                        roc[i] = roc_auc_score(labels2, outputs2, average=None)  # compute AUC of ROC curves
+                        roc_comp[i] = roc_auc_score(labels2, comp_outs2, average=None)
+                    except ValueError as e:
+                        print(e)
+                        roc[i], roc_comp[i] = np.nan, np.nan
+                print('Baseline Test {0} ROC: {1}. Comp Test {0} ROC: {2}'.format(i, roc.mean(), roc_comp.mean()))
 
 
 def get_prob(inputs,  m=[0], sd=[1], skew=[0]):
