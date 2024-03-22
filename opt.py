@@ -329,6 +329,19 @@ class OptWBoundEignVal(object):
             if p.grad is not None:
                 p.grad.data.zero_()
 
+    def prep_data(self, data):
+
+        if type(data) == list:
+            inputs, target = data
+            inputs = inputs.to(self.device)
+            target = target.to(self.device)
+        elif type(data) == dict:
+            inputs, target = Variable(data['image'].to(self.device)), Variable(data['label'].to(self.device))
+        else:
+            raise Exception('Data type not supported')
+
+        return inputs, target
+
     def comp_fisher(self, opt, output, target=None, retain_graph=False):
         # compute true fisher
         opt.acc_stats = True
