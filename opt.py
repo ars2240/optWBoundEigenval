@@ -1430,7 +1430,7 @@ class OptWBoundEignVal(object):
                 labels.append(target)
 
                 if classification:
-
+                    c = [list(classes[i]).index(x) for x in overlap]
                     target, output, comp_out = self.sub_classes(c, mc, target, output, comp_out)
                     saliency, sal_comp = self.get_saliency(method, mc, target, output, comp_out, cam, cam_comp)
 
