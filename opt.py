@@ -1310,7 +1310,7 @@ class OptWBoundEignVal(object):
                 comp_out = comp_out[:, mc]
         return target, output, comp_out
 
-    def get_saliency(self, method, mc, target, output, comp_out, cam, cam_comp):
+    def get_saliency(self, method, mc, target, inputs, output, comp_out, cam, cam_comp):
         if method == 'saliency':
             # compute loss
             if self.loss.__class__.__name__ == 'KLDivLoss':
@@ -1432,7 +1432,7 @@ class OptWBoundEignVal(object):
                 if classification:
                     c = [list(classes[0]).index(x) for x in overlap]
                     target, output, comp_out = self.sub_classes(c, mc, target, output, comp_out)
-                    saliency, sal_comp = self.get_saliency(method, mc, target, output, comp_out, cam, cam_comp)
+                    saliency, sal_comp = self.get_saliency(method, mc, target, inputs, output, comp_out, cam, cam_comp)
 
                     hm_opt.zero_grad()
                     outputs = hm_model(saliency.view(-1, dims ** 2))
@@ -1492,7 +1492,7 @@ class OptWBoundEignVal(object):
                 output = self.model(inputs)  # compute prediction
                 comp_out = comp_model(inputs)
                 target, output, comp_out = self.sub_classes(c, mc, target, output, comp_out)
-                saliency, sal_comp = self.get_saliency(method, mc, target, output, comp_out, cam, cam_comp)
+                saliency, sal_comp = self.get_saliency(method, mc, target, inputs, output, comp_out, cam, cam_comp)
 
                 output = hm_model(saliency.view(-1, dims ** 2))
                 comp_outs = hmc_model(sal_comp.view(-1, dims ** 2))
@@ -1538,7 +1538,7 @@ class OptWBoundEignVal(object):
                 output = self.model(inputs)  # compute prediction
                 comp_out = comp_model(inputs)
                 target, output, comp_out = self.sub_classes(c, mc, target, output, comp_out)
-                saliency, sal_comp = self.get_saliency(method, mc, target, output, comp_out, cam, cam_comp)
+                saliency, sal_comp = self.get_saliency(method, mc, target, inputs, output, comp_out, cam, cam_comp)
 
                 saliency = saliency.to('cpu')
                 sal_comp = sal_comp.to('cpu')
