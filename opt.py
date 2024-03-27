@@ -1435,14 +1435,14 @@ class OptWBoundEignVal(object):
                     saliency, sal_comp = self.get_saliency(method, mc, target, inputs, output, comp_out, cam, cam_comp)
 
                     hm_opt.zero_grad()
-                    outputs = hm_model(saliency.view(-1, dims ** 2))
-                    loss = hm_loss(outputs, target)
+                    output = hm_model(saliency.view(-1, dims ** 2))
+                    loss = hm_loss(output, target)
                     loss.backward()
                     hm_opt.step()
 
                     hmc_opt.zero_grad()
-                    outputs = hmc_model(sal_comp.view(-1, dims ** 2))
-                    loss = hmc_loss(outputs, target)
+                    output = hmc_model(sal_comp.view(-1, dims ** 2))
+                    loss = hmc_loss(output, target)
                     loss.backward()
                     hmc_opt.step()
 
