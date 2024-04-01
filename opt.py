@@ -1702,7 +1702,7 @@ class OptWBoundEignVal(object):
         cmodels = [self.model]
         for i in range(ncomp):
             comp_model = copy.deepcopy(self.model)
-            state = self.load_state(fname)
+            state = self.load_state(fname[i])
             comp_model.load_state_dict(state)
             comp_model.to(self.device)
             cmodels.append(comp_model)
