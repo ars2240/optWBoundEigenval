@@ -1264,14 +1264,7 @@ class OptWBoundEignVal(object):
                 output = self.model(inputs)  # compute prediction
 
                 # subset classes
-                if c is not None:
-                    if mc is None:
-                        mc = c
-                    if target.shape[1] == 1:
-                        print('"Classes" argument only implemented for one-hot encoding')
-                    else:
-                        target = target[:, c]
-                        output = output[:, mc]
+                target, output = sub_classes(self, c, mc, target, output)
 
                 # compute loss
                 if self.loss.__class__.__name__ == 'KLDivLoss':
@@ -1296,7 +1289,7 @@ class OptWBoundEignVal(object):
                     n += 1
             k += 1
 
-    def sub_classes(self, c, mc, target, output, comp_out):
+    def sub_classes(self, c, mc, target, output):
         # subset classes
         if c is not None:
             if mc is None:
@@ -1307,47 +1300,33 @@ class OptWBoundEignVal(object):
                 target = target[:, c]
             if target.shape[1] != 1:
                 output = output[:, mc]
-                comp_out = comp_out[:, mc]
-        return target, output, comp_out
+        return target, output
 
-    def get_saliency(self, method, mc, target, inputs, output, comp_out, cam, cam_comp):
+    def get_saliency(self, method, mc, target, inputs, output, cam):
         if method == 'saliency':
             # compute loss
             if self.loss.__class__.__name__ == 'KLDivLoss':
                 target_onehot = torch.zeros(output.shape)
                 target_onehot.scatter_(1, target.view(-1, 1), 1)
                 f = self.loss(output.float(), target_onehot.float())
-                comp_f = self.loss(comp_out.float(), target_onehot.float())
             else:
                 f = self.loss(output, target)
-                comp_f = self.loss(comp_out, target)
 
             self.zero_grad()
             f.backward()  # back prop
             saliency = inputs.grad.data.abs()
             saliency, _ = torch.max(saliency, dim=1)
-
-            self.zero_grad(comp_model)
-            comp_f.backward()  # back prop
-            sal_comp = inputs.grad.data.abs()
-            sal_comp, _ = torch.max(sal_comp, dim=1)
         elif method == 'backprop':
-            saliency, output = GBP.generate_gradients(inputs, target, mc)
+            saliency, output = cam.generate_gradients(inputs, target, mc)
             saliency = saliency.abs()
             saliency, _ = torch.max(saliency, dim=1)
-
-            sal_comp, comp_out = GBP_comp.generate_gradients(inputs, target, mc)
-            sal_comp = sal_comp.abs()
-            sal_comp, _ = torch.max(sal_comp, dim=1)
         elif method == 'cam':
             saliency = cam(input_tensor=inputs)
             saliency = torch.from_numpy(saliency)
-            sal_comp = cam_comp(input_tensor=inputs)
-            sal_comp = torch.from_numpy(sal_comp)
         else:
             raise Exception('Bad method.')
 
-        return saliency, sal_comp
+        return saliency
 
     def clean_labs(self, i, ouputs, comp_outs, labels):
         # remove NaN labels
@@ -1385,6 +1364,8 @@ class OptWBoundEignVal(object):
             cam = GradCAM(model=self.model, target_layers=[self.model.densenet121.features[-1]], use_cuda=self.use_gpu)
             cam_comp = GradCAM(model=comp_model, target_layers=[comp_model.densenet121.features[-1]],
                                use_cuda=self.use_gpu)
+        else:
+            cam, cam_comp = None, None
 
         # get class overlap
         classes = [loader.classes.keys() for loader in loaders if not isinstance(loader, utils_data.DataLoader)]
@@ -1431,18 +1412,20 @@ class OptWBoundEignVal(object):
 
                 if classification:
                     c = [list(classes[0]).index(x) for x in overlap]
-                    target, output, comp_out = self.sub_classes(c, mc, target, output, comp_out)
-                    saliency, sal_comp = self.get_saliency(method, mc, target, inputs, output, comp_out, cam, cam_comp)
+                    target2, output = self.sub_classes(c, mc, target, output)
+                    _, comp_out = self.sub_classes(c, mc, target, comp_out)
+                    saliency = self.get_saliency(method, mc, target2, inputs, output, cam)
+                    sal_comp = self.get_saliency(method, mc, target2, inputs, comp_out, cam_comp)
 
                     hm_opt.zero_grad()
                     output = hm_model(saliency.view(-1, dims ** 2))
-                    loss = hm_loss(output, target)
+                    loss = hm_loss(output, target2)
                     loss.backward()
                     hm_opt.step()
 
                     hmc_opt.zero_grad()
                     output = hmc_model(sal_comp.view(-1, dims ** 2))
-                    loss = hmc_loss(output, target)
+                    loss = hmc_loss(output, target2)
                     loss.backward()
                     hmc_opt.step()
 
@@ -1491,14 +1474,16 @@ class OptWBoundEignVal(object):
                 inputs.requires_grad_()
                 output = self.model(inputs)  # compute prediction
                 comp_out = comp_model(inputs)
-                target, output, comp_out = self.sub_classes(c, mc, target, output, comp_out)
-                saliency, sal_comp = self.get_saliency(method, mc, target, inputs, output, comp_out, cam, cam_comp)
+                target2, output = self.sub_classes(c, mc, target, output)
+                _, comp_out = self.sub_classes(c, mc, target, comp_out)
+                saliency = self.get_saliency(method, mc, target2, inputs, output, cam)
+                sal_comp = self.get_saliency(method, mc, target2, inputs, comp_out, cam_comp)
 
                 output = hm_model(saliency.view(-1, dims ** 2))
                 comp_outs = hmc_model(sal_comp.view(-1, dims ** 2))
                 outputs.append(output.data)
                 comp_outs.append(comp_out.data)
-                labels.append(target)
+                labels.append(target2)
 
             outputs, comp_outs, labels = torch.cat(outputs), torch.cat(comp_outs), torch.cat(labels)
 
@@ -1522,7 +1507,7 @@ class OptWBoundEignVal(object):
                 log['conf_matrix']['model'][lab], log['conf_matrix']['baseline'][lab] = np.zeros((2, 2)), np.zeros((2, 2))
                 log['jac'][lab], log['cts'][lab] = np.zeros((2, 2)), np.zeros((2, 2))
                 jac_dic[lab] = []
-            sal_mean, cov_mean, sal_comp_mean, cov_comp_mean = 0, 0, 0, 0
+            sal_mean, cov_mean, sal_comp_mean, cov_comp_mean, jac_mean = 0, 0, 0, 0, 0
             n_img, b, n = 0, 0, 0
             loader = assert_dl(loader, self.batch_size, self.num_workers)
             cut2 = cut[mc]
@@ -1537,8 +1522,10 @@ class OptWBoundEignVal(object):
                 inputs.requires_grad_()
                 output = self.model(inputs)  # compute prediction
                 comp_out = comp_model(inputs)
-                target, output, comp_out = self.sub_classes(c, mc, target, output, comp_out)
-                saliency, sal_comp = self.get_saliency(method, mc, target, inputs, output, comp_out, cam, cam_comp)
+                target2, output = self.sub_classes(c, mc, target, output)
+                _, comp_out = self.sub_classes(c, mc, target, comp_out)
+                saliency = self.get_saliency(method, mc, target2, inputs, output, cam)
+                sal_comp = self.get_saliency(method, mc, target2, inputs, comp_out, cam_comp)
 
                 saliency = saliency.to('cpu')
                 sal_comp = sal_comp.to('cpu')
@@ -1548,7 +1535,7 @@ class OptWBoundEignVal(object):
                     comp_outs = hmc_model(sal_comp.view(-1, dims ** 2))
                     outputs.append(output.data)
                     comp_outs.append(comp_out.data)
-                    labels.append(target)
+                    labels.append(target2)
                 # stop = time.time() - start
                 # timeHMS(stop, 'Part 2 ')
 
@@ -1572,6 +1559,7 @@ class OptWBoundEignVal(object):
                     cov_mean = cov_mean * n / (n + 1) + torch.mean(sal_cov.float()).item() / (n + 1)
                     sal_comp_mean = sal_comp_mean * n / (n + 1) + torch.mean(sal_comp[j]).item() / (n + 1)
                     cov_comp_mean = cov_comp_mean * n / (n + 1) + torch.mean(sal_comp_cov.float()).item() / (n + 1)
+                    jac_mean = jac_mean * n / (n + 1) + jac / (n + 1)
                     n += 1
                     for x in range(len(mc)):
                         lab = list(classes[0])[mc[x]]
@@ -1662,6 +1650,7 @@ class OptWBoundEignVal(object):
 
             print('Saliency: %f\t%f' % (sal_mean, sal_comp_mean))
             print('Coverage: %f\t%f' % (cov_mean, cov_comp_mean))
+            print('Jaccard: %f' % jac_mean)
             # print(jac_dic)
             plt.rcdefaults()
             for x in range(len(mc)):
@@ -1700,6 +1689,87 @@ class OptWBoundEignVal(object):
                         print(e)
                         roc[i], roc_comp[i] = np.nan, np.nan
                 print('Baseline Test {0} ROC: {1}. Comp Test {0} ROC: {2}'.format(i, roc.mean(), roc_comp.mean()))
+
+    def jaccard_comp(self, loaders,  fname, thresh=.9, method='cam', thresh_type='quantile'):
+        # method = saliency, backprop, or cam
+        # thresh_type = fixed or quantile
+        # compute jaccard intersection of saliency maps
+
+        # load comparison model
+        if type(fname) is str:
+            fname = [fname]
+        ncomp = len(fname)
+        cmodels = [self.model]
+        for i in range(ncomp):
+            comp_model = copy.deepcopy(self.model)
+            state = self.load_state(fname)
+            comp_model.load_state_dict(state)
+            comp_model.to(self.device)
+            cmodels.append(comp_model)
+        ncomp += 1
+
+        if method == 'backprop':
+            cam = [GuidedBackprop(cmodels[i]) for i in range(ncomp)]
+        elif method == 'cam':
+            cam = [GradCAM(model=cmodels[i], target_layers=[cmodels[i].densenet121.features[-1]],use_cuda=self.use_gpu)
+                   for i in range(ncomp)]
+        else:
+            cam = None
+
+        # get class overlap
+        classes = [loader.classes.keys() for loader in loaders if not isinstance(loader, utils_data.DataLoader)]
+        if len(classes) > 1:
+            overlap = classes[0]
+            for c in classes[1:]:
+                overlap = [x for x in overlap if x in c]
+
+            # model classes
+            mc = [x for x in range(len(classes[0])) if list(classes[0])[x] in overlap]
+        else:
+            raise Exception('Insufficient Classes')
+
+        i = 0
+        for loader in loaders:
+            jac_mean = np.ones((ncomp, ncomp))
+            b, n = 0, 0
+            loader = assert_dl(loader, self.batch_size, self.num_workers)
+            c = [list(classes[i]).index(x) for x in overlap]
+            for _, data in enumerate(loader):
+                # start = time.time()
+
+                inputs, target = self.prep_data(data)
+
+                inputs.requires_grad_()
+                output = [cmodels[x](inputs) for x in range(ncomp)]
+                for x in range(ncomp):
+                    target2, output = self.sub_classes(c, mc, target, output[x])
+                sal = [self.get_saliency(method, mc, target2, inputs, output[x], cam[x]) for x in range(ncomp)]
+
+                sal = [sal[x].to('cpu') for x in range(ncomp)]
+
+                for j in range(inputs.shape[0]):
+                    if thresh_type == 'fixed':
+                        sal_cov = [sal[x][j].flatten() > thresh for x in range(ncomp)]
+                    elif thresh_type == 'quantile':
+                        sal_cov = [sal[x][j].flatten() > np.quantile(sal[x][j].numpy(), thresh) for x in range(ncomp)]
+                    else:
+                        raise Exception('Bad thresh_type.')
+                    for x in range(ncomp):
+                        for y in range(x+1, ncomp):
+                            jac = jaccard_score(sal_cov[x], sal_cov[y])
+                            jac_mean[x, y] = jac_mean[x, y] * n / (n + 1) + jac / (n + 1)
+                            jac_mean[y, x] = jac_mean[x, y]
+                    n += 1
+
+                if self.use_gpu:
+                    torch.cuda.empty_cache()
+                    if self.mem_track:
+                        self.mem_check()
+                        check_cpu()
+                b += 1
+            print('Jaccard: %f' % jac_mean)
+            i += 1
+            # break
 
 
 def get_prob(inputs,  m=[0], sd=[1], skew=[0]):
@@ -1944,3 +2014,6 @@ def main(pfile):
     if 'jaccard' in options.keys() and 'comp_fname' in options.keys() and options['jaccard']:
         opt.jaccard(options['test_loader'], options['train_loader'], fname=options['comp_fname'],
                     max_img=options['max_img'])
+
+    if 'jaccard_comp' in options.keys() and 'comp_fname' in options.keys() and options['jaccard_comp']:
+        opt.jaccard_comp(options['test_loader'], fname=options['comp_fname'])
