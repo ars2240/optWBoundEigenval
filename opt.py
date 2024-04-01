@@ -1690,7 +1690,7 @@ class OptWBoundEignVal(object):
                         roc[i], roc_comp[i] = np.nan, np.nan
                 print('Baseline Test {0} ROC: {1}. Comp Test {0} ROC: {2}'.format(i, roc.mean(), roc_comp.mean()))
 
-    def jaccard_comp(self, loaders,  fname, thresh=.9, method='cam', thresh_type='quantile'):
+    def jaccard_comp(self, loaders,  fname, thresh=.9, method='cam', thresh_type='quantile', tail=''):
         # method = saliency, backprop, or cam
         # thresh_type = fixed or quantile
         # compute jaccard intersection of saliency maps
@@ -1768,6 +1768,7 @@ class OptWBoundEignVal(object):
                         check_cpu()
                 b += 1
             print('Jaccard: %f' % jac_mean)
+            np.savetxt('./logs/' + self.header2 + '_jaccard_comp_' + str(i) + tail + '.csv', jac_mean, delimiter=",")
             i += 1
             # break
 
