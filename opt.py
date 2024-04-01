@@ -1699,19 +1699,19 @@ class OptWBoundEignVal(object):
         if type(fname) is str:
             fname = [fname]
         ncomp = len(fname)
-        cmodels = [self.model]
+        models = [self.model]
         for i in range(ncomp):
             comp_model = copy.deepcopy(self.model)
             state = self.load_state(fname[i])
             comp_model.load_state_dict(state)
             comp_model.to(self.device)
-            cmodels.append(comp_model)
+            models.append(comp_model)
         ncomp += 1
 
         if method == 'backprop':
-            cam = [GuidedBackprop(cmodels[i]) for i in range(ncomp)]
+            cam = [GuidedBackprop(models[i]) for i in range(ncomp)]
         elif method == 'cam':
-            cam = [GradCAM(model=cmodels[i], target_layers=[cmodels[i].densenet121.features[-1]],use_cuda=self.use_gpu)
+            cam = [GradCAM(model=models[i], target_layers=[models[i].densenet121.features[-1]], use_cuda=self.use_gpu)
                    for i in range(ncomp)]
         else:
             cam = None
@@ -1740,9 +1740,9 @@ class OptWBoundEignVal(object):
                 inputs, target = self.prep_data(data)
 
                 inputs.requires_grad_()
-                output = [cmodels[x](inputs) for x in range(ncomp)]
+                output = [models[x](inputs) for x in range(ncomp)]
                 for x in range(ncomp):
-                    target2, output = self.sub_classes(c, mc, target, output[x])
+                    target2, output[x] = self.sub_classes(c, mc, target, output[x])
                 sal = [self.get_saliency(method, mc, target2, inputs, output[x], cam[x]) for x in range(ncomp)]
 
                 sal = [sal[x].to('cpu') for x in range(ncomp)]
