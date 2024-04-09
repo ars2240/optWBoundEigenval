@@ -126,19 +126,19 @@ def options():
     opt['rho_test'] = False
     # opt['other_classes'] = list(range(1, 7))
     opt['saliency'] = 0
-    opt['jaccard'] = True
-    opt['jaccard_comp'] = False
+    opt['jaccard'] = False
+    opt['jaccard_comp'] = True
     opt['max_img'] = 25
     opt['crops'] = True
     opt['rand_init'] = True
     opt['gradg_clip'] = 100
-    opt['comp_fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'
-    """
+    # opt['comp_fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'
+    # """
     opt['comp_fname'] = ['/home/ars411/chexnet/models/m-10012023-100132.pth.tar',
                          './models/chestxray2_AsymValley_dens121_SGD_mu0_K0_trained_model.pt',
                          './models/chestxray2_dens121_EntropySGD_mu0_K0_trained_model_best.pt',
                          './models/chestxray2_dens121_KFACOptimizer_mu0_K0_trained_model_best.pt']
-    """
+    # """
     # opt['comp_fname'] = './models/chestxray2_AsymValley_dens121_SGD_mu0_K0_trained_model.pt'
     # opt['fname'] = './models/m-25012018-123527.pth.tar'
     # opt['fname'] = '/home/ars411/chexnet/models/m-10012023-100132.pth.tar'

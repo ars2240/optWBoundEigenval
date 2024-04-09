@@ -1650,7 +1650,7 @@ class OptWBoundEignVal(object):
 
             print('Saliency: %f\t%f' % (sal_mean, sal_comp_mean))
             print('Coverage: %f\t%f' % (cov_mean, cov_comp_mean))
-            print('Jaccard: %f' % jac_mean)
+            print('Jaccard: {0}'.format(jac_mean))
             # print(jac_dic)
             plt.rcdefaults()
             for x in range(len(mc)):
@@ -1767,7 +1767,7 @@ class OptWBoundEignVal(object):
                         self.mem_check()
                         check_cpu()
                 b += 1
-            print('Jaccard: %f' % jac_mean)
+            print('Jaccard: {0}'.format(jac_mean))
             np.savetxt('./logs/' + self.header2 + '_jaccard_comp_' + str(i) + tail + '.csv', jac_mean, delimiter=",")
             i += 1
             # break
