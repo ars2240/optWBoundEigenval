@@ -1328,7 +1328,7 @@ class OptWBoundEignVal(object):
 
         return saliency
 
-    def clean_labs(self, i, ouputs, comp_outs, labels):
+    def clean_labs(self, i, outputs, comp_outs, labels):
         # remove NaN labels
         outputs2 = outputs[:, i]
         comp_outs2 = comp_outs[:, i]
@@ -1339,7 +1339,7 @@ class OptWBoundEignVal(object):
         comp_outs2 = comp_outs2[good]
         labels2 = labels2[good]
 
-        return ouputs2, comp_outs2, labels2
+        return outputs2, comp_outs2, labels2
 
     def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.01, tail='', method='cam',
                 thresh_type='quantile', max_img=100, load=True, save=False, classification=True, dims=224):
@@ -1434,7 +1434,7 @@ class OptWBoundEignVal(object):
             cut = np.zeros(nc)
             comp_cut = np.zeros(nc)
             for i in range(nc):
-                ouputs2, comp_outs2, labels2 = self.clean_labs(i, ouputs, comp_outs, labels)
+                outputs2, comp_outs2, labels2 = self.clean_labs(i, outputs, comp_outs, labels)
 
                 np.seterr(invalid='ignore')
 
@@ -1489,7 +1489,7 @@ class OptWBoundEignVal(object):
 
             roc, roc_comp = np.zeros(len(mc)), np.zeros(len(mc))
             for i in range(len(mc)):
-                ouputs2, comp_outs2, labels2 = self.clean_labs(i, ouputs, comp_outs, labels)
+                outputs2, comp_outs2, labels2 = self.clean_labs(i, outputs, comp_outs, labels)
 
                 try:
                     roc[i] = roc_auc_score(labels2, outputs2, average=None)  # compute AUC of ROC curves
@@ -1680,7 +1680,7 @@ class OptWBoundEignVal(object):
 
                 roc, roc_comp = np.zeros(len(mc)), np.zeros(len(mc))
                 for i in range(len(mc)):
-                    ouputs2, comp_outs2, labels2 = self.clean_labs(i, ouputs, comp_outs, labels)
+                    outputs2, comp_outs2, labels2 = self.clean_labs(i, outputs, comp_outs, labels)
 
                     try:
                         roc[i] = roc_auc_score(labels2, outputs2, average=None)  # compute AUC of ROC curves
