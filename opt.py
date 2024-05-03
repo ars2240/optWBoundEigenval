@@ -1328,18 +1328,16 @@ class OptWBoundEignVal(object):
 
         return saliency
 
-    def clean_labs(self, i, outputs, comp_outs, labels):
+    def clean_labs(self, i, outputs, labels):
         # remove NaN labels
         outputs2 = outputs[:, i]
-        comp_outs2 = comp_outs[:, i]
         labels2 = labels[:, i]
 
         good = labels2 == labels2
         outputs2 = outputs2[good]
-        comp_outs2 = comp_outs2[good]
         labels2 = labels2[good]
 
-        return outputs2, comp_outs2, labels2
+        return outputs2, labels2
 
     def jaccard(self, loaders, train_loader, fname, thresh=.9, jac_thresh=0.01, tail='', method='cam',
                 thresh_type='quantile', max_img=100, load=True, save=False, classification=True, dims=224):
@@ -1434,7 +1432,8 @@ class OptWBoundEignVal(object):
             cut = np.zeros(nc)
             comp_cut = np.zeros(nc)
             for i in range(nc):
-                outputs2, comp_outs2, labels2 = self.clean_labs(i, outputs, comp_outs, labels)
+                outputs2, labels2 = self.clean_labs(i, outputs, labels)
+                comp_outs2, _ = self.clean_labs(i, comp_outs, labels)
 
                 np.seterr(invalid='ignore')
 
@@ -1489,7 +1488,8 @@ class OptWBoundEignVal(object):
 
             roc, roc_comp = np.zeros(len(mc)), np.zeros(len(mc))
             for i in range(len(mc)):
-                outputs2, comp_outs2, labels2 = self.clean_labs(i, outputs, comp_outs, labels)
+                outputs2, labels2 = self.clean_labs(i, outputs, labels)
+                comp_outs2, _ = self.clean_labs(i, comp_outs, labels)
 
                 try:
                     roc[i] = roc_auc_score(labels2, outputs2, average=None)  # compute AUC of ROC curves
@@ -1680,7 +1680,8 @@ class OptWBoundEignVal(object):
 
                 roc, roc_comp = np.zeros(len(mc)), np.zeros(len(mc))
                 for i in range(len(mc)):
-                    outputs2, comp_outs2, labels2 = self.clean_labs(i, outputs, comp_outs, labels)
+                    outputs2, labels2 = self.clean_labs(i, outputs, labels)
+                    comp_outs2, _ = self.clean_labs(i, comp_outs, labels)
 
                     try:
                         roc[i] = roc_auc_score(labels2, outputs2, average=None)  # compute AUC of ROC curves
@@ -1690,7 +1691,8 @@ class OptWBoundEignVal(object):
                         roc[i], roc_comp[i] = np.nan, np.nan
                 print('Baseline Test {0} ROC: {1}. Comp Test {0} ROC: {2}'.format(i, roc.mean(), roc_comp.mean()))
 
-    def jaccard_comp(self, loaders,  fname, thresh=.9, method='cam', thresh_type='quantile', tail=''):
+    def jaccard_comp(self, loaders,  fname, thresh=.9, method='cam', thresh_type='quantile', tail='', same_pred=True,
+                     load=True, save=True):
         # method = saliency, backprop, or cam
         # thresh_type = fixed or quantile
         # compute jaccard intersection of saliency maps
@@ -1728,9 +1730,50 @@ class OptWBoundEignVal(object):
         else:
             raise Exception('Insufficient Classes')
 
+        h2 = "./logs/" + self.header2
+        if not same_pred:
+            cut = None
+        if load and os.path.isfile(h2 + '_cuts' + tail + '.csv'):
+            cut = np.genfromtxt(h2 + '_cuts' + tail + '.csv', delimiter=",")
+        else:
+            if load:
+                print('Load cutoff files do not exist. Generating instead.')
+            outputs, labels = [], []
+            for _, data in enumerate(train_loader):
+                inputs, target = self.prep_data(data)
+
+                if classification:
+                    inputs.requires_grad_()
+                output = [models[x](inputs) for x in range(ncomp)]
+                for x in range(ncomp):
+                    target2, output[x] = self.sub_classes(c, mc, target, output[x])
+                    output[x] = output[x].to('cpu')
+
+                target2 = target2.to('cpu')
+                outputs.append(output.detach().data)
+                labels.append(target2)
+
+            outputs, labels = torch.cat(outputs), torch.cat(labels)
+            nc = outputs.size()[1]
+            cut = np.zeros((ncomp, nc))
+            for i in range(nc):
+                for x in range(ncomp):
+                    outputs2, labels2 = self.clean_labs(i, outputs[x], labels)
+
+                    np.seterr(invalid='ignore')
+
+                    precision, recall, thresholds = precision_recall_curve(labels2, outputs2)
+                    f1 = np.divide(2 * precision * recall, precision + recall)
+                    cut[x, i] = thresholds[np.nanargmax(f1)]
+
+            if save:
+                np.savetxt("./logs/" + self.header2 + "_cuts.csv", cut, delimiter=",")
+
+        tail += '_same_pred' if same_pred else ''
+
         i = 0
         for loader in loaders:
-            jac_mean = np.ones((ncomp, ncomp))
+            jac_mean, count = np.ones((ncomp, ncomp)), np.zeroes((ncomp, ncomp))
             b, n = 0, 0
             loader = assert_dl(loader, self.batch_size, self.num_workers)
             c = [list(classes[i]).index(x) for x in overlap]
@@ -1756,9 +1799,14 @@ class OptWBoundEignVal(object):
                         raise Exception('Bad thresh_type.')
                     for x in range(ncomp):
                         for y in range(x+1, ncomp):
-                            jac = jaccard_score(sal_cov[x], sal_cov[y])
-                            jac_mean[x, y] = jac_mean[x, y] * n / (n + 1) + jac / (n + 1)
-                            jac_mean[y, x] = jac_mean[x, y]
+                            if same_pred:
+                                pred, comp_pred = output[x][j] > cut[x], output[y][j] > cut[y]
+                            m = count[x, y] if same_pred else n
+                            if not same_pred or (same_pred and pred == comp_pred):
+                                jac = jaccard_score(sal_cov[x], sal_cov[y])
+                                jac_mean[x, y] = jac_mean[x, y] * m / (m + 1) + jac / (m + 1)
+                                jac_mean[y, x] = jac_mean[x, y]
+                                count[x, y] += 1
                     n += 1
 
                 if self.use_gpu:
@@ -1769,6 +1817,9 @@ class OptWBoundEignVal(object):
                 b += 1
             print('Jaccard: {0}'.format(jac_mean))
             np.savetxt('./logs/' + self.header2 + '_jaccard_comp_' + str(i) + tail + '.csv', jac_mean, delimiter=",")
+            if same_pred:
+                np.savetxt('./logs/' + self.header2 + '_count_' + str(i) + tail + '.csv', count, delimiter=",")
+                np.savetxt('./logs/' + self.header2 + '_freq_' + str(i) + tail + '.csv', count/n, delimiter=",")
             i += 1
             # break
 
