@@ -1733,38 +1733,41 @@ class OptWBoundEignVal(object):
         h2 = "./logs/" + self.header2
         if not same_pred:
             cut = None
-        if load and os.path.isfile(h2 + '_cuts' + tail + '.csv'):
+        elif load and os.path.isfile(h2 + '_cuts' + tail + '.csv'):
             cut = np.genfromtxt(h2 + '_cuts' + tail + '.csv', delimiter=",")
         else:
             if load:
                 print('Load cutoff files do not exist. Generating instead.')
             outputs, labels = [], []
-            for _, data in enumerate(train_loader):
-                inputs, target = self.prep_data(data)
-
-                if classification:
-                    inputs.requires_grad_()
-                output = [models[x](inputs) for x in range(ncomp)]
-                for x in range(ncomp):
-                    target2, output[x] = self.sub_classes(c, mc, target, output[x])
-                    output[x] = output[x].to('cpu')
-
-                target2 = target2.to('cpu')
-                outputs.append(output.detach().data)
-                labels.append(target2)
-
-            outputs, labels = torch.cat(outputs), torch.cat(labels)
             nc = outputs.size()[1]
             cut = np.zeros((ncomp, nc))
-            for i in range(nc):
-                for x in range(ncomp):
-                    outputs2, labels2 = self.clean_labs(i, outputs[x], labels)
+            for x in range(ncomp):
+                for _, data in enumerate(train_loader):
+                    inputs, target = self.prep_data(data)
+
+                    if classification:
+                        inputs.requires_grad_()
+                    output = models[x](inputs)
+                    target2, output[x] = self.sub_classes(c, mc, target, output)
+                    output = output.to('cpu')
+                    outputs.append(output.detach().data)
+
+                    if x == 0:
+                        target2 = target2.to('cpu')
+                        labels.append(target2)
+
+                outputs = torch.cat(outputs)
+                labels = torch.cat(labels) if x == 0 else labels
+                for i in range(nc):
+                    outputs2, labels2 = self.clean_labs(i, outputs, labels)
 
                     np.seterr(invalid='ignore')
 
                     precision, recall, thresholds = precision_recall_curve(labels2, outputs2)
                     f1 = np.divide(2 * precision * recall, precision + recall)
                     cut[x, i] = thresholds[np.nanargmax(f1)]
+
+                print('Cutoffs for model {0}: {1}'.format(x, cut[x, :]))
 
             if save:
                 np.savetxt("./logs/" + self.header2 + "_cuts.csv", cut, delimiter=",")
@@ -1799,8 +1802,7 @@ class OptWBoundEignVal(object):
                         raise Exception('Bad thresh_type.')
                     for x in range(ncomp):
                         for y in range(x+1, ncomp):
-                            if same_pred:
-                                pred, comp_pred = output[x][j] > cut[x], output[y][j] > cut[y]
+                            pred, comp_pred = output[x][j] > cut[x], output[y][j] > cut[y]
                             m = count[x, y] if same_pred else n
                             if not same_pred or (same_pred and pred == comp_pred):
                                 jac = jaccard_score(sal_cov[x], sal_cov[y])
