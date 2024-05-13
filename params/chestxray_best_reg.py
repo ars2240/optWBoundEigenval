@@ -126,8 +126,8 @@ def options():
     opt['rho_test'] = False
     # opt['other_classes'] = list(range(1, 7))
     opt['saliency'] = 0
-    opt['jaccard'] = True
-    opt['jaccard_comp'] = False
+    opt['jaccard'] = False
+    opt['jaccard_comp'] = True
     opt['max_img'] = 25
     opt['crops'] = True
     opt['rand_init'] = True
