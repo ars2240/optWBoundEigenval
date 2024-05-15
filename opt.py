@@ -1691,8 +1691,8 @@ class OptWBoundEignVal(object):
                         roc[i], roc_comp[i] = np.nan, np.nan
                 print('Baseline Test {0} ROC: {1}. Comp Test {0} ROC: {2}'.format(i, roc.mean(), roc_comp.mean()))
 
-    def jaccard_comp(self, loaders,  fname, thresh=.9, method='cam', thresh_type='quantile', tail='', same_pred=True,
-                     load=True, save=True):
+    def jaccard_comp(self, loaders,  train_loader=None, fname=None, thresh=.9, method='cam', thresh_type='quantile',
+                     tail='', same_pred=True, load=True, save=True):
         # method = saliency, backprop, or cam
         # thresh_type = fixed or quantile
         # compute jaccard intersection of saliency maps
@@ -2070,4 +2070,4 @@ def main(pfile):
                     max_img=options['max_img'])
 
     if 'jaccard_comp' in options.keys() and 'comp_fname' in options.keys() and options['jaccard_comp']:
-        opt.jaccard_comp(options['test_loader'], fname=options['comp_fname'])
+        opt.jaccard_comp(options['test_loader'], options['train_loader'], fname=options['comp_fname'])
