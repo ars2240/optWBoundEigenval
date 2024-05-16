@@ -1745,8 +1745,6 @@ class OptWBoundEignVal(object):
                 for _, data in enumerate(train_loader):
                     inputs, target = self.prep_data(data)
 
-                    if classification:
-                        inputs.requires_grad_()
                     output = models[x](inputs)
                     target2, output[x] = self.sub_classes(c, mc, target, output)
                     output = output.to('cpu')
