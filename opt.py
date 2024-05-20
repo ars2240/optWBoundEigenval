@@ -1742,12 +1742,12 @@ class OptWBoundEignVal(object):
             nc = len(overlap)
             cut = np.zeros((ncomp, nc))
             for x in range(ncomp):
-                c = [list(classes[x]).index(y) for y in overlap]
+                c = [list(classes[x]).index(y) for x in overlap]
                 for _, data in enumerate(train_loader):
                     inputs, target = self.prep_data(data)
 
                     output = models[x](inputs)
-                    target2, output[x] = self.sub_classes(c, mc, target, output)
+                    target2, output = self.sub_classes(c, mc, target, output)
                     output = output.to('cpu')
                     outputs.append(output.detach().data)
 
@@ -1785,10 +1785,9 @@ class OptWBoundEignVal(object):
                 inputs, target = self.prep_data(data)
 
                 inputs.requires_grad_()
-                output = [None for x in range(ncomp)]
+                output = [models[x](inputs) for x in range(ncomp)]
                 for x in range(ncomp):
-                    out = models[x](inputs)
-                    target2, output[x] = self.sub_classes(c, mc, target, out)
+                    target2, output[x] = self.sub_classes(c, mc, target, output[x])
                 sal = [self.get_saliency(method, mc, target2, inputs, output[x], cam[x]) for x in range(ncomp)]
 
                 sal = [sal[x].to('cpu') for x in range(ncomp)]
