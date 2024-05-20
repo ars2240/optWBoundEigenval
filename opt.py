@@ -1742,7 +1742,7 @@ class OptWBoundEignVal(object):
             nc = len(overlap)
             cut = np.zeros((ncomp, nc))
             for x in range(ncomp):
-                c = [list(classes[x]).index(y) for x in overlap]
+                c = [list(classes[x]).index(y) for y in overlap]
                 for _, data in enumerate(train_loader):
                     inputs, target = self.prep_data(data)
 
