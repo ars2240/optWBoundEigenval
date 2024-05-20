@@ -1264,7 +1264,7 @@ class OptWBoundEignVal(object):
                 output = self.model(inputs)  # compute prediction
 
                 # subset classes
-                target, output = sub_classes(self, c, mc, target, output)
+                target, output = self.sub_classes(c, mc, target, output)
 
                 # compute loss
                 if self.loss.__class__.__name__ == 'KLDivLoss':
@@ -1742,6 +1742,7 @@ class OptWBoundEignVal(object):
             nc = len(overlap)
             cut = np.zeros((ncomp, nc))
             for x in range(ncomp):
+                c = [list(classes[x]).index(y) for y in overlap]
                 for _, data in enumerate(train_loader):
                     inputs, target = self.prep_data(data)
 
