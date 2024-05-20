@@ -1785,9 +1785,10 @@ class OptWBoundEignVal(object):
                 inputs, target = self.prep_data(data)
 
                 inputs.requires_grad_()
-                output = [models[x](inputs) for x in range(ncomp)]
+                output = [None for x in range(ncomp)]
                 for x in range(ncomp):
-                    target2, output[x] = self.sub_classes(c, mc, target, output[x])
+                    out = models[x](inputs)
+                    target2, output[x] = self.sub_classes(c, mc, target, out)
                 sal = [self.get_saliency(method, mc, target2, inputs, output[x], cam[x]) for x in range(ncomp)]
 
                 sal = [sal[x].to('cpu') for x in range(ncomp)]
