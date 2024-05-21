@@ -1738,10 +1738,11 @@ class OptWBoundEignVal(object):
         else:
             if load:
                 print('Load cutoff files do not exist. Generating instead.')
-            outputs, labels = [], []
+            labels = []
             nc = len(overlap)
             cut = np.zeros((ncomp, nc))
             for x in range(ncomp):
+                outputs = []
                 c = [list(classes[x]).index(y) for y in overlap]
                 for _, data in enumerate(train_loader):
                     inputs, target = self.prep_data(data)
