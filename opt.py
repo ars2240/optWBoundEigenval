@@ -1744,7 +1744,8 @@ class OptWBoundEignVal(object):
             for x in range(ncomp):
                 outputs = []
                 c = [list(classes[x]).index(y) for y in overlap]
-                for _, data in enumerate(train_loader):
+                for i, data in enumerate(train_loader):
+                    print('Batch {0} of {1}'.format(i, len(train_loader)), end='\r')
                     inputs, target = self.prep_data(data)
 
                     output = models[x](inputs)
