@@ -31,6 +31,8 @@ from torchvision import transforms
 from kfac import KFACOptimizer
 from guided_backprop import GuidedBackprop
 import warnings
+import pytz
+from datetime import datetime
 
 try:
     from pytorch_grad_cam import GradCAM
@@ -1741,12 +1743,14 @@ class OptWBoundEignVal(object):
             labels = []
             nc = len(overlap)
             cut = np.zeros((ncomp, nc))
+            tz = pytz.timezone('US/Central')
             for x in range(ncomp):
                 outputs = []
                 c = [list(classes[x]).index(y) for y in overlap]
                 for i, data in enumerate(train_loader):
                     if i % 100 == 0:
-                        print('Batch {0} of {1}'.format(i, len(train_loader)))
+                        print('Batch {0} of {1} @ {2}'.format(i, len(train_loader),
+                                                              datetime.now(tz).strftime('%d %b %Y %I:%M%p %Z')))
                     inputs, target = self.prep_data(data)
 
                     output = models[x](inputs)
