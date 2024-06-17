@@ -1813,7 +1813,7 @@ class OptWBoundEignVal(object):
                             pred = output[x][j].detach().numpy() > cut[x]
                             comp_pred = output[y][j].detach().numpy() > cut[y]
                             m = count[x, y] if same_pred else n
-                            if not same_pred or (same_pred and pred == comp_pred):
+                            if not same_pred or (same_pred and (pred == comp_pred).all()):
                                 jac = jaccard_score(sal_cov[x], sal_cov[y])
                                 jac_mean[x, y] = jac_mean[x, y] * m / (m + 1) + jac / (m + 1)
                                 jac_mean[y, x] = jac_mean[x, y]
