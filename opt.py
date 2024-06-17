@@ -1748,9 +1748,11 @@ class OptWBoundEignVal(object):
                 outputs = []
                 c = [list(classes[x]).index(y) for y in overlap]
                 for i, data in enumerate(train_loader):
+                    """
                     if i % 100 == 0:
                         print('Batch {0} of {1} @ {2}'.format(i, len(train_loader),
                                                               datetime.now(tz).strftime('%d %b %Y %I:%M%p %Z')))
+                    """
                     inputs, target = self.prep_data(data)
 
                     output = models[x](inputs)
@@ -1782,7 +1784,7 @@ class OptWBoundEignVal(object):
 
         i = 0
         for loader in loaders:
-            jac_mean, count = np.ones((ncomp, ncomp)), np.zeroes((ncomp, ncomp))
+            jac_mean, count = np.ones((ncomp, ncomp)), np.zeros((ncomp, ncomp))
             b, n = 0, 0
             loader = assert_dl(loader, self.batch_size, self.num_workers)
             c = [list(classes[i]).index(x) for x in overlap]
