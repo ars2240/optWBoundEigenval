@@ -1810,7 +1810,8 @@ class OptWBoundEignVal(object):
                         raise Exception('Bad thresh_type.')
                     for x in range(ncomp):
                         for y in range(x+1, ncomp):
-                            pred, comp_pred = output[x][j].numpy() > cut[x], output[y][j].numpy() > cut[y]
+                            pred = output[x][j].detach().numpy() > cut[x]
+                            comp_pred = output[y][j].detach().numpy() > cut[y]
                             m = count[x, y] if same_pred else n
                             if not same_pred or (same_pred and pred == comp_pred):
                                 jac = jaccard_score(sal_cov[x], sal_cov[y])
