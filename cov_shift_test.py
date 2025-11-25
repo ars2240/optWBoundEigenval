@@ -27,6 +27,7 @@ from forest_data import get_data, Net
 from optim import EntropySGD
 from kfac import KFACOptimizer
 from asymmetric_valley import AsymmetricValley
+from sam import SAM
 
 # set seed
 np.random.seed(1226)
@@ -110,7 +111,7 @@ mu = 0.0028
 K = 1
 opt11 = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
                          max_pow_iter=10000, verbose=False, header='Forest_LOBPCG4')
-"""
+
 
 mu = 0.01
 K = 0
@@ -122,8 +123,17 @@ opt14 = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=256, eps=
                          max_pow_iter=10000, verbose=False, header='Cov')
 opt15 = OptWBoundEignVal(model, loss, optimizer, scheduler, batch_size=512, eps=-1, mu=mu, K=K, max_iter=100,
                          max_pow_iter=10000, verbose=False, header='Cov')
+"""
 
-models = [opt12, opt13, opt14, opt15]
+base_optimizer = torch.optim.SGD
+params = [{'params': model.parameters()}]
+optimizer = SAM(params, base_optimizer, lr=0.5)
+mu, K = 0, 0
+opt16 = OptWBoundEignVal(model, loss, optimizer, batch_size=batch_size, eps=-1, mu=mu, K=K, max_iter=100,
+                        max_pow_iter=10000, verbose=False, header='COV')
+
+models = [opt16]
+# models = [opt12, opt13, opt14, opt15]
 # models = [opt1, opt2, opt3, opt4, opt5, opt6, opt7, opt8, opt9]
 
 

@@ -673,6 +673,13 @@ class OptWBoundEignVal(object):
                         return loss.item(), err
                     return feval
                 self.optimizer.step(helper(), self.model, self.loss)
+            elif self.optimizer.__class__.__name__ == "SAM":
+                self.optimizer.first_step(zero_grad=True)
+
+                output = self.model(inputs)
+                loss = self.loss(output, target)  # loss function
+                loss.backward()
+                self.optimizer.second_step(zero_grad=True)
             else:
                 try:
                     self.optimizer.step()
@@ -1225,13 +1232,13 @@ class OptWBoundEignVal(object):
         with open(self.log_file, "r") as log_file:  # open log file
             data = log_file.readlines()
             res = []
-            if len(data) < 8:
+            if len(data) < 10:
                 raise Exception('Not enough log data.')
-            for string in data[-8:]:
+            for string in data[-10:]:
                 string = string.split()
                 res.append(string[-1])
 
-        order = [0, 2, 3, 4, 5, 6, 7, 1]
+        order = [0, 3, 4, 5, 7, 8, 9, 1]
         res = [res[i] for i in order]
         print('Best_Val_Acc\tTrain_Loss\tTrain_Acc\tTrain_F1\tTest_Loss\tTest_Acc\tTest_F1\tRho')
         print('\t'.join(res))
