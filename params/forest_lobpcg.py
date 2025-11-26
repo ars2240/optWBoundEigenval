@@ -45,7 +45,7 @@ def options():
     opt['use_gpu'] = False
     opt['train'] = True
     opt['lobpcg'] = True
-    opt['verbose'] = True
+    opt['verbose'] = False
     opt['pow_iter_alpha'] = alpha
 
     opt['kfac_rand'] = False

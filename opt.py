@@ -344,7 +344,7 @@ class OptWBoundEignVal(object):
 
         return inputs, target
 
-    def comp_fisher(self, opt, output, target=None, retain_graph=False):
+    def comp_fisher(self, opt, output, target=None, retain_graph=True):
         # compute true fisher
         opt.acc_stats = True
         if self.kfac_rand:
@@ -365,10 +365,14 @@ class OptWBoundEignVal(object):
             data = iter(self.dataloader).next()
         # for testing purposes
         self.kfac_opt.zero_grad()  # zero gradient
+
         inputs, target = self.prep_data(data)
+        inputs.requires_grad_()
         output = self.model(inputs)
 
         self.comp_fisher(self.kfac_opt, output, target)
+        loss = self.loss(output, target)  # loss function
+        loss.backward()  # back prop
 
         for m in self.kfac_opt.modules:
             self.kfac_opt._update_inv(m)
@@ -635,7 +639,7 @@ class OptWBoundEignVal(object):
                     self.optimizer.zero_grad()  # zero gradient
                     inputs, target = self.prep_data(data)
                     output = self.model(inputs)
-                    self.comp_fisher(self.optimizer, output, target, retain_graph=True)
+                    self.comp_fisher(self.optimizer, output, target)
                     loss = self.loss(output, target)  # loss function
                     loss.backward()  # back prop
 
@@ -653,7 +657,7 @@ class OptWBoundEignVal(object):
                 output = self.model(inputs)
                 if self.optimizer.__class__.__name__ == "KFACOptimizer" and \
                         self.optimizer.steps % self.optimizer.TCov == 0:
-                    self.comp_fisher(self.optimizer, output, target, retain_graph=True)
+                    self.comp_fisher(self.optimizer, output, target)
                 loss = self.loss(output, target)  # loss function
                 loss.backward()  # back prop
 

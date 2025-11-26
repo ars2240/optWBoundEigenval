@@ -39,9 +39,9 @@ def options():
     opt['optimizer'] = EntropySGD(opt['model'].parameters())
     # opt['scheduler'] = torch.optim.lr_scheduler.LambdaLR(options['optimizer'], lr_lambda=alpha)
     opt['header'] = 'Forest'
-    opt['train'] = False
+    opt['train'] = True
     opt['pow_iter'] = False
-    opt['rho_test'] = True
+    opt['rho_test'] = False
     opt['ignore_bad_vals'] = False
 
     return opt
