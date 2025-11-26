@@ -34,22 +34,23 @@ def options():
     opt['test_loader'] = []
     # opt['test_loader'].append(get_test_loader(batch_size=batch_size))
     # opt['test_loader'].append(get_mnist_loader(batch_size=batch_size))
-    opt['test_loader'].append(get_gan_loader(batch_size=batch_size, file='constructed6.pt'))
-    opt['test_loader_aug'] = get_test_loader(batch_size=batch_size, augment=True)
+    # opt['test_loader'].append(get_gan_loader(batch_size=batch_size, file='constructed6.pt'))
+    # opt['test_loader_aug'] = get_test_loader(batch_size=batch_size, augment=True)
 
     # Training Setup
     opt['model'] = CNN()
     opt['loss'] = nn.CrossEntropyLoss()
     opt['optimizer'] = torch.optim.Adam(opt['model'].parameters())
     opt['header'] = 'USPS'
-    opt['train'] = False
+    opt['train'] = True
     opt['btch_h'] = False
     # opt['test_func'] = 'max conf'
 
     opt['test'] = False
     opt['comp_test'] = False
     opt['aug_test'] = False
-    opt['rho_test'] = True
+    opt['rho_test'] = False
     opt['ignore_bad_vals'] = False
+    opt['verbose'] = True
 
     return opt

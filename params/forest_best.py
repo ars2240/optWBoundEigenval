@@ -41,7 +41,7 @@ def options():
     opt['use_gpu'] = False
     opt['train'] = True
     opt['lobpcg'] = False
-    opt['verbose'] = False
+    opt['verbose'] = True
     opt['rho_test'] = False
     opt['ignore_bad_vals'] = False
 
