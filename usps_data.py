@@ -287,6 +287,7 @@ def get_gan_loader(data_dir='./data', file='cgan_usps.pt', batch_size=1, random_
     torch.manual_seed(random_seed)
 
     dataset = torch.load(data_dir + '/' + file, weights_only=False)
+    dataset.transform = gan_trans
     data_loader = torch.utils.data.DataLoader(
         dataset, batch_size=batch_size, shuffle=shuffle,
         num_workers=num_workers, pin_memory=pin_memory)

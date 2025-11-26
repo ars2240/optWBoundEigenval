@@ -24,7 +24,7 @@ def options():
     opt = {'seed': 1226, 'tol': 0.001, 'mu': 0.005, 'K': 0}
 
     # batch size
-    batch_size = 512
+    batch_size = 128
     opt['batch_size'] = batch_size
 
     # def mu(i):
@@ -33,9 +33,12 @@ def options():
     # Load the dataset
     opt['train_loader'], opt['valid_loader'] = get_train_valid_loader(batch_size=batch_size, augment=False)
     opt['test_loader'] = []
-    opt['test_loader'].append(get_test_loader(batch_size=batch_size))
-    opt['test_loader'].append(get_mnist_loader(batch_size=batch_size))
-    opt['test_loader'].append(get_gan_loader(batch_size=batch_size, file='constructed6.pt'))
+    # opt['test_loader'].append(get_test_loader(batch_size=batch_size))
+    # opt['test_loader'].append(get_mnist_loader(batch_size=batch_size))
+    # opt['test_loader'].append(get_gan_loader(batch_size=batch_size, file='gan_usps.pt'))
+    opt['test_loader'].append(get_gan_loader(batch_size=batch_size, file='cgan_usps.pt'))
+    # opt['test_loader'].append(get_gan_loader(batch_size=batch_size, file='constructed2.pt'))
+    # opt['test_loader'].append(get_gan_loader(batch_size=batch_size, file='constructed6.pt'))
     opt['test_loader_aug'] = get_test_loader(batch_size=batch_size, augment=True)
 
     # Training Setup
@@ -44,9 +47,13 @@ def options():
     base_optimizer = torch.optim.Adam
     opt['optimizer'] = SAM(opt['model'].parameters(), base_optimizer)
     opt['header'] = 'USPS'
-    opt['train'] = True
+    opt['train'] = False
     opt['pow_iter'] = False
-    opt['rho_test'] = True
+    opt['rho_test'] = False
     opt['ignore_bad_vals'] = False
+
+    opt['test'] = False
+    opt['comp_test'] = True
+    opt['aug_test'] = False
 
     return opt
