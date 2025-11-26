@@ -1028,9 +1028,9 @@ class OptWBoundEignVal(object):
     def load_state(self, fname, dic='state_dict'):
 
         try:
-            state = torch.load(fname)
+            state = torch.load(fname) if torch.cuda.is_available() else torch.load(fname, map_location='cpu')
         except RuntimeError:
-            state = torch.jit.load(fname)
+            state = torch.jit.load(fname) if torch.cuda.is_available() else torch.jit.load(fname, map_location='cpu')
         if dic in state.keys():
             state2 = state[dic]
 
