@@ -41,7 +41,7 @@ def options():
     # Training Setup
     opt['model'] = CNN()
     opt['loss'] = nn.CrossEntropyLoss()
-    base_optimizer = torch.optim.SGD
+    base_optimizer = torch.optim.Adam
     opt['optimizer'] = SAM(opt['model'].parameters(), base_optimizer)
     opt['header'] = 'USPS'
     opt['train'] = True
