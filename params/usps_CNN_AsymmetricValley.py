@@ -42,12 +42,12 @@ def options():
     opt['loss'] = nn.CrossEntropyLoss()
     opt['optimizer'] = torch.optim.Adam(opt['model'].parameters())
     opt['header'] = 'USPS_AsymValley'
-    opt['train'] = False
+    opt['train'] = True
     opt['btch_h'] = False
     opt['asymmetric_valley'] = True
 
     opt['test'] = False
-    opt['comp_test'] = True
+    opt['comp_test'] = False
     opt['aug_test'] = False
     opt['rho_test'] = False
     opt['ignore_bad_vals'] = False

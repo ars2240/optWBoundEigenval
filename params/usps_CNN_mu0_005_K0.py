@@ -51,6 +51,6 @@ def options():
     opt['aug_test'] = False
     opt['rho_test'] = False
     opt['ignore_bad_vals'] = False
-    opt['verbose'] = True
+    opt['verbose'] = False
 
     return opt
