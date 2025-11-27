@@ -43,5 +43,6 @@ def options():
     opt['pow_iter'] = False
     opt['rho_test'] = False
     opt['ignore_bad_vals'] = False
+    opt['verbose'] = True
 
     return opt

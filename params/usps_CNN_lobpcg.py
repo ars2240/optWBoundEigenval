@@ -50,7 +50,7 @@ def options():
     opt['max_iter'] = 100
     opt['use_gpu'] = False
     opt['lobpcg'] = True
-    opt['verbose'] = False
+    opt['verbose'] = True
     opt['pow_iter_alpha'] = alpha
     opt['mem_track'] = False
     opt['ignore_bad_vals'] = True

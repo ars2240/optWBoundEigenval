@@ -313,6 +313,7 @@ class OptWBoundEignVal(object):
         self.kfac_rand = kfac_rand  # if randomizer used for kfac
         self.rand_init = rand_init  # if power iteration vector is randomly initiated each time
         self.gradg_clip = gradg_clip  # norm of maximum rho gradient size (None to ignore)
+        self.kTime = 0
 
     def mem_check(self):
         # checks & prints max memory used
@@ -360,6 +361,7 @@ class OptWBoundEignVal(object):
 
     def init_kfac(self, data=None):
         # initializes KFAC on batch
+        start = time.time()
 
         if data is None:
             data = iter(self.dataloader).next()
@@ -377,8 +379,12 @@ class OptWBoundEignVal(object):
         for m in self.kfac_opt.modules:
             self.kfac_opt._update_inv(m)
 
+        self.kTime += time.time() - start
+
     def kfac(self, r):
         # computes K-FAC on batch, given residual vector
+        start = time.time()
+
         Tr = r.clone()
         j = 0
         for m in self.model.modules():
@@ -405,6 +411,8 @@ class OptWBoundEignVal(object):
                     Tr[j:(j + sn)] = torch.tensor(t)
                     #Tr[j:(j + sn)] = r[j:(j + sn)]
                 j += sn  # increment
+
+        self.kTime += time.time() - start
         return Tr
 
     def comp_rho(self, data, p=False):
@@ -744,6 +752,7 @@ class OptWBoundEignVal(object):
             timeHMS(aTime0, 'Autograd 0 ')
             timeHMS(aTime1, 'Autograd 1 ')
             timeHMS(aTime2, 'Autograd 2 ')
+            timeHMS(self.kTime, 'K-FAC ')
             log_file.close()  # close log file
             sys.stdout = old_stdout  # reset output
 

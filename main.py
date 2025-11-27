@@ -16,4 +16,5 @@ from opt import main
 if len(sys.argv) == 2:
     main(sys.argv[1])
 else:
-    main('cifar100_ResNet_mu0')
+    main('usps_CNN_lobpcg')
+    main('forest_lobpcg')
