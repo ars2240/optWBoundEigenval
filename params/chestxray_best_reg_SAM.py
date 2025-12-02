@@ -114,7 +114,7 @@ def options():
     opt['ignore_bad_vals'] = False
     opt['pow_iter_eps'] = 0.1
     # opt['pow_iter_alpha'] = alpha
-    opt['verbose'] = True
+    opt['verbose'] = False
     opt['mem_track'] = False
     opt['train'] = True
     opt['test'] = True

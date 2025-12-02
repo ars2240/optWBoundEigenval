@@ -16,5 +16,4 @@ from opt import main
 if len(sys.argv) == 2:
     main(sys.argv[1])
 else:
-    main('usps_CNN_lobpcg')
-    main('forest_lobpcg')
+    main('chestxray_best_reg_SAM')
