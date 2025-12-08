@@ -106,7 +106,7 @@ def options():
     opt['optimizer'] = SAM(opt['model'].parameters(), base_optimizer, lr=1e-5, weight_decay=1e-5)
     opt['scheduler'] = torch.optim.lr_scheduler.ReduceLROnPlateau(opt['optimizer'], patience=5)
     opt['header'] = 'chestxray2_' + enc
-    opt['use_gpu'] = False
+    opt['use_gpu'] = True
     opt['pow_iter'] = False
     opt['test_func'] = 'accauc sigmoid'
     opt['max_iter'] = 1
