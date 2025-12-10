@@ -103,9 +103,9 @@ def options():
     opt['model'] = model
     opt['loss'] = W_BCEWithLogitsLoss()
     base_optimizer = torch.optim.Adam
-    opt['optimizer'] = SAM(opt['model'].parameters(), base_optimizer, lr=1e-5, weight_decay=1e-5)
+    opt['optimizer'] = SAM(opt['model'].parameters(), base_optimizer, lr=1e-6)
     opt['scheduler'] = torch.optim.lr_scheduler.ReduceLROnPlateau(opt['optimizer'], patience=5)
-    opt['header'] = 'chestxray2_' + enc
+    opt['header'] = 'chestxray2_LRE-6_' + enc
     opt['use_gpu'] = True
     opt['pow_iter'] = False
     opt['test_func'] = 'accauc sigmoid'
